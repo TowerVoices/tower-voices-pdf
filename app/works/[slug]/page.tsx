@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import ShareButtons from "./ShareButtons";
 import SpoilerSynopsis from "./SpoilerSynopsis";
 import InteractiveRating from "@/components/InteractiveRating";
-import ReportButton from "@/components/ReportButton"; // المكون الجديد لإصلاح زر البلاغ
+import ReportButton from "@/components/ReportButton";
 import { 
   FaDownload, 
   FaExclamationTriangle, 
@@ -19,7 +19,9 @@ interface Props {
 }
 
 async function getWork(slug: string) {
+  // الخطوة 2: إضافة _id للاستعلام لتمكين المكون من معرفة أي مستند يحدث
   const query = `*[_type == "work" && slug.current == $slug][0]{
+    _id,
     title,
     "rawCover": cover,
     author,
@@ -90,12 +92,13 @@ export default async function WorkPage({ params }: Props) {
                 {work.title}
               </h1>
 
-              {/* نظام التقييم المطور */}
+              {/* نظام التقييم المطور - تم تمرير workId هنا */}
               <div className="flex flex-col md:flex-row gap-6 mb-8 items-center md:items-start">
                 <div className="flex flex-col items-center md:items-start gap-2">
                   <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">تقييم القصة</span>
                   <div className="bg-zinc-900/50 p-2 md:p-3 rounded-xl border border-white/5 shadow-inner flex items-center gap-3">
-                    <InteractiveRating initialRating={workRating} />
+                    {/* تمرير المعرّف work._id للمكون التفاعلي */}
+                    <InteractiveRating initialRating={workRating} workId={work._id} />
                     <div className="flex items-center gap-1 border-r border-white/10 pr-3 mr-1">
                         <span className="text-yellow-500 font-black text-lg">{workRating}</span>
                         <span className="text-gray-500 text-[10px] md:text-xs font-medium">(من {work.ratingCount || 0} تقييم)</span>
@@ -108,7 +111,7 @@ export default async function WorkPage({ params }: Props) {
                 <div className="flex flex-col items-center md:items-start gap-2">
                   <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">جودة الترجمة</span>
                   <div className="bg-zinc-900/50 p-2 md:p-3 rounded-xl border border-white/5 shadow-inner flex items-center gap-3">
-                    <InteractiveRating initialRating={translationRating} />
+                    <InteractiveRating initialRating={translationRating} workId={work._id} />
                     <span className="text-blue-400 font-black text-lg border-r border-white/10 pr-3 mr-1">{translationRating}</span>
                   </div>
                 </div>
@@ -121,7 +124,6 @@ export default async function WorkPage({ params }: Props) {
                     <FaDownload className="text-xl" /> تحميل الرواية الآن
                   </a>
                 )}
-                {/* استبدال زر البلاغ القديم بالمكون التفاعلي الجديد */}
                 <ReportButton workTitle={work.title} />
               </div>
             </div>
@@ -168,6 +170,7 @@ export default async function WorkPage({ params }: Props) {
             </div>
           </div>
 
+          {/* الجانب (Sidebar) */}
           <div className="lg:col-span-4 space-y-6">
             <div className="bg-zinc-900/80 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl sticky top-24">
               <h3 className="text-xl font-bold mb-8 text-white border-b border-white/5 pb-4">معلومات العمل</h3>
