@@ -7,7 +7,7 @@ import {
   FaArrowLeft
 } from "react-icons/fa";
 
-// بيانات السيو والروابط الأساسية
+// 1. إعدادات السيو والروابط الأساسية
 export const metadata: Metadata = {
   title: "أصوات البرج | منصة الروايات المترجمة",
   description: "المكان الأول لأحدث الروايات المترجمة والحصرية بأسلوب عربي فصيح وتجربة قراءة فريدة.",
@@ -25,9 +25,13 @@ export const metadata: Metadata = {
 };
 
 async function getLatestWorks() {
-  // التعديل هنا: استخدمنا [0...4] لجلب 4 عناصر (الفهارس 0، 1، 2، 3)
-  // وأضفنا الترتيب حسب الأولوية priority أولاً ثم التاريخ
-  const query = `*[_type == "work"] | order(priority asc, _createdAt desc) [0...4] {
+  /**
+   * شرح التعديل:
+   * 1. استخدمنا [0..3] (نقطتين) لجلب 4 عناصر شاملة (0، 1، 2، 3).
+   * 2. أضفنا شرط الترتيب حسب الأولوية (priority) ثم الأحدث تاريخاً.
+   * 3. تأكد من إدخال أرقام (1, 2, 3, 4) في Sanity Studio ليعمل الترتيب.
+   */
+  const query = `*[_type == "work"] | order(priority asc, _createdAt desc) [0..3] {
     title,
     "slug": slug.current,
     cover,
@@ -45,7 +49,7 @@ export default async function HomePage() {
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans selection:bg-blue-500/30">
 
-      {/* 1. Hero Section */}
+      {/* 1. قسم الهيرو (Hero Section) */}
       <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-[url('/hero.jpg')] bg-cover bg-center opacity-30 scale-105" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-[#050505]/80 to-[#050505]" />
@@ -81,7 +85,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 2. Latest Works Grid (عرض 4 أعمال) */}
+      {/* 2. شبكة الأعمال (تظهر 4 أعمال مرتبة) */}
       <section id="works" className="max-w-7xl mx-auto px-6 py-24">
         <div className="flex items-end justify-between mb-12">
           <div>
@@ -132,7 +136,7 @@ export default async function HomePage() {
           ))}
         </div>
 
-        {/* 3. Show More Button */}
+        {/* 3. زر شاهد المزيد (ينقل لصفحة المكتبة الكاملة) */}
         <div className="mt-16 text-center">
           <Link 
             href="/works" 
@@ -144,7 +148,7 @@ export default async function HomePage() {
         </div>
       </section>
       
-      {/* 5. Footer */}
+      {/* 5. الفوتر */}
       <footer className="border-t border-white/5 py-12 bg-black/50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <div className="text-2xl font-black mb-4 text-white uppercase tracking-tighter">أصوات البرج</div>
