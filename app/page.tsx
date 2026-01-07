@@ -3,20 +3,15 @@ import { Metadata } from "next";
 import { client } from "./sanity.client"; 
 import { urlFor } from "./sanity.image";  
 import { 
-  FaBook, 
-  FaFeatherAlt, 
-  FaSearch, 
-  FaCheckCircle, 
-  FaChevronDown,
-  FaArrowRight 
+  FaArrowRight,
+  FaArrowLeft
 } from "react-icons/fa";
 
-// تحديث بيانات السيو والروابط الأساسية لتطابق رابط الاستضافة الحالي
+// بيانات السيو والروابط الأساسية
 export const metadata: Metadata = {
   title: "أصوات البرج | منصة الروايات المترجمة",
   description: "المكان الأول لأحدث الروايات المترجمة والحصرية بأسلوب عربي فصيح وتجربة قراءة فريدة.",
   alternates: {
-    // تم تحديث الرابط هنا ليتطابق مع رابط جوجل المعتمد
     canonical: "https://tower-voices-pdf.vercel.app", 
   },
   openGraph: {
@@ -29,8 +24,9 @@ export const metadata: Metadata = {
   },
 };
 
-async function getWorks() {
-  const query = `*[_type == "work"] | order(_createdAt desc) {
+async function getLatestWorks() {
+  // تم تعديل الاستعلام لجلب أول 4 أعمال فقط مرتبة من الأحدث [0...3]
+  const query = `*[_type == "work"] | order(_createdAt desc) [0...3] {
     title,
     "slug": slug.current,
     cover,
@@ -42,7 +38,7 @@ async function getWorks() {
 }
 
 export default async function HomePage() {
-  const works = await getWorks(); 
+  const works = await getLatestWorks(); 
 
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans selection:bg-blue-500/30">
@@ -83,7 +79,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 2. Latest Works Grid */}
+      {/* 2. Latest Works Grid (Limited to 4 items) */}
       <section id="works" className="max-w-7xl mx-auto px-6 py-24">
         <div className="flex items-end justify-between mb-12">
           <div>
@@ -132,6 +128,17 @@ export default async function HomePage() {
               </div>
             </Link>
           ))}
+        </div>
+
+        {/* 3. Show More Button - زر شاهد المزيد */}
+        <div className="mt-16 text-center">
+          <Link 
+            href="/works" 
+            className="inline-flex items-center gap-3 bg-zinc-900 border border-white/10 hover:border-blue-500/50 text-white px-10 py-4 rounded-2xl font-bold transition-all group"
+          >
+            استكشف كافة الأعمال 
+            <FaArrowLeft className="text-blue-500 group-hover:-translate-x-2 transition-transform" />
+          </Link>
         </div>
       </section>
       
