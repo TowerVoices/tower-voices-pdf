@@ -9,22 +9,28 @@ import {
   FaRedditAlien,
 } from "react-icons/fa6";
 
-export default function ShareButtons() {
-  const url = typeof window !== "undefined" ? window.location.href : "";
+// تعريف البيانات المستقبلة لضمان مشاركة الرابط الصحيح لكل عمل
+interface ShareProps {
+  url: string;
+  title: string;
+}
 
+export default function ShareButtons({ url, title }: ShareProps) {
+  // إعداد نص المشاركة مع عنوان الرواية
+  const shareText = `أنصحك بقراءة رواية: ${title}`;
+  
   const base =
     "w-10 h-10 flex items-center justify-center rounded-lg text-white text-lg transition-all duration-200 hover:scale-110";
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(url);
-    alert("تم نسخ الرابط!");
+    alert("تم نسخ رابط الرواية بنجاح!");
   };
 
   return (
-    // التغيير هنا: flex-row بدلاً من flex-col، وإضافة flex-wrap للتجاوب
     <div className="flex flex-row flex-wrap gap-3 justify-center items-center">
 
-      {/* نسخ الرابط */}
+      {/* نسخ الرابط المباشر للرواية */}
       <button
         onClick={copyToClipboard}
         title="نسخ الرابط"
@@ -33,9 +39,9 @@ export default function ShareButtons() {
         <FaLink />
       </button>
 
-      {/* تيليغرام */}
+      {/* مشاركة عبر تيليغرام مع العنوان */}
       <a
-        href={`https://t.me/share/url?url=${encodeURIComponent(url)}`}
+        href={`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText)}`}
         target="_blank"
         rel="noopener noreferrer"
         className={`${base} bg-blue-600 hover:bg-blue-500`}
@@ -43,9 +49,9 @@ export default function ShareButtons() {
         <FaTelegram />
       </a>
 
-      {/* واتساب */}
+      {/* مشاركة عبر واتساب */}
       <a
-        href={`https://wa.me/?text=${encodeURIComponent(url)}`}
+        href={`https://wa.me/?text=${encodeURIComponent(shareText + " " + url)}`}
         target="_blank"
         rel="noopener noreferrer"
         className={`${base} bg-green-600 hover:bg-green-500`}
@@ -53,9 +59,9 @@ export default function ShareButtons() {
         <FaWhatsapp />
       </a>
 
-      {/* إكس */}
+      {/* مشاركة عبر منصة إكس (تويتر سابقاً) */}
       <a
-        href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}`}
+        href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText)}`}
         target="_blank"
         rel="noopener noreferrer"
         className={`${base} bg-sky-700 hover:bg-sky-600`}
@@ -73,9 +79,9 @@ export default function ShareButtons() {
         <FaDiscord />
       </a>
 
-      {/* ريديت */}
+      {/* مشاركة عبر ريديت */}
       <a
-        href={`https://www.reddit.com/submit?url=${encodeURIComponent(url)}`}
+        href={`https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(shareText)}`}
         target="_blank"
         rel="noopener noreferrer"
         className={`${base} bg-orange-600 hover:bg-orange-500`}

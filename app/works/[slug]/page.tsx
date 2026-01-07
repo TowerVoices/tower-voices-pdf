@@ -20,14 +20,15 @@ interface Props {
   params: Promise<{ slug: string; }>;
 }
 
+// الثابت الخاص بالرابط الأساسي
+const baseUrl = "https://tower-voices-pdf.vercel.app";
+
 // دالة توليد بيانات الميتا والروابط الأساسية
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const work = await getWork(slug);
   
   if (!work) return {};
-
-  const baseUrl = "https://tower-voices-pdf.vercel.app"; 
 
   return {
     title: `${work.title} | أصوات البرج`,
@@ -49,6 +50,7 @@ async function getWork(slug: string) {
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id,
     title,
+    "slug": slug.current,
     "rawCover": cover,
     author,
     tags,
@@ -63,10 +65,6 @@ async function getWork(slug: string) {
     "comments": *[_type == "comment" && work._ref == ^._id && approved == true] | order(_createdAt desc)
   }`;
   
-  /**
-   * إضافة { next: { revalidate: 60 } } تضمن أن أي تعديل تجريه داخل Sanity
-   * (مثل تغيير رابط التحميل أو حالة الرواية) سيظهر للقراء خلال دقيقة واحدة.
-   */
   return await client.fetch(query, { slug }, { next: { revalidate: 60 } });
 }
 
@@ -192,11 +190,15 @@ export default async function WorkPage({ params }: Props) {
               </div>
             </div>
 
+            {/* التعديل هنا: تمرير الرابط والعنوان لمكون ShareButtons */}
             <div className="bg-white/5 rounded-3xl p-6 flex flex-col items-center justify-between gap-6 border border-white/5">
                 <div className="flex items-center gap-4 text-gray-400 font-bold text-sm">
                     <FaShareAlt className="text-blue-500" /> انشر العمل مع أصدقائك
                 </div>
-                <ShareButtons />
+                <ShareButtons 
+                  url={`${baseUrl}/works/${work.slug}`} 
+                  title={work.title} 
+                />
             </div>
           </div>
         </div>
