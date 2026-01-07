@@ -1,0 +1,12 @@
+import { MetadataRoute } from 'next';
+
+export default function robots(): MetadataRoute.Robots {
+  return {
+    rules: {
+      userAgent: '*',
+      allow: '/',
+      disallow: '/studio/', // منع أرشفة لوحة التحكم الخاصة بك
+    },
+    sitemap: 'https://tower-voices.com/sitemap.xml',
+  };
+}

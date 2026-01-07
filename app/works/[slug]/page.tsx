@@ -1,6 +1,7 @@
 import { client } from "../../sanity.client";
 import { urlFor } from "../../sanity.image";
 import { notFound } from "next/navigation";
+import { Metadata } from "next"; // إضافة لدعم السيو
 import ShareButtons from "./ShareButtons";
 import SpoilerSynopsis from "./SpoilerSynopsis";
 import InteractiveRating from "@/components/InteractiveRating";
@@ -19,8 +20,32 @@ interface Props {
   params: Promise<{ slug: string; }>;
 }
 
+// دالة توليد بيانات الميتا والروابط الأساسية (حل مشكلة الأرشفة في Google Search Console)
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const work = await getWork(slug);
+  
+  if (!work) return {};
+
+  const baseUrl = "https://tower-voices.com"; // قم بتعديله لرابط موقعك الرسمي
+
+  return {
+    title: `${work.title} | أصوات البرج`,
+    description: work.synopsis?.slice(0, 160),
+    alternates: {
+      canonical: `${baseUrl}/works/${slug}`, // يخبر جوجل أن هذا هو الرابط الأصلي والوحيد للرواية
+    },
+    openGraph: {
+      title: work.title,
+      description: work.synopsis,
+      url: `${baseUrl}/works/${slug}`,
+      siteName: "أصوات البرج",
+      type: "article",
+    },
+  };
+}
+
 async function getWork(slug: string) {
-  // تحديث الاستعلام لجلب البيانات والتعليقات المرتبطة
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id,
     title,
@@ -117,7 +142,7 @@ export default async function WorkPage({ params }: Props) {
         </div>
       </section>
 
-      {/* 2. قسم المحتوى العلوي (الملخص والمعلومات) */}
+      {/* 2. قسم المحتوى العلوي */}
       <section className="max-w-6xl mx-auto px-5 md:px-8 py-12">
         <div className="grid lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8 space-y-8">
@@ -173,7 +198,7 @@ export default async function WorkPage({ params }: Props) {
         </div>
       </section>
 
-      {/* 3. قسم التعليقات (يظهر في آخر الصفحة تماماً بعرض كامل) */}
+      {/* 3. قسم التعليقات النهائي */}
       <section className="max-w-6xl mx-auto px-5 md:px-8 pb-20">
         <div id="comments-section" className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-8 md:p-12 shadow-2xl space-y-10">
           <div className="flex items-center justify-between border-b border-white/5 pb-6">

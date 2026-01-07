@@ -1,5 +1,5 @@
 import Link from "next/link";
-// استيراد الملفات من نفس المجلد الحالي (app) لضمان عملها مع Turbopack
+import { Metadata } from "next"; // إضافة لدعم السيو
 import { client } from "./sanity.client"; 
 import { urlFor } from "./sanity.image";  
 import { 
@@ -11,7 +11,23 @@ import {
   FaArrowRight 
 } from "react-icons/fa";
 
-// دالة جلب البيانات من Sanity باستخدام لغة GROQ
+// 1. إضافة بيانات السيو والروابط الأساسية (حل مشكلة التكرار في جوجل)
+export const metadata: Metadata = {
+  title: "أصوات البرج | منصة الروايات المترجمة",
+  description: "المكان الأول لأحدث الروايات المترجمة والحصرية بأسلوب عربي فصيح وتجربة قراءة فريدة.",
+  alternates: {
+    canonical: "https://tower-voices.com", // يخبر جوجل أن هذا هو الرابط الرسمي الوحيد للواجهة
+  },
+  openGraph: {
+    title: "أصوات البرج",
+    description: "اكتشف عالم الروايات المترجمة باحترافية",
+    url: "https://tower-voices.com",
+    siteName: "أصوات البرج",
+    locale: "ar_SA",
+    type: "website",
+  },
+};
+
 async function getWorks() {
   const query = `*[_type == "work"] | order(_createdAt desc) {
     title,
@@ -25,12 +41,12 @@ async function getWorks() {
 }
 
 export default async function HomePage() {
-  const works = await getWorks(); // جلب البيانات الحقيقية من Sanity Studio
+  const works = await getWorks(); 
 
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans selection:bg-blue-500/30">
 
-      {/* 1. Hero Section - واجهة سينمائية */}
+      {/* 1. Hero Section */}
       <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-[url('/hero.jpg')] bg-cover bg-center opacity-30 scale-105" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-[#050505]/80 to-[#050505]" />
@@ -66,7 +82,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 2. Latest Works - شبكة الأعمال المحسنة المستمدة من Sanity */}
+      {/* 2. Latest Works Grid */}
       <section id="works" className="max-w-7xl mx-auto px-6 py-24">
         <div className="flex items-end justify-between mb-12">
           <div>
@@ -84,7 +100,6 @@ export default async function HomePage() {
               className="group relative bg-zinc-900/30 border border-white/5 rounded-3xl overflow-hidden transition-all duration-500 hover:border-blue-500/50 hover:-translate-y-2"
             >
               <div className="relative aspect-[2/3] overflow-hidden">
-                {/* استخدام urlFor لجلب روابط الصور من Studio */}
                 <img
                   src={urlFor(work.cover).width(600).url()} 
                   alt={work.title}
@@ -118,9 +133,6 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
-
-      {/* باقي الأقسام (Methodology, FAQ, Footer) تظل كما هي */}
-      {/* ... */}
       
       {/* 5. Footer */}
       <footer className="border-t border-white/5 py-12 bg-black/50 backdrop-blur-md">
