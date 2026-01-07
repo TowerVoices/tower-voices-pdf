@@ -3,7 +3,7 @@ import { urlFor } from "../../sanity.image";
 import { notFound } from "next/navigation";
 import ShareButtons from "./ShareButtons";
 import SpoilerSynopsis from "./SpoilerSynopsis";
-import InteractiveRating from "@/components/InteractiveRating"; // تأكد من إنشاء هذا الملف
+import InteractiveRating from "@/components/InteractiveRating";
 import { 
   FaDownload, 
   FaExclamationTriangle, 
@@ -18,6 +18,7 @@ interface Props {
 }
 
 async function getWork(slug: string) {
+  // تحديث الاستعلام ليشمل ratingCount و author
   const query = `*[_type == "work" && slug.current == $slug][0]{
     title,
     "rawCover": cover,
@@ -26,6 +27,7 @@ async function getWork(slug: string) {
     status,
     ratingWork,
     ratingTranslation,
+    ratingCount,
     synopsis,
     isSpoiler,
     warning,
@@ -48,7 +50,7 @@ export default async function WorkPage({ params }: Props) {
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans overflow-x-hidden">
       
-      {/* 1. قسم الهيرو (Hero Section) - استجابة كاملة */}
+      {/* 1. قسم الهيرو (Hero Section) */}
       <section className="relative min-h-[55vh] md:h-[65vh] w-full overflow-hidden flex items-end">
         <div 
           className="absolute inset-0 bg-cover bg-center scale-110 blur-md opacity-30 transition-all duration-700"
@@ -59,7 +61,7 @@ export default async function WorkPage({ params }: Props) {
         <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-8 w-full pb-10 md:pb-16">
           <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-end w-full">
             
-            {/* غلاف الرواية - حجم ذكي لكل جهاز */}
+            {/* غلاف الرواية */}
             <div className="relative group shrink-0">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
               <div className="relative w-40 md:w-64 aspect-[2/3] rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10">
@@ -71,7 +73,7 @@ export default async function WorkPage({ params }: Props) {
               </div>
             </div>
 
-            {/* تفاصيل النص - محاذاة ذكية */}
+            {/* تفاصيل النص */}
             <div className="flex-1 text-center md:text-right w-full">
               <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
                 {work.tags?.map((tag: string, index: number) => (
@@ -88,26 +90,31 @@ export default async function WorkPage({ params }: Props) {
                 {work.title}
               </h1>
 
-              {/* نظام التقييم التفاعلي - يعمل على الجوال والكمبيوتر */}
+              {/* نظام التقييم المطور مع عدد المقيمين */}
               <div className="flex flex-col md:flex-row gap-6 mb-8 items-center md:items-start">
                 <div className="flex flex-col items-center md:items-start gap-2">
                   <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">تقييم القصة</span>
-                  <div className="bg-zinc-900/50 p-2 rounded-xl border border-white/5 shadow-inner">
+                  <div className="bg-zinc-900/50 p-2 md:p-3 rounded-xl border border-white/5 shadow-inner flex items-center gap-3">
                     <InteractiveRating initialRating={workRating} />
+                    <div className="flex items-center gap-1 border-r border-white/10 pr-3 mr-1">
+                        <span className="text-yellow-500 font-black text-lg">{workRating}</span>
+                        <span className="text-gray-500 text-[10px] md:text-xs font-medium">(من {work.ratingCount || 0} تقييم)</span>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="w-px h-10 bg-white/10 hidden md:block" />
+                <div className="w-px h-10 bg-white/10 hidden md:block mt-6" />
 
                 <div className="flex flex-col items-center md:items-start gap-2">
                   <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">جودة الترجمة</span>
-                  <div className="bg-zinc-900/50 p-2 rounded-xl border border-white/5 shadow-inner">
+                  <div className="bg-zinc-900/50 p-2 md:p-3 rounded-xl border border-white/5 shadow-inner flex items-center gap-3">
                     <InteractiveRating initialRating={translationRating} />
+                    <span className="text-blue-400 font-black text-lg border-r border-white/10 pr-3 mr-1">{translationRating}</span>
                   </div>
                 </div>
               </div>
 
-              {/* أزرار الإجراءات - عرض كامل على الجوال */}
+              {/* الأزرار */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
                 {work.downloadUrl && (
                   <a href={work.downloadUrl} target="_blank" className="flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-blue-600/20 active:scale-95 w-full sm:w-auto">
@@ -126,8 +133,6 @@ export default async function WorkPage({ params }: Props) {
       {/* 2. قسم المحتوى السفلي */}
       <section className="max-w-6xl mx-auto px-5 md:px-8 py-12">
         <div className="grid lg:grid-cols-12 gap-10">
-          
-          {/* العمود الرئيسي */}
           <div className="lg:col-span-8 space-y-8">
             {work.warning && (
               <div className="bg-red-950/20 border border-red-900/30 rounded-[2rem] p-6 md:p-8 flex items-start gap-5 backdrop-blur-md">
@@ -180,7 +185,6 @@ export default async function WorkPage({ params }: Props) {
               </div>
             </div>
           </div>
-
         </div>
       </section>
     </main>
