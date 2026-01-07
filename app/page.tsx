@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Metadata } from "next"; // إضافة لدعم السيو
+import { Metadata } from "next"; 
 import { client } from "./sanity.client"; 
 import { urlFor } from "./sanity.image";  
 import { 
@@ -11,17 +11,18 @@ import {
   FaArrowRight 
 } from "react-icons/fa";
 
-// 1. إضافة بيانات السيو والروابط الأساسية (حل مشكلة التكرار في جوجل)
+// تحديث بيانات السيو والروابط الأساسية لتطابق رابط الاستضافة الحالي
 export const metadata: Metadata = {
   title: "أصوات البرج | منصة الروايات المترجمة",
   description: "المكان الأول لأحدث الروايات المترجمة والحصرية بأسلوب عربي فصيح وتجربة قراءة فريدة.",
   alternates: {
-    canonical: "https://tower-voices.com", // يخبر جوجل أن هذا هو الرابط الرسمي الوحيد للواجهة
+    // تم تحديث الرابط هنا ليتطابق مع رابط جوجل المعتمد
+    canonical: "https://tower-voices-pdf.vercel.app", 
   },
   openGraph: {
     title: "أصوات البرج",
     description: "اكتشف عالم الروايات المترجمة باحترافية",
-    url: "https://tower-voices.com",
+    url: "https://tower-voices-pdf.vercel.app",
     siteName: "أصوات البرج",
     locale: "ar_SA",
     type: "website",

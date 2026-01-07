@@ -1,7 +1,7 @@
 import { client } from "../../sanity.client";
 import { urlFor } from "../../sanity.image";
 import { notFound } from "next/navigation";
-import { Metadata } from "next"; // إضافة لدعم السيو
+import { Metadata } from "next"; 
 import ShareButtons from "./ShareButtons";
 import SpoilerSynopsis from "./SpoilerSynopsis";
 import InteractiveRating from "@/components/InteractiveRating";
@@ -27,13 +27,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   
   if (!work) return {};
 
-  const baseUrl = "https://tower-voices.com"; // قم بتعديله لرابط موقعك الرسمي
+  // تحديث الرابط هنا ليتطابق مع رابط جوجل المعتمد حالياً
+  const baseUrl = "https://tower-voices-pdf.vercel.app"; 
 
   return {
     title: `${work.title} | أصوات البرج`,
     description: work.synopsis?.slice(0, 160),
     alternates: {
-      canonical: `${baseUrl}/works/${slug}`, // يخبر جوجل أن هذا هو الرابط الأصلي والوحيد للرواية
+      canonical: `${baseUrl}/works/${slug}`, // الرابط الأساسي الديناميكي لكل صفحة رواية
     },
     openGraph: {
       title: work.title,
