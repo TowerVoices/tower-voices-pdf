@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import ShareButtons from "./ShareButtons";
 import SpoilerSynopsis from "./SpoilerSynopsis";
 import InteractiveRating from "@/components/InteractiveRating";
+import ReportButton from "@/components/ReportButton"; // المكون الجديد لإصلاح زر البلاغ
 import { 
   FaDownload, 
   FaExclamationTriangle, 
@@ -18,7 +19,6 @@ interface Props {
 }
 
 async function getWork(slug: string) {
-  // تحديث الاستعلام ليشمل ratingCount و author
   const query = `*[_type == "work" && slug.current == $slug][0]{
     title,
     "rawCover": cover,
@@ -90,7 +90,7 @@ export default async function WorkPage({ params }: Props) {
                 {work.title}
               </h1>
 
-              {/* نظام التقييم المطور مع عدد المقيمين */}
+              {/* نظام التقييم المطور */}
               <div className="flex flex-col md:flex-row gap-6 mb-8 items-center md:items-start">
                 <div className="flex flex-col items-center md:items-start gap-2">
                   <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">تقييم القصة</span>
@@ -121,9 +121,8 @@ export default async function WorkPage({ params }: Props) {
                     <FaDownload className="text-xl" /> تحميل الرواية الآن
                   </a>
                 )}
-                <button className="flex items-center justify-center gap-2 bg-zinc-800/80 hover:bg-zinc-700 p-4 rounded-2xl border border-white/5 transition-all w-full sm:w-auto">
-                  <FaExclamationTriangle className="text-red-500" /> بلاغ
-                </button>
+                {/* استبدال زر البلاغ القديم بالمكون التفاعلي الجديد */}
+                <ReportButton workTitle={work.title} />
               </div>
             </div>
           </div>
@@ -169,7 +168,6 @@ export default async function WorkPage({ params }: Props) {
             </div>
           </div>
 
-          {/* الجانب (Sidebar) */}
           <div className="lg:col-span-4 space-y-6">
             <div className="bg-zinc-900/80 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl sticky top-24">
               <h3 className="text-xl font-bold mb-8 text-white border-b border-white/5 pb-4">معلومات العمل</h3>
