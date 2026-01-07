@@ -5,6 +5,7 @@ import ShareButtons from "./ShareButtons";
 import SpoilerSynopsis from "./SpoilerSynopsis";
 import InteractiveRating from "@/components/InteractiveRating";
 import ReportButton from "@/components/ReportButton";
+import CommentForm from "@/components/CommentForm"; // استدعاء نموذج التعليقات
 import { 
   FaDownload, 
   FaExclamationTriangle, 
@@ -19,6 +20,7 @@ interface Props {
 }
 
 async function getWork(slug: string) {
+  // تحديث الاستعلام لجلب التعليقات الموافَق عليها والمرتبطة بهذا العمل
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id,
     title,
@@ -32,7 +34,8 @@ async function getWork(slug: string) {
     synopsis,
     isSpoiler,
     warning,
-    downloadUrl
+    downloadUrl,
+    "comments": *[_type == "comment" && work._ref == ^._id && approved == true] | order(_createdAt desc)
   }`;
   
   return await client.fetch(query, { slug });
@@ -91,19 +94,12 @@ export default async function WorkPage({ params }: Props) {
                 {work.title}
               </h1>
 
-              {/* نظام التقييم المزدوج (قصة + ترجمة) */}
+              {/* نظام التقييم المزدوج */}
               <div className="flex flex-col md:flex-row gap-6 mb-8 items-center md:items-start">
-                
-                {/* تقييم القصة */}
                 <div className="flex flex-col items-center md:items-start gap-2">
                   <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">تقييم القصة</span>
                   <div className="bg-zinc-900/50 p-2 md:p-3 rounded-xl border border-white/5 shadow-inner flex items-center gap-3">
-                    {/* تمرير fieldName="ratingWork" لحفظ تقييم القصة */}
-                    <InteractiveRating 
-                      initialRating={workRating} 
-                      workId={work._id} 
-                      fieldName="ratingWork" 
-                    />
+                    <InteractiveRating initialRating={workRating} workId={work._id} fieldName="ratingWork" />
                     <div className="flex items-center gap-1 border-r border-white/10 pr-3 mr-1">
                         <span className="text-yellow-500 font-black text-lg">{workRating}</span>
                         <span className="text-gray-500 text-[10px] md:text-xs font-medium">(من {work.ratingCount || 0} تقييم)</span>
@@ -113,16 +109,10 @@ export default async function WorkPage({ params }: Props) {
                 
                 <div className="w-px h-10 bg-white/10 hidden md:block mt-6" />
 
-                {/* جودة الترجمة */}
                 <div className="flex flex-col items-center md:items-start gap-2">
                   <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">جودة الترجمة</span>
                   <div className="bg-zinc-900/50 p-2 md:p-3 rounded-xl border border-white/5 shadow-inner flex items-center gap-3">
-                    {/* تمرير fieldName="ratingTranslation" لحفظ تقييم الترجمة */}
-                    <InteractiveRating 
-                      initialRating={translationRating} 
-                      workId={work._id} 
-                      fieldName="ratingTranslation" 
-                    />
+                    <InteractiveRating initialRating={translationRating} workId={work._id} fieldName="ratingTranslation" />
                     <span className="text-blue-400 font-black text-lg border-r border-white/10 pr-3 mr-1">{translationRating}</span>
                   </div>
                 </div>
@@ -165,11 +155,42 @@ export default async function WorkPage({ params }: Props) {
                 </div>
                 <h2 className="font-black text-2xl text-white">ملخص القصة</h2>
               </div>
-              <div className="prose prose-invert max-w-none text-gray-300 leading-loose text-lg">
+              <div className="prose prose-invert max-w-none text-gray-300 leading-loose text-lg mb-10">
                 <SpoilerSynopsis 
                   text={work.synopsis || "لا يوجد ملخص متاح حالياً."} 
                   isSpoiler={work.isSpoiler || false} 
                 />
+              </div>
+
+              {/* قسم التعليقات الجديد داخل صندوق المحتوى */}
+              <div className="border-t border-white/5 pt-10">
+                <h2 className="font-black text-2xl text-white mb-8 flex items-center gap-3">
+                  <span className="w-2 h-8 bg-blue-600 rounded-full"></span>
+                  آراء القراء ({work.comments?.length || 0})
+                </h2>
+
+                <div className="space-y-6 mb-12">
+                  {work.comments?.length > 0 ? (
+                    work.comments.map((comment: any) => (
+                      <div key={comment._id} className="bg-white/5 p-6 rounded-2xl border border-white/5 transition-all hover:border-white/10">
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="font-bold text-blue-400">{comment.name}</span>
+                          <span className="text-[10px] text-gray-500">
+                            {new Date(comment._createdAt).toLocaleDateString('ar-EG')}
+                          </span>
+                        </div>
+                        <p className="text-gray-300 leading-relaxed">{comment.content}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-center py-10 bg-white/2 rounded-2xl border border-dashed border-white/10 italic">
+                      كن أول من يترك انطباعاً عن هذا العمل..
+                    </p>
+                  )}
+                </div>
+
+                {/* نموذج إضافة تعليق */}
+                <CommentForm workId={work._id} />
               </div>
             </div>
 

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { postComment } from "@/app/actions/comment";
+// تم تصحيح المسار أدناه ليتعرف عليه المحرر والمتصفح بشكل مباشر
+import { postComment } from "../app/actions/comment";
 
 export default function CommentForm({ workId }: { workId: string }) {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -11,7 +12,8 @@ export default function CommentForm({ workId }: { workId: string }) {
     
     if (result.success) {
       setStatus("success");
-      (document.getElementById("comment-form") as HTMLFormElement).reset();
+      const form = document.getElementById("comment-form") as HTMLFormElement;
+      if (form) form.reset();
     } else {
       setStatus("error");
     }
