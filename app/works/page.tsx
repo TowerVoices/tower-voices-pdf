@@ -12,15 +12,21 @@ export const metadata: Metadata = {
 };
 
 async function getAllWorks() {
-  // جلب كافة الأعمال بدون استثناء
-  const query = `*[_type == "work"] | order(_createdAt desc) {
+  /**
+   * شرح التعديل:
+   * 1. الترتيب حسب priority ثم التاريخ لضمان تناسق الترتيب مع الصفحة الرئيسية.
+   * 2. إضافة { next: { revalidate: 60 } } لضمان تحديث الروابط (Slugs) كل دقيقة.
+   */
+  const query = `*[_type == "work"] | order(priority asc, _createdAt desc) {
     title,
     "slug": slug.current,
     cover,
     status,
-    tags
+    tags,
+    priority
   }`;
-  return await client.fetch(query);
+  
+  return await client.fetch(query, {}, { next: { revalidate: 60 } });
 }
 
 export default async function AllWorksPage() {

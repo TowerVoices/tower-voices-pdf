@@ -20,21 +20,20 @@ interface Props {
   params: Promise<{ slug: string; }>;
 }
 
-// دالة توليد بيانات الميتا والروابط الأساسية (حل مشكلة الأرشفة في Google Search Console)
+// دالة توليد بيانات الميتا والروابط الأساسية
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const work = await getWork(slug);
   
   if (!work) return {};
 
-  // تحديث الرابط هنا ليتطابق مع رابط جوجل المعتمد حالياً
   const baseUrl = "https://tower-voices-pdf.vercel.app"; 
 
   return {
     title: `${work.title} | أصوات البرج`,
     description: work.synopsis?.slice(0, 160),
     alternates: {
-      canonical: `${baseUrl}/works/${slug}`, // الرابط الأساسي الديناميكي لكل صفحة رواية
+      canonical: `${baseUrl}/works/${slug}`, 
     },
     openGraph: {
       title: work.title,
@@ -64,7 +63,11 @@ async function getWork(slug: string) {
     "comments": *[_type == "comment" && work._ref == ^._id && approved == true] | order(_createdAt desc)
   }`;
   
-  return await client.fetch(query, { slug });
+  /**
+   * إضافة { next: { revalidate: 60 } } تضمن أن أي تعديل تجريه داخل Sanity
+   * (مثل تغيير رابط التحميل أو حالة الرواية) سيظهر للقراء خلال دقيقة واحدة.
+   */
+  return await client.fetch(query, { slug }, { next: { revalidate: 60 } });
 }
 
 export default async function WorkPage({ params }: Props) {

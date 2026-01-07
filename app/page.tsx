@@ -27,9 +27,8 @@ export const metadata: Metadata = {
 async function getLatestWorks() {
   /**
    * شرح التعديل:
-   * 1. استخدمنا [0..3] (نقطتين) لجلب 4 عناصر شاملة (0، 1، 2، 3).
-   * 2. أضفنا شرط الترتيب حسب الأولوية (priority) ثم الأحدث تاريخاً.
-   * 3. تأكد من إدخال أرقام (1, 2, 3, 4) في Sanity Studio ليعمل الترتيب.
+   * تم إضافة { next: { revalidate: 60 } } لإجبار الموقع على تحديث البيانات 
+   * من Sanity كل 60 ثانية، مما يحل مشكلة الروابط القديمة (خطأ 404).
    */
   const query = `*[_type == "work"] | order(priority asc, _createdAt desc) [0..3] {
     title,
@@ -39,7 +38,9 @@ async function getLatestWorks() {
     tags,
     priority
   }`;
-  const data = await client.fetch(query);
+  
+  // تحديث السطر التالي ليشمل خيارات التحديث التلقائي
+  const data = await client.fetch(query, {}, { next: { revalidate: 60 } });
   return data;
 }
 
