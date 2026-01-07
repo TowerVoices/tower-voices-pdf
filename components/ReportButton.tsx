@@ -3,8 +3,8 @@ import { FaExclamationTriangle } from "react-icons/fa";
 
 export default function ReportButton({ workTitle }: { workTitle: string }) {
   const handleReport = () => {
-    // يمكنك تغيير الإيميل هنا لإيميلك الخاص
-    const email = "support@tower-voices.com"; 
+    // تم تعديل الإيميل ليكون الإيميل الخاص بك
+    const email = "qwdd54125@gmail.com"; 
     const subject = encodeURIComponent(`بلاغ عن مشكلة في رواية: ${workTitle}`);
     const body = encodeURIComponent(`مرحباً فريق أصوات البرج،\n\nأود الإبلاغ عن مشكلة في عمل "${workTitle}".\n\nنوع المشكلة (رابط معطل / خطأ في الصور / أخرى):\n`);
     
