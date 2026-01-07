@@ -75,7 +75,7 @@ export default async function HomePage() {
           </h1>
           
           <p className="text-lg md:text-xl text-gray-400 leading-relaxed max-w-2xl mx-auto mb-10">
-            نهدف إلى نقل النصوص بروحها الأصلية وبأسلوب عربي فصيح يحترم القارئ والمؤلف، لنصنع تجربة أدبية فريدة.
+            نهدف إلى نقل النصوص بروحها الأصلية وبأسلوب عربي فصيح يحترم القارئ والمؤلف، لنصنع تجربة أدبية فريدة
           </p>
 
           <div className="flex flex-wrap justify-center gap-4">
@@ -153,7 +153,7 @@ export default async function HomePage() {
       <footer className="border-t border-white/5 py-12 bg-black/50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <div className="text-2xl font-black mb-4 text-white uppercase tracking-tighter">أصوات البرج</div>
-          <p className="text-gray-500 text-sm mb-8 italic">مشروع ترجمة مستقل من المعجبين وإلى المعجبين.</p>
+          <p className="text-gray-500 text-sm mb-8 italic">مشروع ترجمة مستقل من المعجبين وإلى المعجبين</p>
           <div className="h-[1px] w-20 bg-blue-600 mx-auto" />
         </div>
       </footer>
