@@ -8,7 +8,15 @@ export default defineType({
     defineField({ name: 'title', title: 'عنوان العمل', type: 'string' }),
     defineField({ name: 'slug', title: 'الرابط (Slug)', type: 'slug', options: { source: 'title' } }),
     
-    // 1. خانة المؤلف الجديدة
+    // 1. حقل الأولوية الجديد للتحكم في ترتيب الظهور في الصفحة الرئيسية
+    defineField({ 
+      name: 'priority', 
+      title: 'الأولوية (للترتيب في الرئيسية)', 
+      type: 'number',
+      initialValue: 99,
+      description: 'ضع رقم 1 للعمل الذي تريده أن يظهر أولاً، ثم 2 للذي يليه، وهكذا. الأعمال ذات الأرقام الأصغر تظهر في البداية.'
+    }),
+
     defineField({ 
       name: 'author', 
       title: 'المؤلف', 
@@ -23,7 +31,6 @@ export default defineType({
     defineField({ name: 'ratingWork', title: 'تقييم القصة', type: 'number' }),
     defineField({ name: 'ratingTranslation', title: 'تقييم الترجمة', type: 'number' }),
     
-    // 2. خانة عدد المقيمين الجديدة
     defineField({ 
       name: 'ratingCount', 
       title: 'عدد المقيمين', 

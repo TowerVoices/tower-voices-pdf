@@ -25,13 +25,15 @@ export const metadata: Metadata = {
 };
 
 async function getLatestWorks() {
-  // تم تعديل الاستعلام لجلب أول 4 أعمال فقط مرتبة من الأحدث [0...3]
-  const query = `*[_type == "work"] | order(_createdAt desc) [0...3] {
+  // التعديل هنا: استخدمنا [0...4] لجلب 4 عناصر (الفهارس 0، 1، 2، 3)
+  // وأضفنا الترتيب حسب الأولوية priority أولاً ثم التاريخ
+  const query = `*[_type == "work"] | order(priority asc, _createdAt desc) [0...4] {
     title,
     "slug": slug.current,
     cover,
     status,
-    tags
+    tags,
+    priority
   }`;
   const data = await client.fetch(query);
   return data;
@@ -79,7 +81,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 2. Latest Works Grid (Limited to 4 items) */}
+      {/* 2. Latest Works Grid (عرض 4 أعمال) */}
       <section id="works" className="max-w-7xl mx-auto px-6 py-24">
         <div className="flex items-end justify-between mb-12">
           <div>
@@ -130,7 +132,7 @@ export default async function HomePage() {
           ))}
         </div>
 
-        {/* 3. Show More Button - زر شاهد المزيد */}
+        {/* 3. Show More Button */}
         <div className="mt-16 text-center">
           <Link 
             href="/works" 
