@@ -19,7 +19,6 @@ interface Props {
 }
 
 async function getWork(slug: string) {
-  // الخطوة 2: إضافة _id للاستعلام لتمكين المكون من معرفة أي مستند يحدث
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id,
     title,
@@ -92,13 +91,19 @@ export default async function WorkPage({ params }: Props) {
                 {work.title}
               </h1>
 
-              {/* نظام التقييم المطور - تم تمرير workId هنا */}
+              {/* نظام التقييم المزدوج (قصة + ترجمة) */}
               <div className="flex flex-col md:flex-row gap-6 mb-8 items-center md:items-start">
+                
+                {/* تقييم القصة */}
                 <div className="flex flex-col items-center md:items-start gap-2">
                   <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">تقييم القصة</span>
                   <div className="bg-zinc-900/50 p-2 md:p-3 rounded-xl border border-white/5 shadow-inner flex items-center gap-3">
-                    {/* تمرير المعرّف work._id للمكون التفاعلي */}
-                    <InteractiveRating initialRating={workRating} workId={work._id} />
+                    {/* تمرير fieldName="ratingWork" لحفظ تقييم القصة */}
+                    <InteractiveRating 
+                      initialRating={workRating} 
+                      workId={work._id} 
+                      fieldName="ratingWork" 
+                    />
                     <div className="flex items-center gap-1 border-r border-white/10 pr-3 mr-1">
                         <span className="text-yellow-500 font-black text-lg">{workRating}</span>
                         <span className="text-gray-500 text-[10px] md:text-xs font-medium">(من {work.ratingCount || 0} تقييم)</span>
@@ -108,10 +113,16 @@ export default async function WorkPage({ params }: Props) {
                 
                 <div className="w-px h-10 bg-white/10 hidden md:block mt-6" />
 
+                {/* جودة الترجمة */}
                 <div className="flex flex-col items-center md:items-start gap-2">
                   <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">جودة الترجمة</span>
                   <div className="bg-zinc-900/50 p-2 md:p-3 rounded-xl border border-white/5 shadow-inner flex items-center gap-3">
-                    <InteractiveRating initialRating={translationRating} workId={work._id} />
+                    {/* تمرير fieldName="ratingTranslation" لحفظ تقييم الترجمة */}
+                    <InteractiveRating 
+                      initialRating={translationRating} 
+                      workId={work._id} 
+                      fieldName="ratingTranslation" 
+                    />
                     <span className="text-blue-400 font-black text-lg border-r border-white/10 pr-3 mr-1">{translationRating}</span>
                   </div>
                 </div>

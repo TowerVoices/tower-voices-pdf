@@ -1,14 +1,16 @@
 "use client";
 import { useState } from "react";
 import { FaStar, FaRegStar } from "react-icons/fa";
-import { submitRating } from "@/app/actions/rate"; // استدعاء الأكشن الخاص بالحفظ
+import { submitRating } from "@/app/actions/rate";
 
 interface RatingProps {
   initialRating: number;
-  workId: string; // إضافة معرف العمل لضمان الحفظ في المكان الصحيح
+  workId: string;
+  // أضفنا هذا السطر لتحديد نوع التقييم (قصة أم ترجمة)
+  fieldName: 'ratingWork' | 'ratingTranslation'; 
 }
 
-export default function InteractiveRating({ initialRating, workId }: RatingProps) {
+export default function InteractiveRating({ initialRating, workId, fieldName }: RatingProps) {
   const [rating, setRating] = useState(initialRating);
   const [hover, setHover] = useState(0);
   const [voted, setVoted] = useState(false);
@@ -19,14 +21,14 @@ export default function InteractiveRating({ initialRating, workId }: RatingProps
 
     setIsLoading(true);
     
-    // محاولة حفظ التقييم في السيرفر
-    const result = await submitRating(workId, val);
+    // نرسل الآن fieldName للأكشن ليعرف أي خانة يحدث في سانتي
+    const result = await submitRating(workId, val, fieldName);
 
     if (result.success) {
-      setRating(result.newAverage || val); // تحديث القيمة بالمتوسط الجديد
+      setRating(result.newAverage || val);
       setVoted(true);
     } else {
-      alert("عذراً، حدث خطأ أثناء حفظ التقييم. يرجى المحاولة لاحقاً.");
+      alert("عذراً، حدث خطأ أثناء حفظ التقييم.");
     }
     
     setIsLoading(false);
@@ -61,9 +63,7 @@ export default function InteractiveRating({ initialRating, workId }: RatingProps
       )}
       
       {voted && !isLoading && (
-        <span className="text-[10px] text-green-500 font-bold animate-fade-in">
-          ✓ تم حفظ تقييمك بنجاح
-        </span>
+        <span className="text-[10px] text-green-500 font-bold animate-fade-in">✓ تم الحفظ</span>
       )}
     </div>
   );

@@ -4,23 +4,28 @@ import { createClient } from "next-sanity";
 const writeClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET,
-  token: process.env.SANITY_API_WRITE_TOKEN, // يستخدم مفتاح الكتابة
+  token: process.env.SANITY_API_WRITE_TOKEN,
   useCdn: false,
 });
 
-export async function submitRating(workId: string, newRate: number) {
+// أضفنا fieldName لتحديد هل التحديث للقصة أم للترجمة
+export async function submitRating(workId: string, newRate: number, fieldName: 'ratingWork' | 'ratingTranslation') {
   try {
     const work = await writeClient.getDocument(workId);
+    
+    // نستخدم ratingCount العام حالياً، أو يمكنك مستقبلاً فصلهم
     const oldCount = work?.ratingCount || 0;
-    const oldAverage = work?.ratingWork || 0;
+    const oldAverage = work?.[fieldName] || 0;
 
-    // معادلة حساب المتوسط الجديد
     const newCount = oldCount + 1;
     const newAverage = Number(((oldAverage * oldCount + newRate) / newCount).toFixed(1));
 
     await writeClient
       .patch(workId)
-      .set({ ratingWork: newAverage, ratingCount: newCount })
+      .set({ 
+        [fieldName]: newAverage, // تحديث الخانة المطلوبة ديناميكياً
+        ratingCount: newCount 
+      })
       .commit();
 
     return { success: true, newAverage };
