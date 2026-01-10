@@ -1,6 +1,5 @@
 "use client";
 import { useState, useMemo } from "react";
-// استيراد useRouter للتعامل مع الإغلاق برمجياً داخل العميل
 import { useRouter } from "next/navigation"; 
 import { Worker, Viewer, SpecialZoomLevel, ViewMode } from "@react-pdf-viewer/core";
 import { zoomPlugin } from "@react-pdf-viewer/zoom";
@@ -15,7 +14,7 @@ import { FaRegFileAlt, FaThList, FaCog, FaTimes, FaPlus, FaMinus, FaSpinner } fr
 interface ModernReaderProps {
     pdfUrl: string;
     title: string;
-    onClose?: () => void; // جعلناها اختيارية لحل تعارض الـ Props في السيرفر
+    onClose?: () => void;
 }
 
 export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderProps) {
@@ -27,7 +26,6 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
   const zoomPluginInstance = zoomPlugin();
   const { ZoomIn, ZoomOut, CurrentScale } = zoomPluginInstance;
 
-  // دالة الإغلاق الذكية: تستخدم الوظيفة الممرة أو تعود للخلف تلقائياً
   const handleClose = () => {
     if (onClose) {
       onClose();
@@ -48,27 +46,36 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
   return (
     <div dir="rtl" className="fixed inset-0 z-[9999] bg-[#050505] flex flex-col font-sans select-none overflow-hidden text-right">
       
-      {/* 1. حقن تنسيقات CSS لقتل الخطوط والظلال البيضاء نهائياً */}
+      {/* ================================================================================== */}
+      {/* هذا هو الجزء المسؤول عن إزالة الخطوط القبيحة تماماً */}
       <style dangerouslySetInnerHTML={{ __html: `
+        /* استهداف حاوية الصفحة وإزالة أي لون خلفية أو حدود أو ظلال */
         .rpv-core__page-container {
           background-color: transparent !important;
           border: none !important;
-          box-shadow: none !important; 
+          box-shadow: none !important; /* هذا هو السطر السحري الذي يخفي الخطوط */
         }
+        /* زيادة التأكيد على طبقة الرسم */
         .rpv-core__canvas-layer {
           box-shadow: none !important;
           border: none !important;
         }
+        /* جعل الخلفيات بين الصفحات شفافة */
         .rpv-core__inner-pages, 
         .rpv-core__viewer {
           background-color: transparent !important;
         }
+        /* إخفاء شريط التمرير الجانبي المزعج */
         .rpv-core__viewer::-webkit-scrollbar {
-          width: 0;
+          width: 0px;
+          background: transparent;
+        }
+        .rpv-core__viewer {
+           scrollbar-width: none; /* لمتصفح فايرفوكس */
         }
       `}} />
+      {/* ================================================================================== */}
 
-      {/* البار العلوي الداكن */}
       <header className="h-14 bg-black/90 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6 z-[10001]">
           <button 
             onClick={() => setShowControls(!showControls)} 
@@ -81,13 +88,11 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
             {title}
           </h1>
 
-          {/* زر الإغلاق المرتبط بالدالة الذكية */}
           <button onClick={handleClose} className="p-2.5 bg-white/5 hover:bg-red-600/20 text-gray-400 hover:text-red-500 rounded-xl transition-all">
             <FaTimes size={18} />
           </button>
       </header>
 
-      {/* منطقة القراءة المركزية */}
       <main className="flex-1 relative bg-[#0a0a0a] flex justify-center items-start overflow-y-auto pt-4 pb-10">
         
         {isLoading && (
@@ -97,8 +102,8 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
           </div>
         )}
 
-        <div className="w-full max-w-4xl bg-transparent overflow-hidden relative">
-            {/* استخدام نسخة Worker 3.4.120 لضمان التوافق */}
+        {/* التأكد من أن الحاوية المحيطة شفافة أيضاً */}
+        <div className="w-full max-w-4xl bg-transparent overflow-hidden relative shadow-none border-none">
             <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
                 {finalPdfUrl && (
                   <Viewer
@@ -113,7 +118,7 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
         </div>
       </main>
 
-      {/* اللوحة الجانبية الأنيقة */}
+      {/* اللوحة الجانبية */}
       <AnimatePresence>
         {showControls && (
           <motion.aside 
