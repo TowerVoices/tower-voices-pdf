@@ -35,7 +35,8 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
   return (
     <div dir="rtl" className="fixed inset-0 z-[9999] bg-[#050505] flex flex-col font-sans select-none overflow-hidden">
       
-      <header className="h-14 bg-black/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6 z-[10001]">
+      {/* البار العلوي الداكن */}
+      <header className="h-14 bg-black/90 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6 z-[10001]">
           <button 
             onClick={() => setShowControls(!showControls)} 
             className={`p-2.5 rounded-xl transition-all ${showControls ? "bg-blue-600 text-white" : "bg-white/5 text-gray-400"}`}
@@ -52,6 +53,7 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
           </button>
       </header>
 
+      {/* منطقة القراءة: خلفية داكنة لمنع تداخل المحتوى */}
       <main className="flex-1 relative bg-[#0a0a0a] flex justify-center items-start overflow-y-auto pt-4 pb-10">
         
         {isLoading && (
@@ -61,7 +63,7 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
           </div>
         )}
 
-        {/* --- التعديل هنا: إزالة الخلفية البيضاء والحدود --- */}
+        {/* الحاوية شفافة لإلغاء البرواز الأبيض */}
         <div className="w-full max-w-4xl bg-transparent overflow-hidden relative">
             <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
                 {finalPdfUrl && (
@@ -75,7 +77,6 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
                 )}
             </Worker>
         </div>
-        {/* -------------------------------------------------- */}
       </main>
 
       <AnimatePresence>
