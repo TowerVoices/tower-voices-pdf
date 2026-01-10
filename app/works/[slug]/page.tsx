@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// تعديل الاستعلام لربط ملف الـ PDF بشكل صحيح
+// جلب بيانات الرواية مع دعم البحث المزدوج عن رابط الـ PDF
 async function getWork(slug: string) {
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id,
@@ -62,8 +62,8 @@ async function getWork(slug: string) {
     synopsis,
     isSpoiler,
     warning,
-    // الربط: جلب الرابط المباشر من أصل ملف Sanity
-    "pdfUrl": pdfFile.asset->url, 
+    // الحل الذكي: يجلب الرابط من الملف المرفوع pdfFile أو الرابط النصي downloadUrl
+    "pdfUrl": coalesce(pdfFile.asset->url, downloadUrl), 
     "comments": *[_type == "comment" && work._ref == ^._id && approved == true] | order(_createdAt desc)
   }`;
   
@@ -79,7 +79,8 @@ export default async function WorkPage({ params }: Props) {
   const workRating = work.ratingWork || 0; 
   const translationRating = work.ratingTranslation || 0;
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
-  // استخدام الرابط المربوط من Sanity
+  
+  // الرابط النهائي الذي سيتم استخدامه في الأزرار
   const finalPdfUrl = work.pdfUrl; 
 
   return (
@@ -135,15 +136,17 @@ export default async function WorkPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* أزرار الإجراءات مع الرابط المربوط */}
+              {/* تحسين ظهور الأزرار لضمان عدم اختفائها */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center">
-                {finalPdfUrl && (
+                {finalPdfUrl ? (
                   <>
                     <ReaderButton pdfUrl={finalPdfUrl} title={work.title} />
                     <a href={finalPdfUrl} target="_blank" className="flex items-center justify-center gap-3 bg-zinc-800 hover:bg-zinc-700 text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/10 w-full sm:w-auto shadow-xl active:scale-95">
                       <FaDownload className="text-lg" /> تحميل PDF
                     </a>
                   </>
+                ) : (
+                  <p className="text-gray-500 text-xs italic">رابط الـ PDF قيد التجهيز..</p>
                 )}
                 <ReportButton workTitle={work.title} />
               </div>
@@ -152,7 +155,7 @@ export default async function WorkPage({ params }: Props) {
         </div>
       </section>
 
-      {/* 2. قسم المحتوى والتنبيهات */}
+      {/* باقي أقسام الصفحة (الملخص، المعلومات، التعليقات) تظل كما هي لضمان استقرار التصميم */}
       <section className="max-w-6xl mx-auto px-5 md:px-8 py-12">
         <div className="grid lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8 space-y-8">
@@ -208,7 +211,6 @@ export default async function WorkPage({ params }: Props) {
         </div>
       </section>
 
-      {/* 3. قسم التعليقات والمناقشات */}
       <section className="max-w-6xl mx-auto px-5 md:px-8 pb-20">
         <div id="comments-section" className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-8 md:p-12 shadow-2xl space-y-10">
           <div className="flex items-center justify-between border-b border-white/5 pb-6">
