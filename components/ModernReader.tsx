@@ -1,10 +1,8 @@
 "use client";
 import { useState, useMemo } from "react";
-// 1. استيراد المكونات الأساسية فقط (بدون Default Layout)
 import { Worker, Viewer, SpecialZoomLevel, ViewMode } from "@react-pdf-viewer/core";
 import { zoomPlugin } from "@react-pdf-viewer/zoom";
 
-// 2. استيراد الأنماط الضرورية فقط
 import "@react-pdf-viewer/core/lib/styles/index.css";
 import "@react-pdf-viewer/zoom/lib/styles/index.css";
 
@@ -22,7 +20,6 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
   const [viewMode, setViewMode] = useState<ViewMode | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
 
-  // تفعيل محرك الزووم لربطه بأزرارك الجانبية فقط
   const zoomPluginInstance = zoomPlugin();
   const { ZoomIn, ZoomOut, CurrentScale } = zoomPluginInstance;
 
@@ -30,7 +27,6 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
     if (!pdfUrl) return "";
     if (pdfUrl.includes('drive.google.com')) {
       const driveId = pdfUrl.split('/d/')[1]?.split('/')[0] || pdfUrl.split('id=')[1]?.split('&')[0];
-      // التأكد من مسار الجسر الصحيح
       return driveId ? `/api/pdf-proxy?id=${driveId}` : pdfUrl;
     }
     return pdfUrl;
@@ -39,7 +35,6 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
   return (
     <div dir="rtl" className="fixed inset-0 z-[9999] bg-[#050505] flex flex-col font-sans select-none overflow-hidden">
       
-      {/* البار العلوي المخصص الخاص بك */}
       <header className="h-14 bg-black/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6 z-[10001]">
           <button 
             onClick={() => setShowControls(!showControls)} 
@@ -57,7 +52,6 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
           </button>
       </header>
 
-      {/* منطقة القراءة (هنا قتلنا المحاكي الداخلي) */}
       <main className="flex-1 relative bg-[#0a0a0a] flex justify-center items-start overflow-y-auto pt-4 pb-10">
         
         {isLoading && (
@@ -67,14 +61,13 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
           </div>
         )}
 
-        <div className="w-full max-w-4xl shadow-[0_0_80px_rgba(0,0,0,0.9)] rounded-sm overflow-hidden">
-            {/* الربط بنسخة المشروع 3.4.120 */}
+        {/* التعديل هنا: جعلنا الخلفية شفافة وأزلنا الظل للحصول على مظهر مسطح */}
+        <div className="w-full max-w-4xl bg-transparent rounded-sm overflow-hidden">
             <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
                 {finalPdfUrl && (
                   <Viewer
                     fileUrl={finalPdfUrl}
                     defaultScale={SpecialZoomLevel.PageWidth}
-                    // هنا السر: نستخدم zoomPluginInstance فقط ونحذف البقية
                     plugins={[zoomPluginInstance]} 
                     viewMode={viewMode}
                     onDocumentLoad={() => setIsLoading(false)}
@@ -84,7 +77,6 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
         </div>
       </main>
 
-      {/* اللوحة الجانبية الأنيقة */}
       <AnimatePresence>
         {showControls && (
           <motion.aside 

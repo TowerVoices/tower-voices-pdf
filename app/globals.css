@@ -24,3 +24,31 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* --------------------------------------------------------- */
+/* تنسيقات قارئ PDF لإزالة الحدود والظلال البيضاء */
+
+/* إزالة الظل الأبيض المحيط بالصفحة والجوانب */
+.rpv-core__page-container {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important; /* هذا هو المسؤول عن الخط الأبيض */
+}
+
+/* جعل خلفية طبقات الصفحة شفافة */
+.rpv-core__page-layer {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* إزالة أي خلفية رمادية أو بيضاء من العارض نفسه */
+.rpv-core__viewer {
+  background-color: transparent !important;
+}
+
+/* تحسين المسافة بين الصفحات في نمط العرض المستمر */
+.rpv-core__inner-pages {
+  background-color: transparent !important;
+  gap: 20px !important;
+}
+/* --------------------------------------------------------- */
