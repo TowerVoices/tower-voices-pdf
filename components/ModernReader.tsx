@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { Worker, Viewer, SpecialZoomLevel, ViewMode } from "@react-pdf-viewer/core";
 import { zoomPlugin } from "@react-pdf-viewer/zoom";
 
+// استيراد الأنماط الأساسية فقط
 import "@react-pdf-viewer/core/lib/styles/index.css";
 import "@react-pdf-viewer/zoom/lib/styles/index.css";
 
@@ -27,6 +28,7 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
     if (!pdfUrl) return "";
     if (pdfUrl.includes('drive.google.com')) {
       const driveId = pdfUrl.split('/d/')[1]?.split('/')[0] || pdfUrl.split('id=')[1]?.split('&')[0];
+      // التأكد من استخدام مسار الجسر البرمي الصحيح
       return driveId ? `/api/pdf-proxy?id=${driveId}` : pdfUrl;
     }
     return pdfUrl;
@@ -35,6 +37,27 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
   return (
     <div dir="rtl" className="fixed inset-0 z-[9999] bg-[#050505] flex flex-col font-sans select-none overflow-hidden">
       
+      {/* 1. حقن تنسيقات CSS لإزالة الخطوط والظلال البيضاء نهائياً */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .rpv-core__page-container {
+          background-color: transparent !important;
+          border: none !important;
+          box-shadow: none !important; 
+        }
+        .rpv-core__canvas-layer {
+          box-shadow: none !important;
+          border: none !important;
+        }
+        .rpv-core__inner-pages, 
+        .rpv-core__viewer {
+          background-color: transparent !important;
+        }
+        /* إخفاء شريط التمرير الافتراضي للمكتبة */
+        .rpv-core__viewer::-webkit-scrollbar {
+          width: 0;
+        }
+      `}} />
+
       {/* البار العلوي الداكن */}
       <header className="h-14 bg-black/90 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6 z-[10001]">
           <button 
@@ -53,7 +76,7 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
           </button>
       </header>
 
-      {/* منطقة القراءة: خلفية داكنة لمنع تداخل المحتوى */}
+      {/* منطقة القراءة المركزية */}
       <main className="flex-1 relative bg-[#0a0a0a] flex justify-center items-start overflow-y-auto pt-4 pb-10">
         
         {isLoading && (
@@ -63,7 +86,7 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
           </div>
         )}
 
-        {/* الحاوية شفافة لإلغاء البرواز الأبيض */}
+        {/* الحاوية شفافة تماماً لدمج الصفحات مع الخلفية السوداء */}
         <div className="w-full max-w-4xl bg-transparent overflow-hidden relative">
             <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
                 {finalPdfUrl && (
@@ -79,6 +102,7 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
         </div>
       </main>
 
+      {/* اللوحة الجانبية */}
       <AnimatePresence>
         {showControls && (
           <motion.aside 
