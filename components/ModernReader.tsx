@@ -25,15 +25,18 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
   const { ZoomIn, ZoomOut, CurrentScale } = zoomPluginInstance;
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
 
-  // دالة معالجة الرابط لضمان الاستقرار مع Google Drive
+  // دالة محسنة لاستخراج المعرف بدقة لضمان عمل الجسر البرمي
   const finalPdfUrl = useMemo(() => {
+    if (!pdfUrl) return "";
+    
     if (pdfUrl.includes('drive.google.com')) {
-      // استخراج المعرف (ID) من الرابط العادي
-      const driveIdMatch = pdfUrl.match(/\/d\/(.+?)\//) || pdfUrl.match(/id=(.+?)(&|$)/);
-      const driveId = driveIdMatch ? driveIdMatch[1] : null;
+      // استخراج المعرف ID من مختلف أشكال روابط درايف
+      const driveId = pdfUrl.split('/d/')[1]?.split('/')[0] || pdfUrl.split('id=')[1]?.split('&')[0];
       
-      // إذا وجدنا المعرف، نمرره عبر الجسر البرمي لتجنب CORS
-      return driveId ? `/api/pdf-proxy?id=${driveId}` : pdfUrl;
+      if (driveId) {
+        // الربط مع الجسر البرمي المحلي لتجاوز CORS
+        return `/api/pdf-proxy?id=${driveId}`;
+      }
     }
     return pdfUrl;
   }, [pdfUrl]);
@@ -60,14 +63,16 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
 
       <main className="flex-1 relative overflow-hidden bg-[#111111] flex justify-center p-4">
         <div className="h-full w-full max-w-4xl bg-white shadow-2xl overflow-hidden rounded-sm border border-black/10">
-            {/* توحيد الإصدار 3.4.120 لضمان التوافق */}
+            {/* مطابقة الإصدار 3.4.120 المسجل في مشروعك */}
             <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
-                <Viewer
+                {finalPdfUrl && (
+                  <Viewer
                     fileUrl={finalPdfUrl}
                     defaultScale={SpecialZoomLevel.PageWidth}
                     plugins={[defaultLayoutPluginInstance, zoomPluginInstance]}
                     viewMode={viewMode}
-                />
+                  />
+                )}
             </Worker>
         </div>
       </main>
@@ -76,7 +81,7 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
         {showControls && (
           <motion.aside 
             initial={{ x: 320 }} animate={{ x: 0 }} exit={{ x: 320 }}
-            className="fixed top-14 right-0 bottom-0 w-72 bg-[#0d0d12]/95 backdrop-blur-3xl border-l border-white/5 p-8 flex flex-col gap-10 z-[10000] shadow-[-20px_0_60px_rgba(0,0,0,0.8)]"
+            className="fixed top-14 right-0 bottom-0 w-72 bg-[#0d0d12]/95 backdrop-blur-3xl border-l border-white/5 p-8 flex flex-col gap-10 z-[10000] shadow-2xl"
           >
             <section className="space-y-6">
               <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest px-1">التحكم في التكبير</h4>
