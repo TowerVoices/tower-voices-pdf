@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// جلب بيانات الرواية مع دعم البحث المزدوج عن رابط الـ PDF
+// جلب بيانات الرواية مع دعم "الربط الثلاثي" لروابط الـ PDF
 async function getWork(slug: string) {
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id,
@@ -62,8 +62,8 @@ async function getWork(slug: string) {
     synopsis,
     isSpoiler,
     warning,
-    // الحل الذكي: يجلب الرابط من الملف المرفوع pdfFile أو الرابط النصي downloadUrl
-    "pdfUrl": coalesce(pdfFile.asset->url, downloadUrl), 
+    // الحل الذكي: يبحث أولاً عن readerUrl (الرابط المباشر)، ثم ملف Sanity، ثم downloadUrl
+    "pdfUrl": coalesce(readerUrl, pdfFile.asset->url, downloadUrl), 
     "comments": *[_type == "comment" && work._ref == ^._id && approved == true] | order(_createdAt desc)
   }`;
   
@@ -80,7 +80,7 @@ export default async function WorkPage({ params }: Props) {
   const translationRating = work.ratingTranslation || 0;
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
   
-  // الرابط النهائي الذي سيتم استخدامه في الأزرار
+  // الرابط النهائي الموحد
   const finalPdfUrl = work.pdfUrl; 
 
   return (
@@ -136,11 +136,13 @@ export default async function WorkPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* تحسين ظهور الأزرار لضمان عدم اختفائها */}
+              {/* تحسين ظهور الأزرار باستخدام الرابط الموحد */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center">
                 {finalPdfUrl ? (
                   <>
+                    {/* المكون الذي يفتح القارئ */}
                     <ReaderButton pdfUrl={finalPdfUrl} title={work.title} />
+                    {/* زر التحميل التقليدي */}
                     <a href={finalPdfUrl} target="_blank" className="flex items-center justify-center gap-3 bg-zinc-800 hover:bg-zinc-700 text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/10 w-full sm:w-auto shadow-xl active:scale-95">
                       <FaDownload className="text-lg" /> تحميل PDF
                     </a>
@@ -155,7 +157,7 @@ export default async function WorkPage({ params }: Props) {
         </div>
       </section>
 
-      {/* باقي أقسام الصفحة (الملخص، المعلومات، التعليقات) تظل كما هي لضمان استقرار التصميم */}
+      {/* باقي أقسام الصفحة (الملخص، المعلومات، التعليقات) */}
       <section className="max-w-6xl mx-auto px-5 md:px-8 py-12">
         <div className="grid lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8 space-y-8">
