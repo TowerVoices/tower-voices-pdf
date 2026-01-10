@@ -7,6 +7,8 @@ import SpoilerSynopsis from "./SpoilerSynopsis";
 import InteractiveRating from "@/components/InteractiveRating";
 import ReportButton from "@/components/ReportButton";
 import CommentForm from "@/components/CommentForm"; 
+import ReaderButton from "./ReaderButton"; // استيراد مكون زر القارئ التفاعلي
+
 import { 
   FaDownload, 
   FaExclamationTriangle, 
@@ -20,10 +22,10 @@ interface Props {
   params: Promise<{ slug: string; }>;
 }
 
-// الثابت الخاص بالرابط الأساسي
+// الرابط الأساسي للموقع المستخدم في السيو والمشاركة/page.tsx]
 const baseUrl = "https://tower-voices-pdf.vercel.app";
 
-// دالة توليد بيانات الميتا والروابط الأساسية
+// دالة توليد بيانات الميتا والروابط الأساسية لمحركات البحث
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const work = await getWork(slug);
@@ -46,6 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+// جلب بيانات الرواية من Sanity مع تفعيل التحديث التلقائي
 async function getWork(slug: string) {
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id,
@@ -81,7 +84,7 @@ export default async function WorkPage({ params }: Props) {
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans overflow-x-hidden">
       
-      {/* 1. قسم الهيرو (Hero Section) */}
+      {/* 1. قسم الهيرو (Hero Section) مع تأثير البلور الخلفي */}
       <section className="relative min-h-[55vh] md:h-[65vh] w-full overflow-hidden flex items-end">
         <div 
           className="absolute inset-0 bg-cover bg-center scale-110 blur-md opacity-30 transition-all duration-700"
@@ -91,6 +94,7 @@ export default async function WorkPage({ params }: Props) {
 
         <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-8 w-full pb-10 md:pb-16">
           <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-end w-full">
+            {/* غلاف الرواية مع تأثير التوهج */}
             <div className="relative group shrink-0">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
               <div className="relative w-40 md:w-64 aspect-[2/3] rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10">
@@ -99,6 +103,7 @@ export default async function WorkPage({ params }: Props) {
             </div>
 
             <div className="flex-1 text-center md:text-right w-full">
+              {/* التصنيفات والحالة */}
               <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
                 {work.tags?.map((tag: string, index: number) => (
                   <span key={index} className="bg-blue-600/10 text-blue-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-blue-600/20 backdrop-blur-md">{tag}</span>
@@ -108,6 +113,7 @@ export default async function WorkPage({ params }: Props) {
               
               <h1 className="text-3xl md:text-6xl font-black mb-6 text-white leading-tight tracking-tight">{work.title}</h1>
 
+              {/* نظام التقييمات التفاعلي */}
               <div className="flex flex-col md:flex-row gap-6 mb-8 items-center md:items-start">
                 <div className="flex flex-col items-center md:items-start gap-2">
                   <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">تقييم القصة</span>
@@ -131,11 +137,17 @@ export default async function WorkPage({ params }: Props) {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+              {/* أزرار الإجراءات: القراءة والتحميل */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center">
                 {work.downloadUrl && (
-                  <a href={work.downloadUrl} target="_blank" className="flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-blue-600/20 active:scale-95 w-full sm:w-auto">
-                    <FaDownload className="text-xl" /> تحميل الرواية الآن
-                  </a>
+                  <>
+                    {/* المكون الجديد الذي يفتح القارئ العصري */}
+                    <ReaderButton pdfUrl={work.downloadUrl} title={work.title} />
+                    
+                    <a href={work.downloadUrl} target="_blank" className="flex items-center justify-center gap-3 bg-zinc-800 hover:bg-zinc-700 text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/10 w-full sm:w-auto shadow-xl active:scale-95">
+                      <FaDownload className="text-lg" /> تحميل PDF
+                    </a>
+                  </>
                 )}
                 <ReportButton workTitle={work.title} />
               </div>
@@ -144,10 +156,11 @@ export default async function WorkPage({ params }: Props) {
         </div>
       </section>
 
-      {/* 2. قسم المحتوى العلوي */}
+      {/* 2. قسم المحتوى والتنبيهات */}
       <section className="max-w-6xl mx-auto px-5 md:px-8 py-12">
         <div className="grid lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8 space-y-8">
+            {/* تنبيه المحتوى (الحرق أو التحذير) */}
             {work.warning && (
               <div className="bg-red-950/20 border border-red-900/30 rounded-[2rem] p-6 md:p-8 flex items-start gap-5 backdrop-blur-md">
                 <div className="p-4 bg-red-600/20 rounded-2xl border border-red-500/30">
@@ -160,6 +173,7 @@ export default async function WorkPage({ params }: Props) {
               </div>
             )}
 
+            {/* ملخص القصة مع دعم حماية الحرق */}
             <div className="bg-zinc-900/30 border border-white/5 rounded-[2.5rem] p-8 md:p-12 shadow-2xl backdrop-blur-sm">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center border border-blue-600/20">
@@ -173,6 +187,7 @@ export default async function WorkPage({ params }: Props) {
             </div>
           </div>
 
+          {/* المعلومات الجانبية والمشاركة */}
           <div className="lg:col-span-4 space-y-6">
             <div className="bg-zinc-900/80 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl">
               <h3 className="text-xl font-bold mb-8 text-white border-b border-white/5 pb-4 flex items-center gap-2">
@@ -190,21 +205,17 @@ export default async function WorkPage({ params }: Props) {
               </div>
             </div>
 
-            {/* التعديل هنا: تمرير الرابط والعنوان لمكون ShareButtons */}
             <div className="bg-white/5 rounded-3xl p-6 flex flex-col items-center justify-between gap-6 border border-white/5">
                 <div className="flex items-center gap-4 text-gray-400 font-bold text-sm">
                     <FaShareAlt className="text-blue-500" /> انشر العمل مع أصدقائك
                 </div>
-                <ShareButtons 
-                  url={`${baseUrl}/works/${work.slug}`} 
-                  title={work.title} 
-                />
+                <ShareButtons url={`${baseUrl}/works/${work.slug}`} title={work.title} />
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. قسم التعليقات النهائي */}
+      {/* 3. قسم التعليقات والمناقشات */}
       <section className="max-w-6xl mx-auto px-5 md:px-8 pb-20">
         <div id="comments-section" className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-8 md:p-12 shadow-2xl space-y-10">
           <div className="flex items-center justify-between border-b border-white/5 pb-6">
@@ -240,7 +251,6 @@ export default async function WorkPage({ params }: Props) {
           </div>
         </div>
       </section>
-
     </main>
   );
 }
