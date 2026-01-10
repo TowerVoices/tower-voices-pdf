@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-// إضافة ViewMode إلى الاستيراد لحل مشكلة النوع (Type Error)
+// استيراد ViewMode بشكل صحيح
 import { Worker, Viewer, SpecialZoomLevel, ViewMode } from "@react-pdf-viewer/core";
 import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout";
 import "@react-pdf-viewer/core/lib/styles/index.css";
@@ -8,18 +8,16 @@ import "@react-pdf-viewer/default-layout/lib/styles/index.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FaRegFileAlt, FaThList, FaArrowsAltH, 
-  FaArrowsAltV, FaChevronRight, FaChevronLeft,
-  FaExpand, FaCompress
+  FaArrowsAltV, FaExpand, FaCompress
 } from "react-icons/fa";
 
 export default function ModernReader({ pdfUrl, title }: { pdfUrl: string; title: string }) {
   const [showControls, setShowControls] = useState(true);
   const [scaling, setScaling] = useState<SpecialZoomLevel | number>(SpecialZoomLevel.PageWidth);
   
-  // تحديث نوع الحالة ليقبل ViewMode بدلاً من string بسيط
-  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Vertical);
+  // الإصلاح: استخدام undefined للوضع الافتراضي (المستمر) لأن "Vertical" غير موجودة في الـ Enum
+  const [viewMode, setViewMode] = useState<ViewMode | undefined>(undefined);
 
-  // تفعيل إضافات المكتبة
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
 
   return (
@@ -33,7 +31,7 @@ export default function ModernReader({ pdfUrl, title }: { pdfUrl: string; title:
               fileUrl={pdfUrl}
               defaultScale={scaling}
               plugins={[defaultLayoutPluginInstance]}
-              // تمرير القيمة من الـ Enum مباشرة لحل تعارض الأنواع
+              // تمرير القيمة الصحيحة للمكون
               viewMode={viewMode}
             />
           </Worker>
@@ -63,8 +61,8 @@ export default function ModernReader({ pdfUrl, title }: { pdfUrl: string; title:
                   <FaRegFileAlt className="text-lg"/> صفحة واحدة
                 </button>
                 <button 
-                  onClick={() => setViewMode(ViewMode.Vertical)}
-                  className={`p-3 rounded-2xl flex flex-col items-center gap-2 text-[10px] border transition-all ${viewMode === ViewMode.Vertical ? "bg-blue-600 border-blue-500 shadow-lg shadow-blue-600/30" : "bg-white/5 border-transparent text-gray-500"}`}
+                  onClick={() => setViewMode(undefined)} // العودة للوضع الافتراضي المستمر
+                  className={`p-3 rounded-2xl flex flex-col items-center gap-2 text-[10px] border transition-all ${viewMode === undefined ? "bg-blue-600 border-blue-500 shadow-lg shadow-blue-600/30" : "bg-white/5 border-transparent text-gray-500"}`}
                 >
                   <FaThList className="text-lg"/> مستمر
                 </button>
@@ -93,7 +91,6 @@ export default function ModernReader({ pdfUrl, title }: { pdfUrl: string; title:
         )}
       </AnimatePresence>
 
-      {/* زر إظهار التحكم عند الإخفاء */}
       {!showControls && (
         <button 
           onClick={() => setShowControls(true)}

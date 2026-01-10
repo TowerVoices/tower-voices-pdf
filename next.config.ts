@@ -1,20 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // إخبار المحرك بمعالجة مكتبات القارئ بشكل خاص لتجنب أخطاء البناء
+  // 1. إخبار المحرك بمعالجة مكتبات القارئ بشكل خاص لتجنب أخطاء البناء الثقيلة
   transpilePackages: ['@react-pdf-viewer/core', '@react-pdf-viewer/default-layout', 'pdfjs-dist'],
 
   webpack: (config) => {
-    // تجاهل الحزم التي تسبب الأخطاء في المتصفح
+    // 2. حل مشكلة المتصفح: تجاهل الحزم التي تسبب الأخطاء الحمراء
     config.resolve.alias.canvas = false;
     config.resolve.alias.encoding = false;
     return config;
   },
-  
-  // ترك هذا فارغاً لإرضاء محرك Turbopack إذا حاول العمل
-  experimental: {
-    turbopack: {},
-  },
+
+  // ملاحظة: تم حذف قسم turbopack لأنه يسبب تحذيراً "Unrecognized key" وغير مطلوب
 };
 
 export default nextConfig;
