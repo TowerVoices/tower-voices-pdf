@@ -1,6 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Worker, Viewer, SpecialZoomLevel } from "@react-pdf-viewer/core";
+import { useState } from "react";
+// إضافة ViewMode إلى الاستيراد لحل مشكلة النوع (Type Error)
+import { Worker, Viewer, SpecialZoomLevel, ViewMode } from "@react-pdf-viewer/core";
 import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout";
 import "@react-pdf-viewer/core/lib/styles/index.css";
 import "@react-pdf-viewer/default-layout/lib/styles/index.css";
@@ -14,7 +15,9 @@ import {
 export default function ModernReader({ pdfUrl, title }: { pdfUrl: string; title: string }) {
   const [showControls, setShowControls] = useState(true);
   const [scaling, setScaling] = useState<SpecialZoomLevel | number>(SpecialZoomLevel.PageWidth);
-  const [viewMode, setViewMode] = useState<"SinglePage" | "Vertical">("Vertical");
+  
+  // تحديث نوع الحالة ليقبل ViewMode بدلاً من string بسيط
+  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Vertical);
 
   // تفعيل إضافات المكتبة
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
@@ -30,14 +33,14 @@ export default function ModernReader({ pdfUrl, title }: { pdfUrl: string; title:
               fileUrl={pdfUrl}
               defaultScale={scaling}
               plugins={[defaultLayoutPluginInstance]}
-              // هنا نربط وضع القراءة
-              viewMode={viewMode === "SinglePage" ? "SinglePage" : "Vertical"}
+              // تمرير القيمة من الـ Enum مباشرة لحل تعارض الأنواع
+              viewMode={viewMode}
             />
           </Worker>
         </div>
       </div>
 
-      {/* لوحة التحكم الجانبية (نفس التصميم المطلوب) */}
+      {/* لوحة التحكم الجانبية */}
       <AnimatePresence>
         {showControls && (
           <motion.aside 
@@ -54,14 +57,14 @@ export default function ModernReader({ pdfUrl, title }: { pdfUrl: string; title:
               <h4 className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">نمط القراءة</h4>
               <div className="grid grid-cols-2 gap-2">
                 <button 
-                  onClick={() => setViewMode("SinglePage")}
-                  className={`p-3 rounded-2xl flex flex-col items-center gap-2 text-[10px] border transition-all ${viewMode === "SinglePage" ? "bg-blue-600 border-blue-500 shadow-lg shadow-blue-600/30" : "bg-white/5 border-transparent text-gray-500"}`}
+                  onClick={() => setViewMode(ViewMode.SinglePage)}
+                  className={`p-3 rounded-2xl flex flex-col items-center gap-2 text-[10px] border transition-all ${viewMode === ViewMode.SinglePage ? "bg-blue-600 border-blue-500 shadow-lg shadow-blue-600/30" : "bg-white/5 border-transparent text-gray-500"}`}
                 >
                   <FaRegFileAlt className="text-lg"/> صفحة واحدة
                 </button>
                 <button 
-                  onClick={() => setViewMode("Vertical")}
-                  className={`p-3 rounded-2xl flex flex-col items-center gap-2 text-[10px] border transition-all ${viewMode === "Vertical" ? "bg-blue-600 border-blue-500 shadow-lg shadow-blue-600/30" : "bg-white/5 border-transparent text-gray-500"}`}
+                  onClick={() => setViewMode(ViewMode.Vertical)}
+                  className={`p-3 rounded-2xl flex flex-col items-center gap-2 text-[10px] border transition-all ${viewMode === ViewMode.Vertical ? "bg-blue-600 border-blue-500 shadow-lg shadow-blue-600/30" : "bg-white/5 border-transparent text-gray-500"}`}
                 >
                   <FaThList className="text-lg"/> مستمر
                 </button>
