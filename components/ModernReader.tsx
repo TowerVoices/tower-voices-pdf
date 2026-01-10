@@ -61,8 +61,8 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
           </div>
         )}
 
-        {/* التعديل هنا: جعلنا الخلفية شفافة وأزلنا الظل للحصول على مظهر مسطح */}
-        <div className="w-full max-w-4xl bg-transparent rounded-sm overflow-hidden">
+        {/* --- التعديل هنا: إزالة الخلفية البيضاء والحدود --- */}
+        <div className="w-full max-w-4xl bg-transparent overflow-hidden relative">
             <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
                 {finalPdfUrl && (
                   <Viewer
@@ -75,6 +75,7 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
                 )}
             </Worker>
         </div>
+        {/* -------------------------------------------------- */}
       </main>
 
       <AnimatePresence>

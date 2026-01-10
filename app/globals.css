@@ -1,54 +1,38 @@
-@import "tailwindcss";
+/* app/globals.css */
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* ... (الأكواد السابقة) ... */
 
 /* --------------------------------------------------------- */
-/* تنسيقات قارئ PDF لإزالة الحدود والظلال البيضاء */
+/* تنسيقات قارئ PDF المتقدمة لإزالة كافة الحدود البيضاء */
 
-/* إزالة الظل الأبيض المحيط بالصفحة والجوانب */
+/* إجبار حاوية الصفحة على الشفافية المطلقة وإزالة الظل */
 .rpv-core__page-container {
   background-color: transparent !important;
   border: none !important;
-  box-shadow: none !important; /* هذا هو المسؤول عن الخط الأبيض */
+  box-shadow: none !important; /* إزالة الظل الخارجي */
+  margin-bottom: 20px !important;
 }
 
-/* جعل خلفية طبقات الصفحة شفافة */
-.rpv-core__page-layer {
-  background-color: transparent !important;
+/* استهداف طبقة الرسم (Canvas) مباشرة لإزالة حدودها */
+.rpv-core__canvas-layer {
   box-shadow: none !important;
+  border: none !important;
 }
 
-/* إزالة أي خلفية رمادية أو بيضاء من العارض نفسه */
+/* إزالة الخلفيات من حاويات النصوص والتعليقات */
+.rpv-core__text-layer,
+.rpv-core__annotation-layer {
+  background-color: transparent !important;
+}
+
+/* تنظيف الحاوية الرئيسية للعارض */
 .rpv-core__viewer {
   background-color: transparent !important;
+  border: none !important;
 }
 
-/* تحسين المسافة بين الصفحات في نمط العرض المستمر */
+/* تنظيف منطقة تمرير الصفحات */
 .rpv-core__inner-pages {
   background-color: transparent !important;
-  gap: 20px !important;
 }
 /* --------------------------------------------------------- */
