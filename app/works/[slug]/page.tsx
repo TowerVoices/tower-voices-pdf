@@ -46,7 +46,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// جلب بيانات الرواية مع دعم "الربط الثلاثي" لروابط الـ PDF
 async function getWork(slug: string) {
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id,
@@ -62,7 +61,6 @@ async function getWork(slug: string) {
     synopsis,
     isSpoiler,
     warning,
-    // الحل الذكي: يبحث أولاً عن readerUrl (الرابط المباشر)، ثم ملف Sanity، ثم downloadUrl
     "pdfUrl": coalesce(readerUrl, pdfFile.asset->url, downloadUrl), 
     "comments": *[_type == "comment" && work._ref == ^._id && approved == true] | order(_createdAt desc)
   }`;
@@ -80,13 +78,11 @@ export default async function WorkPage({ params }: Props) {
   const translationRating = work.ratingTranslation || 0;
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
   
-  // الرابط النهائي الموحد
   const finalPdfUrl = work.pdfUrl; 
 
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans overflow-x-hidden">
       
-      {/* 1. قسم الهيرو */}
       <section className="relative min-h-[55vh] md:h-[65vh] w-full overflow-hidden flex items-end">
         <div 
           className="absolute inset-0 bg-cover bg-center scale-110 blur-md opacity-30 transition-all duration-700"
@@ -136,28 +132,24 @@ export default async function WorkPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* تحسين ظهور الأزرار باستخدام الرابط الموحد */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center">
+                {/* تم تعديل الاستدعاء هنا ليمرر slug فقط */}
+                <ReaderButton slug={work.slug} />
+                
                 {finalPdfUrl ? (
-                  <>
-                    {/* المكون الذي يفتح القارئ */}
-                    <ReaderButton pdfUrl={finalPdfUrl} title={work.title} />
-                    {/* زر التحميل التقليدي */}
-                    <a href={finalPdfUrl} target="_blank" className="flex items-center justify-center gap-3 bg-zinc-800 hover:bg-zinc-700 text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/10 w-full sm:w-auto shadow-xl active:scale-95">
-                      <FaDownload className="text-lg" /> تحميل PDF
-                    </a>
-                  </>
+                  <a href={finalPdfUrl} target="_blank" className="flex items-center justify-center gap-3 bg-zinc-800 hover:bg-zinc-700 text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/10 w-full sm:w-auto shadow-xl active:scale-95">
+                    <FaDownload className="text-lg" /> تحميل PDF
+                  </a>
                 ) : (
-                  <p className="text-gray-500 text-xs italic">رابط الـ PDF قيد التجهيز..</p>
+                  <p className="text-gray-500 text-xs italic">رابط التحميل قيد التجهيز..</p>
                 )}
                 <ReportButton workTitle={work.title} />
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* باقي أقسام الصفحة (الملخص، المعلومات، التعليقات) */}
       <section className="max-w-6xl mx-auto px-5 md:px-8 py-12">
         <div className="grid lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8 space-y-8">
