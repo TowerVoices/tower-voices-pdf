@@ -49,14 +49,14 @@ export default defineType({
       name: 'downloadUrl', 
       title: 'رابط التحميل (Drive)', 
       type: 'url',
-      description: 'هذا الرابط سيستخدم لزر "تحميل PDF" التقليدي.'
+      description: 'هذا الرابط مخصص لزر "تحميل PDF" التقليدي ويفتح في صفحة قوقل درايف مباشرة.'
     }),
 
     defineField({ 
       name: 'readerUrl', 
       title: 'رابط القارئ المباشر (Reader URL)', 
       type: 'url',
-      description: 'هام جداً: ضع هنا رابط التنزيل المباشر فقط (Direct Link) ليعمل القارئ المدمج دون خطأ Invalid PDF structure.'
+      description: 'انسخ رابط Drive العادي هنا (الذي ينتهي بـ /view). سيقوم الموقع تلقائياً بمعالجته عبر "الجسر البرمي" ليعمل داخل القارئ دون أخطاء.'
     }),
 
     defineField({
@@ -64,7 +64,7 @@ export default defineType({
       title: 'ملف PDF (رفع مباشر)',
       type: 'file',
       options: { accept: '.pdf' },
-      description: 'اختياري: يمكنك رفع ملف PDF مباشرة من جهازك بدلاً من الروابط الخارجية.'
+      description: 'إذا واجهت مشكلة في روابط Drive، يمكنك رفع الملف مباشرة هنا كخيار بديل ومضمون.'
     }),
   ]
 })

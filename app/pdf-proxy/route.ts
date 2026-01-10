@@ -1,36 +1,35 @@
+// app/api/pdf-proxy/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const fileId = searchParams.get('id');
+
+  if (!fileId) return new NextResponse('ID مطلوب', { status: 400 });
+
+  // استخدام رابط التصدير المباشر لتجاوز واجهات معاينة قوقل
+  const driveUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
+
   try {
-    const { searchParams } = new URL(request.url);
-    const fileId = searchParams.get('id');
+    const response = await fetch(driveUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+    });
 
-    if (!fileId) return new NextResponse('Missing ID', { status: 400 });
-
-    // رابط تحميل مباشر ومستقر من قوقل درايف
-    const driveUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
-
-    const response = await fetch(driveUrl);
-
-    if (!response.ok) {
-      return new NextResponse('Drive access denied or file not found', { status: response.status });
-    }
+    if (!response.ok) throw new Error('فشل الوصول إلى درايف');
 
     const blob = await response.blob();
     
-    // التحقق من أن ما استلمناه هو PDF فعلاً وليس صفحة خطأ من قوقل
-    if (!blob.type.includes('pdf')) {
-      return new NextResponse('The link provided is not a direct PDF. Ensure the file is shared as "Anyone with the link".', { status: 403 });
-    }
-
+    // التأكد من أننا نرسل PDF فعلاً للقارئ
     return new NextResponse(blob, {
       headers: {
         'Content-Type': 'application/pdf',
         'Cache-Control': 'public, max-age=3600',
-        'Content-Disposition': 'inline',
+        'Access-Control-Allow-Origin': '*', // السماح للمتصفح بقراءة الملف
       },
     });
   } catch (error) {
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return new NextResponse('الملف مفقود أو الرابط غير صالح', { status: 404 });
   }
 }
