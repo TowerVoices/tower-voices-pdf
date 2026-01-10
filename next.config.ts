@@ -1,12 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* أي إعدادات أخرى موجودة لديك اتركها هنا */
-
+  // هذا الجزء لحل مشكلة القارئ (Webpack)
   webpack: (config) => {
-    // هذا الجزء هو الحل؛ يخبر المشروع بتجاهل مكتبة canvas التي تسبب الخطأ الأحمر
     config.resolve.alias.canvas = false;
+    config.resolve.alias.encoding = false;
     return config;
+  },
+  // إضافة هذا الجزء لحل مشكلة Turbopack في Vercel
+  experimental: {
+    turbopack: {},
   },
 };
 
