@@ -133,7 +133,7 @@ export default async function WorkPage({ params }: Props) {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center">
-                {/* تم الإصلاح: نمرر الـ slug فقط للانتقال إلى صفحة القراءة المستقلة */}
+                {/* تم الإصلاح: نمرر الـ slug فقط للانتقال إلى صفحة القراءة المستقلة لضمان استقرار التنسيق */}
                 <ReaderButton slug={work.slug} />
                 
                 {finalPdfUrl ? (
