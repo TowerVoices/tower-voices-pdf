@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Worker, Viewer, SpecialZoomLevel, ViewMode } from "@react-pdf-viewer/core";
 import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout";
 import { zoomPlugin } from "@react-pdf-viewer/zoom";
@@ -25,10 +25,22 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
   const { ZoomIn, ZoomOut, CurrentScale } = zoomPluginInstance;
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
 
+  // دالة معالجة الرابط لضمان الاستقرار مع Google Drive
+  const finalPdfUrl = useMemo(() => {
+    if (pdfUrl.includes('drive.google.com')) {
+      // استخراج المعرف (ID) من الرابط العادي
+      const driveIdMatch = pdfUrl.match(/\/d\/(.+?)\//) || pdfUrl.match(/id=(.+?)(&|$)/);
+      const driveId = driveIdMatch ? driveIdMatch[1] : null;
+      
+      // إذا وجدنا المعرف، نمرره عبر الجسر البرمي لتجنب CORS
+      return driveId ? `/api/pdf-proxy?id=${driveId}` : pdfUrl;
+    }
+    return pdfUrl;
+  }, [pdfUrl]);
+
   return (
     <div dir="rtl" className="fixed inset-0 z-[9999] bg-[#0a0a0a] flex flex-col font-sans select-none">
       
-      {/* البار العلوي الثابت */}
       <header className="h-14 bg-black border-b border-white/5 flex items-center justify-between px-6 z-[10001]">
           <button 
             onClick={() => setShowControls(!showControls)} 
@@ -46,13 +58,12 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
           </button>
       </header>
 
-      {/* منطقة القراءة (توسيط الصفحة البيضاء) */}
       <main className="flex-1 relative overflow-hidden bg-[#111111] flex justify-center p-4">
         <div className="h-full w-full max-w-4xl bg-white shadow-2xl overflow-hidden rounded-sm border border-black/10">
-            {/* الربط التقني: مطابقة الإصدار 3.4.120 تماماً */}
+            {/* توحيد الإصدار 3.4.120 لضمان التوافق */}
             <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
                 <Viewer
-                    fileUrl={pdfUrl}
+                    fileUrl={finalPdfUrl}
                     defaultScale={SpecialZoomLevel.PageWidth}
                     plugins={[defaultLayoutPluginInstance, zoomPluginInstance]}
                     viewMode={viewMode}
@@ -61,7 +72,6 @@ export default function ModernReader({ pdfUrl, title, onClose }: ModernReaderPro
         </div>
       </main>
 
-      {/* لوحة التحكم الجانبية */}
       <AnimatePresence>
         {showControls && (
           <motion.aside 
