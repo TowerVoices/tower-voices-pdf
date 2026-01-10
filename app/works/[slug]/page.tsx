@@ -133,7 +133,7 @@ export default async function WorkPage({ params }: Props) {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center">
-                {/* تم تعديل الاستدعاء هنا ليمرر slug فقط */}
+                {/* تم الإصلاح: نمرر الـ slug فقط للانتقال إلى صفحة القراءة المستقلة */}
                 <ReaderButton slug={work.slug} />
                 
                 {finalPdfUrl ? (
@@ -148,7 +148,7 @@ export default async function WorkPage({ params }: Props) {
             </div>
           </div>
         </div>
-      </header>
+      </section>
 
       <section className="max-w-6xl mx-auto px-5 md:px-8 py-12">
         <div className="grid lg:grid-cols-12 gap-10">
