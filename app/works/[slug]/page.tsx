@@ -2,6 +2,7 @@ import { client } from "../../sanity.client";
 import { urlFor } from "../../sanity.image";
 import { notFound } from "next/navigation";
 import { Metadata } from "next"; 
+import Link from "next/link"; // استيراد Link للمسار
 import ShareButtons from "./ShareButtons";
 import SpoilerSynopsis from "./SpoilerSynopsis";
 import InteractiveRating from "@/components/InteractiveRating";
@@ -15,7 +16,8 @@ import {
   FaBookOpen, 
   FaShareAlt,
   FaComments,
-  FaInfoCircle
+  FaInfoCircle,
+  FaChevronLeft
 } from "react-icons/fa";
 
 interface Props {
@@ -24,6 +26,7 @@ interface Props {
 
 const baseUrl = "https://tower-voices-pdf.vercel.app";
 
+// 1. تحسين الميتا داتا لتثبيت اسم الموقع
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const work = await getWork(slug);
@@ -77,11 +80,47 @@ export default async function WorkPage({ params }: Props) {
   const workRating = work.ratingWork || 0; 
   const translationRating = work.ratingTranslation || 0;
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
-  
   const finalPdfUrl = work.pdfUrl; 
+
+  // 2. إعداد كود البيانات المهيكلة (JSON-LD)
+  const bookSchema = {
+    "@context": "https://schema.org",
+    "@type": "Book",
+    "name": work.title,
+    "description": work.synopsis,
+    "author": { "@type": "Person", "name": work.author || "تابي ناجاتسوكي" },
+    "image": coverUrl,
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": workRating,
+      "reviewCount": work.ratingCount || 1
+    }
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "الرئيسية", "item": baseUrl },
+      { "@type": "ListItem", "position": 2, "name": "الروايات", "item": `${baseUrl}/works` },
+      { "@type": "ListItem", "position": 3, "name": work.title, "item": `${baseUrl}/works/${slug}` }
+    ]
+  };
 
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans overflow-x-hidden">
+      {/* حقن أكواد السيو */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(bookSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+
+      {/* 3. مسار التنقل البصري (Visual Breadcrumbs) */}
+      <nav className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-2 text-[10px] md:text-xs text-gray-500 font-bold border-b border-white/5">
+        <Link href="/" className="hover:text-blue-500 transition-colors">الرئيسية</Link>
+        <FaChevronLeft className="text-[8px] opacity-30" />
+        <Link href="/works" className="hover:text-blue-500 transition-colors">الروايات</Link>
+        <FaChevronLeft className="text-[8px] opacity-30" />
+        <span className="text-gray-300 truncate max-w-[150px]">{work.title}</span>
+      </nav>
       
       <section className="relative min-h-[55vh] md:h-[65vh] w-full overflow-hidden flex items-end">
         <div 
@@ -133,7 +172,6 @@ export default async function WorkPage({ params }: Props) {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center">
-                {/* تم الإصلاح: نمرر الـ slug فقط للانتقال إلى صفحة القراءة المستقلة لضمان استقرار التنسيق */}
                 <ReaderButton slug={work.slug} />
                 
                 {finalPdfUrl ? (
