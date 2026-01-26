@@ -2,7 +2,7 @@ import { client } from "../../sanity.client";
 import { urlFor } from "../../sanity.image";
 import { notFound } from "next/navigation";
 import { Metadata } from "next"; 
-import Link from "next/link"; // استيراد Link للمسار
+import Link from "next/link";
 import ShareButtons from "./ShareButtons";
 import SpoilerSynopsis from "./SpoilerSynopsis";
 import InteractiveRating from "@/components/InteractiveRating";
@@ -26,12 +26,14 @@ interface Props {
 
 const baseUrl = "https://tower-voices-pdf.vercel.app";
 
-// 1. تحسين الميتا داتا لتثبيت اسم الموقع
+// 1. تحسين الميتا داتا وإضافة صور المعاينة (Social Media Images)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const work = await getWork(slug);
   
   if (!work) return {};
+
+  const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
 
   return {
     title: `${work.title} | أصوات البرج`,
@@ -44,6 +46,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: work.synopsis,
       url: `${baseUrl}/works/${slug}`,
       siteName: "أصوات البرج",
+      images: [
+        {
+          url: coverUrl, // إضافة الغلاف هنا ليظهر في ديسكورد وإكس
+          width: 800,
+          height: 1200,
+        },
+      ],
       type: "article",
     },
   };
@@ -82,7 +91,7 @@ export default async function WorkPage({ params }: Props) {
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
   const finalPdfUrl = work.pdfUrl; 
 
-  // 2. إعداد كود البيانات المهيكلة (JSON-LD) بشكل مرن لتفادي أخطاء التقييم
+  // 2. إعداد كود البيانات المهيكلة (JSON-LD) وحل مشكلة التقييم الصفر
   const bookSchema: any = {
     "@context": "https://schema.org",
     "@type": "Book",
@@ -92,7 +101,7 @@ export default async function WorkPage({ params }: Props) {
     "image": coverUrl,
   };
 
-  // حل مشكلة التقييم الصفر: لا نرسل التقييم لجوجل إلا إذا كان أكبر من 0
+  // لا نرسل التقييم لجوجل إلا إذا كان أكبر من صفر لتفادي الأخطاء الحمراء
   if (workRating > 0) {
     bookSchema.aggregateRating = {
       "@type": "AggregateRating",
