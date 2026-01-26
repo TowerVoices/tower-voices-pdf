@@ -82,20 +82,26 @@ export default async function WorkPage({ params }: Props) {
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
   const finalPdfUrl = work.pdfUrl; 
 
-  // 2. إعداد كود البيانات المهيكلة (JSON-LD)
-  const bookSchema = {
+  // 2. إعداد كود البيانات المهيكلة (JSON-LD) بشكل مرن لتفادي أخطاء التقييم
+  const bookSchema: any = {
     "@context": "https://schema.org",
     "@type": "Book",
     "name": work.title,
     "description": work.synopsis,
     "author": { "@type": "Person", "name": work.author || "تابي ناجاتسوكي" },
     "image": coverUrl,
-    "aggregateRating": {
+  };
+
+  // حل مشكلة التقييم الصفر: لا نرسل التقييم لجوجل إلا إذا كان أكبر من 0
+  if (workRating > 0) {
+    bookSchema.aggregateRating = {
       "@type": "AggregateRating",
       "ratingValue": workRating,
-      "reviewCount": work.ratingCount || 1
-    }
-  };
+      "reviewCount": work.ratingCount || 1,
+      "bestRating": "5",
+      "worstRating": "1"
+    };
+  }
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",
