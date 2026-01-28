@@ -7,17 +7,21 @@ import {
   FaArrowLeft
 } from "react-icons/fa";
 
-// 1. إعدادات السيو والروابط الأساسية
+// 1. إعدادات السيو المتقدمة (استهداف Re:Zero IF, EX, والمسارات باللغتين)
 export const metadata: Metadata = {
-  title: "أصوات البرج | منصة الروايات المترجمة",
-  description: "المكان الأول لأحدث الروايات المترجمة والحصرية بأسلوب عربي فصيح وتجربة قراءة فريدة.",
+  title: "ترجمة Re:Zero EX و Re:Zero IF بالعربية | أرشيف المسارات (Routes) | أصوات البرج",
+  description: "المكان الأول لأحدث ترجمات روايات ريزيرو. استكشف مسارات Re:Zero IF وقصص Re:Zero EX الجانبية، رواية الويب واللايت نوفل (Web & Light Novel) بأسلوب عربي فصيح.",
+  keywords: [
+    "ترجمة روايات ريزيرو", "Re:Zero novel translation", "Re:Zero IF Routes", "مسارات ريزيرو ماذا لو", 
+    "Re:Zero EX", "رواية ويب ريزيرو", "Light Novel", "أصوات البرج", "Tower Voices"
+  ],
   alternates: {
-    canonical: "https://tower-voices-pdf.vercel.app", 
+    canonical: "https://tower-voices-pdf.vercel.app/works", 
   },
   openGraph: {
-    title: "أصوات البرج",
-    description: "اكتشف عالم الروايات المترجمة باحترافية",
-    url: "https://tower-voices-pdf.vercel.app",
+    title: "أرشيف ترجمة ريزيرو: Re:Zero EX & IF Routes Archive",
+    description: "استكشف كافة مسارات ريزيرو IF ومجلدات EX المترجمة باحترافية.",
+    url: "https://tower-voices-pdf.vercel.app/works",
     siteName: "أصوات البرج",
     locale: "ar_SA",
     type: "website",
@@ -50,7 +54,7 @@ export default async function HomePage() {
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans selection:bg-blue-500/30">
 
-      {/* 1. قسم الهيرو (Hero Section) */}
+      {/* 1. قسم الهيرو (Hero Section) - تم الحفاظ عليه كما هو */}
       <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-[url('/hero.jpg')] bg-cover bg-center opacity-30 scale-105" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-[#050505]/80 to-[#050505]" />
@@ -86,7 +90,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 2. شبكة الأعمال (تظهر 4 أعمال مرتبة) */}
+      {/* 2. شبكة الأعمال (تظهر 4 أعمال مرتبة) - تم الحفاظ عليها كما هي */}
       <section id="works" className="max-w-7xl mx-auto px-6 py-24">
         <div className="flex items-end justify-between mb-12">
           <div>
@@ -106,7 +110,7 @@ export default async function HomePage() {
               <div className="relative aspect-[2/3] overflow-hidden">
                 <img
                   src={urlFor(work.cover).width(600).url()} 
-                  alt={work.title}
+                  alt={`ترجمة ريزيرو: ${work.title}`} 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
@@ -137,7 +141,7 @@ export default async function HomePage() {
           ))}
         </div>
 
-        {/* 3. زر شاهد المزيد (ينقل لصفحة المكتبة الكاملة) */}
+        {/* 3. زر شاهد المزيد */}
         <div className="mt-16 text-center">
           <Link 
             href="/works" 
@@ -153,7 +157,7 @@ export default async function HomePage() {
       <footer className="border-t border-white/5 py-12 bg-black/50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <div className="text-2xl font-black mb-4 text-white uppercase tracking-tighter">أصوات البرج</div>
-          <p className="text-gray-500 text-sm mb-8 italic">مشروع ترجمة مستقل من المعجبين وإلى المعجبين</p>
+          <p className="text-gray-500 text-sm mb-8 italic">مشروع ترجمة مستقل من المعجبين وإلى المعجبين - 2026</p>
           <div className="h-[1px] w-20 bg-blue-600 mx-auto" />
         </div>
       </footer>
