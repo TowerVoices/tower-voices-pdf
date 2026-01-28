@@ -1,5 +1,6 @@
 import type { Metadata } from "next"; 
 import Navbar from "@/components/Navbar";
+import { SpeedInsights } from "@vercel/speed-insights/next"; // استيراد الخدمة الجديدة
 import "./globals.css";
 
 // إضافة بيانات السيو المتقدمة لتغيير اسم الموقع في جوجل
@@ -45,6 +46,9 @@ export default function RootLayout({
       <body className="bg-[#050505]">
         <Navbar /> 
         {children}
+        
+        {/* إضافة مكون قياس السرعة لجمع البيانات وتحسين السيو */}
+        <SpeedInsights /> 
       </body>
     </html>
   );
