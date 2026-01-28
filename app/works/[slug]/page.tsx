@@ -26,31 +26,41 @@ interface Props {
 
 const baseUrl = "https://tower-voices-pdf.vercel.app";
 
-// 1. تحسين الميتا داتا وإضافة صور المعاينة (Social Media Images)
+// 1. نظام التمييز الذكي للروابط (Metadata Generator) ثنائي اللغة
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const work = await getWork(slug);
   
   if (!work) return {};
 
+  const lowerSlug = slug.toLowerCase();
+  let typeSuffix = "";
+
+  // التمييز بناءً على كلمات الرابط (Slug)
+  if (lowerSlug.includes("if")) typeSuffix = " (Re:Zero IF Route)";
+  else if (lowerSlug.includes("ex")) typeSuffix = " (Re:Zero EX Novel)";
+  else if (lowerSlug.includes("arc")) typeSuffix = " (Re:Zero Web Novel)";
+  else typeSuffix = " (Re:Zero Side Story)";
+
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
 
   return {
-    title: `${work.title} | أصوات البرج`,
-    description: work.synopsis?.slice(0, 160),
+    title: `${work.title}${typeSuffix} | أصوات البرج`,
+    description: `قراءة ترجمة ${work.title} ${typeSuffix} بالعربية. استمتع بأحداث ريزيرو المترجمة بأسلوب احترافي حصرياً على أصوات البرج.`,
     alternates: {
       canonical: `${baseUrl}/works/${slug}`, 
     },
     openGraph: {
-      title: work.title,
-      description: work.synopsis,
+      title: `${work.title} ${typeSuffix}`,
+      description: work.synopsis?.slice(0, 160),
       url: `${baseUrl}/works/${slug}`,
       siteName: "أصوات البرج",
       images: [
         {
-          url: coverUrl, // إضافة الغلاف هنا ليظهر في ديسكورد وإكس
+          url: coverUrl, // صورة المعاينة لوسائل التواصل
           width: 800,
           height: 1200,
+          alt: `غلاف رواية ${work.title}`
         },
       ],
       type: "article",
@@ -101,7 +111,7 @@ export default async function WorkPage({ params }: Props) {
     "image": coverUrl,
   };
 
-  // لا نرسل التقييم لجوجل إلا إذا كان أكبر من صفر لتفادي الأخطاء الحمراء
+  // لا نرسل التقييم لجوجل إلا إذا كان أكبر من صفر لتفادي أخطاء النطاق
   if (workRating > 0) {
     bookSchema.aggregateRating = {
       "@type": "AggregateRating",
@@ -243,7 +253,7 @@ export default async function WorkPage({ params }: Props) {
                 </div>
                 <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl">
                     <span className="text-gray-500 text-sm">المؤلف</span>
-                    <span className="text-white font-bold">{work.author || "غير معروف"}</span>
+                    <span className="text-white font-bold">{work.author || "تابي ناجاتسوكي"}</span>
                 </div>
               </div>
             </div>
