@@ -1,5 +1,5 @@
 import { defineType, defineField } from 'sanity'
-import { FaBook, FaLink, FaImage, FaMapSigns, FaInfoCircle } from 'react-icons/fa'
+import { FaBook, FaLink, FaImage, FaMapSigns, FaInfoCircle, FaEyeSlash } from 'react-icons/fa'
 
 export default defineType({
   name: 'work',
@@ -60,7 +60,18 @@ export default defineType({
       group: 'links'
     }),
 
-    /* --- مجموعة: رحلة البرج (التنقل والترتيب) --- */
+    /* --- مجموعة: رحلة البرج (التنقل والترتيب الزمني) --- */
+    
+    // الحقل الجديد: مفتاح الإخفاء التام
+    defineField({
+      name: 'hideFromTimeline',
+      title: 'إخفاء من الخريطة تماماً ⛔',
+      type: 'boolean',
+      initialValue: false,
+      group: 'navigation',
+      description: 'عند تفعيل هذا الخيار، لن يظهر العمل في صفحة الخريطة الزمنية مهما كانت الإعدادات الأخرى.'
+    }),
+
     defineField({
       name: 'previousWork',
       title: 'العمل السابق',
@@ -88,10 +99,9 @@ export default defineType({
       type: 'number',
       initialValue: 0,
       group: 'navigation',
-      description: 'العمل الذي يحمل رقم 0 لن يظهر في الخريطة الزمنية.'
+      description: 'العمل الذي يحمل رقم 0 سيتم إخفاؤه تلقائياً من الخريطة.'
     }),
     
-    // الحقل الجديد: شرح الفترة الزمنية
     defineField({
       name: 'timeDescription',
       title: 'وصف الفترة الزمنية (شرح مبسط)',
@@ -107,7 +117,7 @@ export default defineType({
       group: 'navigation',
       options: {
         list: [
-          { title: 'بدون تصنيف (لاشيء)', value: 'none' }, // خيار لإلغاء الاختيار
+          { title: 'بدون تصنيف (لاشيء)', value: 'none' }, 
           { title: 'القصة الأساسية (Main)', value: 'main' },
           { title: 'روايات (EX)', value: 'ex' },
           { title: 'مسارات ماذا لو (IF)', value: 'if' },
@@ -115,7 +125,8 @@ export default defineType({
         ],
         layout: 'radio'
       },
-      initialValue: 'none'
+      initialValue: 'none',
+      description: 'اختيار "بدون تصنيف" سيؤدي لإخفاء العمل من تبويبات التصفية في الخريطة.'
     }),
   ],
 
