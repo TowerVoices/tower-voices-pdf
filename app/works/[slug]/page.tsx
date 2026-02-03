@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// التحديث: استعلام GROQ المطور لجلب المجلدات المرتبطة
+// استعلام GROQ الشامل
 async function getWork(slug: string) {
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id,
@@ -90,28 +90,43 @@ async function getWork(slug: string) {
     "previousWork": previousWork->{ title, "slug": slug.current, "rawCover": cover },
     "nextWork": nextWork->{ title, "slug": slug.current, "rawCover": cover },
     "parentVolume": parentVolume->{ title, "slug": slug.current, "rawCover": cover },
+    "relatedSideStories": *[_type == "work" && parentVolume._ref == ^._id] {
+      title,
+      "slug": slug.current,
+      "rawCover": cover
+    },
     "comments": *[_type == "comment" && work._ref == ^._id && approved == true] | order(_createdAt desc)
   }`;
   
   return await client.fetch(query, { slug }, { next: { revalidate: 60 } });
 }
 
-// مكون فرعي للبطاقات المصغرة
+// --- التحديث هنا: مكون البطاقة مع تأثير التوهج الذكي ---
 const NavCard = ({ work, label, isNext }: { work: any, label: string, isNext: boolean }) => {
     const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
     return (
         <Link href={`/works/${work.slug}`} className="group relative flex-1">
-            <div className="bg-zinc-900/50 border border-white/5 rounded-2xl overflow-hidden hover:border-blue-500/50 transition-all duration-500 hover:shadow-[0_0_30px_rgba(37,99,235,0.1)]">
+            {/* هنا نطبق ستايل مختلف بناءً على هل هي البطاقة التالية أم السابقة */}
+            <div className={`
+                rounded-2xl overflow-hidden transition-all duration-500
+                ${isNext 
+                    // ستايل المجلد التالي: توهج أزرق وخلفية مميزة
+                    ? "bg-blue-900/10 border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.15)] hover:shadow-[0_0_40px_rgba(59,130,246,0.5)] hover:border-blue-400 hover:-translate-y-1"
+                    // ستايل المجلد السابق: ستايل هادئ
+                    : "bg-zinc-900/50 border border-white/5 hover:border-white/20 hover:shadow-lg hover:-translate-y-1"
+                }
+            `}>
                 <div className="flex items-center gap-4 p-3">
                     <div className="relative w-16 h-24 shrink-0 rounded-lg overflow-hidden border border-white/10">
                         <img src={coverUrl} alt={work.title} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest block mb-1">{label}</span>
-                        <h4 className="text-sm font-bold text-white truncate group-hover:text-blue-400 transition-colors">{work.title}</h4>
+                        {/* تغيير لون النص حسب نوع البطاقة */}
+                        <span className={`text-[10px] font-black uppercase tracking-widest block mb-1 ${isNext ? "text-blue-400" : "text-gray-500"}`}>{label}</span>
+                        <h4 className={`text-sm font-bold truncate transition-colors ${isNext ? "text-white group-hover:text-blue-300" : "text-gray-300 group-hover:text-white"}`}>{work.title}</h4>
                         <div className="mt-2 flex items-center gap-1 text-gray-500 group-hover:text-gray-300">
-                             {isNext ? <FaArrowLeft className="text-[10px]" /> : <FaArrowRight className="text-[10px]" />}
-                             <span className="text-[10px] font-bold">{isNext ? "اذهب للمجلد التالي" : "العودة للمجلد السابق"}</span>
+                             {isNext ? <FaArrowLeft className="text-[10px] text-blue-500" /> : <FaArrowRight className="text-[10px]" />}
+                             <span className={`text-[10px] font-bold ${isNext ? "text-blue-500" : ""}`}>{isNext ? "اذهب للمجلد التالي" : "العودة للمجلد السابق"}</span>
                         </div>
                     </div>
                 </div>
@@ -133,7 +148,6 @@ export default async function WorkPage({ params }: Props) {
 
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans overflow-x-hidden">
-      {/* (البحث والسيو بقيت كما هي لضمان استقرار الأرشفة) */}
       
       <nav className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-2 text-[10px] md:text-xs text-gray-500 font-bold border-b border-white/5">
         <Link href="/" className="hover:text-blue-500 transition-colors">الرئيسية</Link>
@@ -143,7 +157,6 @@ export default async function WorkPage({ params }: Props) {
         <span className="text-gray-300 truncate max-w-[150px]">{work.title}</span>
       </nav>
       
-      {/* قسم الهيدر (بقي كما هو) */}
       <section className="relative min-h-[55vh] md:h-[65vh] w-full overflow-hidden flex items-end">
         <div 
           className="absolute inset-0 bg-cover bg-center scale-110 blur-md opacity-30 transition-all duration-700"
@@ -195,8 +208,8 @@ export default async function WorkPage({ params }: Props) {
               </div>
             </div>
 
-            {/* --- الإضافة الجديدة: نظام التنقل الذكي (البطاقات المصغرة) --- */}
-            {(work.previousWork || work.nextWork || work.parentVolume) && (
+            {/* نظام التنقل الذكي والقصص الجانبية */}
+            {(work.previousWork || work.nextWork || work.parentVolume || work.relatedSideStories?.length > 0) && (
                 <div className="space-y-6 pt-4">
                     <div className="flex items-center gap-3 mb-2">
                          <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/10"></div>
@@ -211,18 +224,32 @@ export default async function WorkPage({ params }: Props) {
                         {work.nextWork && <NavCard work={work.nextWork} label="المجلد التالي" isNext={true} />}
                     </div>
 
+                    {work.relatedSideStories?.length > 0 && (
+                        <div className="mt-8 space-y-4">
+                            <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-2">قصص جانبية تابعة لهذا المجلد</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {work.relatedSideStories.map((side: any) => (
+                                    <Link key={side.slug} href={`/works/${side.slug}`} className="group flex items-center gap-3 bg-white/5 border border-white/5 p-2 rounded-xl hover:border-blue-500/30 transition-all">
+                                        <div className="w-10 h-14 shrink-0 rounded-md overflow-hidden border border-white/5">
+                                            <img src={side.rawCover ? urlFor(side.rawCover).url() : ""} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
+                                        </div>
+                                        <span className="text-[11px] font-bold text-gray-400 group-hover:text-blue-400 transition-colors line-clamp-2">{side.title}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {work.parentVolume && (
-                        <Link href={`/works/${work.parentVolume.slug}`} className="flex items-center justify-center gap-2 p-4 bg-blue-600/5 border border-blue-600/10 rounded-2xl text-xs font-bold text-blue-400 hover:bg-blue-600/10 transition-all">
+                        <Link href={`/works/${work.parentVolume.slug}`} className="flex items-center justify-center gap-2 p-4 bg-blue-600/5 border border-blue-600/10 rounded-2xl text-xs font-bold text-blue-400 hover:bg-blue-600/10 transition-all mt-4">
                             العودة للمجلد الرئيسي: {work.parentVolume.title}
                         </Link>
                     )}
                 </div>
             )}
-            {/* ----------------------------------------------------- */}
           </div>
 
           <div className="lg:col-span-4 space-y-6">
-            {/* (معلومات العمل والأزرار الجانبية بقيت كما هي) */}
             <div className="bg-zinc-900/80 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl">
               <h3 className="text-xl font-bold mb-8 text-white border-b border-white/5 pb-4 flex items-center gap-2">
                 <FaInfoCircle className="text-blue-500" /> معلومات العمل
@@ -242,7 +269,6 @@ export default async function WorkPage({ params }: Props) {
         </div>
       </section>
 
-      {/* قسم التعليقات (بقي كما هو) */}
       <section className="max-w-6xl mx-auto px-5 md:px-8 pb-20">
         <div id="comments-section" className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-8 md:p-12 shadow-2xl space-y-10">
           <div className="flex items-center justify-between border-b border-white/5 pb-6">
@@ -250,9 +276,6 @@ export default async function WorkPage({ params }: Props) {
               <FaComments className="text-blue-600 text-3xl" />
               آراء القراء ({work.comments?.length || 0})
             </h2>
-          </div>
-          <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-            {/* ... عرض التعليقات ... */}
           </div>
           <div className="pt-10 border-t border-white/5">
             <CommentForm workId={work._id} />
