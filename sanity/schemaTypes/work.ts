@@ -66,5 +66,32 @@ export default defineType({
       options: { accept: '.pdf' },
       description: 'إذا واجهت مشكلة في روابط Drive، يمكنك رفع الملف مباشرة هنا كخيار بديل ومضمون.'
     }),
+
+    /* --------------------------------------------------------- */
+    /* الحقول الجديدة لربط المجلدات والقصص الجانبية */
+
+    defineField({
+      name: 'previousWork',
+      title: 'العمل السابق',
+      type: 'reference',
+      to: [{type: 'work'}],
+      description: 'اختر المجلد السابق ليظهر كبطاقة للقارئ للعودة للخلف.'
+    }),
+
+    defineField({
+      name: 'nextWork',
+      title: 'العمل التالي (أو تخطي)',
+      type: 'reference',
+      to: [{type: 'work'}],
+      description: 'اختر المجلد الذي يلي هذا العمل، أو المجلد التالي مباشرة لتخطي القصة الجانبية.'
+    }),
+
+    defineField({
+      name: 'parentVolume',
+      title: 'المجلد الأساسي (خاص بالقصص الجانبية)',
+      type: 'reference',
+      to: [{type: 'work'}],
+      description: 'إذا كان هذا العمل قصة قصيرة، اربطه بالمجلد الرئيسي الذي تنتمي له (مثلاً المجلد الثالث).'
+    }),
   ]
 })
