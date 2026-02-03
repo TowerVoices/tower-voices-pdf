@@ -147,10 +147,10 @@ export default async function HomePage() {
               </div>
               <div>
                 <h3 className="text-xl md:text-2xl font-black text-white mb-2 tracking-tight">
-                  هل تشعر بالضياع في أحداث ريزيرو؟
+                  هل تشعر بالضياع في أحداث ري زيرو؟
                 </h3>
                 <p className="text-gray-400 font-bold text-sm md:text-base leading-relaxed">
-                  شاهد ترتيب المسارات الزمني من هنا وتتبع رحلة سوبارو وفيلهلم بدقة.
+                  شاهد ترتيب المسارات الزمني من هنا وتتبع رحلة سوبارو وفيلهلم بدقة
                 </p>
               </div>
             </div>
