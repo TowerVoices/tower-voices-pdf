@@ -16,12 +16,12 @@ export const metadata: Metadata = {
     google: "QCWLh4mWPB2AX43U4UtzDMwux8SU0ntiDJ_ybRfchcc",
   },
 
-  // الكود المسؤول عن تغيير كلمة Vercel إلى اسم موقعك
+  // الكود المسؤول عن تعريف هويتك الرقمية الجديدة
   openGraph: {
     title: "أصوات البرج",
     description: "المكان الأول لأحدث الروايات المترجمة والحصرية بأسلوب عربي فصيح.",
-    url: "https://tower-voices-pdf.vercel.app",
-    siteName: "أصوات البرج", // هذا هو السطر الأهم لإجبار جوجل على تغيير الاسم
+    url: "https://towervoices.online", // التحديث النهائي للرابط
+    siteName: "أصوات البرج", 
     locale: "ar_SA",
     type: "website",
   },
@@ -40,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <head>
-        {/* رابط الأيقونة لضمان ظهور شعارك بدلاً من شعار Vercel في البحث */}
+        {/* رابط الأيقونة لضمان ظهور شعارك بدلاً من شعار Vercel */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body className="bg-[#050505]">

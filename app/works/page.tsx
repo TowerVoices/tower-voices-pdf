@@ -3,21 +3,22 @@ import { client } from "../sanity.client";
 import { Metadata } from "next";
 import WorksClient from "./WorksClient";
 
-// 1. إعدادات السيو: عنوان نظيف وعام مع وصف وكلمات مفتاحية قوية تقنياً
+// 1. إعدادات السيو المحدثة للنطاق الجديد
 export const metadata: Metadata = {
-  title: "مكتبة الأعمال | أصوات البرج", // العنوان الذي طلبته
+  title: "مكتبة الأعمال | أصوات البرج", 
   description: "استعرض المكتبة الكاملة للروايات المترجمة، بما في ذلك ترجمة روايات ريزيرو (Re:Zero) بكافة مساراتها وقصصها الجانبية.",
   keywords: [
     "مكتبة الروايات", "ترجمة روايات", "أصوات البرج", "Re:Zero IF Routes", 
     "Re:Zero EX", "روايات مترجمة بالعربية", "Tower Voices"
   ],
   alternates: { 
-    canonical: "https://tower-voices-pdf.vercel.app/works" 
+    // التحديث إلى النطاق الجديد
+    canonical: "https://towervoices.online/works" 
   },
   openGraph: {
     title: "مكتبة الأعمال - أصوات البرج",
     description: "الأرشيف الكامل للروايات والقصص المترجمة باحترافية.",
-    url: "https://tower-voices-pdf.vercel.app/works",
+    url: "https://towervoices.online/works",
     siteName: "أصوات البرج",
     locale: "ar_SA",
     type: "website",
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 async function getAllWorks() {
   /**
    * جلب البيانات مع الترتيب وتفعيل التحديث التلقائي كل 60 ثانية
-   * لضمان ظهور الروايات الجديدة فور إضافتها في سانتي
+   * لضمان ظهور الروايات الجديدة (مثل العمل رقم 16) فور إضافتها
    */
   const query = `*[_type == "work"] | order(priority asc, _createdAt desc) {
     title,
@@ -46,7 +47,7 @@ export default async function AllWorksPage() {
     <main dir="rtl" className="bg-[#050505] min-h-screen text-gray-200 pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-6">
         
-        {/* رأس الصفحة بصميم عصري وعنوان غير محصور */}
+        {/* رأس الصفحة بتصميم عصري */}
         <div className="mb-12 border-b border-white/5 pb-10">
           <h1 className="text-4xl md:text-6xl font-black text-white mb-4">
             مكتبة الأعمال

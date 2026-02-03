@@ -24,7 +24,8 @@ interface Props {
   params: Promise<{ slug: string; }>;
 }
 
-const baseUrl = "https://tower-voices-pdf.vercel.app";
+// التحديث الجديد للرابط الأساسي
+const baseUrl = "https://towervoices.online";
 
 // 1. نظام التمييز الذكي للروابط (Metadata Generator) ثنائي اللغة
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -57,7 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: "أصوات البرج",
       images: [
         {
-          url: coverUrl, // صورة المعاينة لوسائل التواصل
+          url: coverUrl, 
           width: 800,
           height: 1200,
           alt: `غلاف رواية ${work.title}`
@@ -101,7 +102,7 @@ export default async function WorkPage({ params }: Props) {
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
   const finalPdfUrl = work.pdfUrl; 
 
-  // 2. إعداد كود البيانات المهيكلة (JSON-LD) وحل مشكلة التقييم الصفر
+  // 2. إعداد كود البيانات المهيكلة (JSON-LD)
   const bookSchema: any = {
     "@context": "https://schema.org",
     "@type": "Book",
@@ -111,7 +112,6 @@ export default async function WorkPage({ params }: Props) {
     "image": coverUrl,
   };
 
-  // لا نرسل التقييم لجوجل إلا إذا كان أكبر من صفر لتفادي أخطاء النطاق
   if (workRating > 0) {
     bookSchema.aggregateRating = {
       "@type": "AggregateRating",

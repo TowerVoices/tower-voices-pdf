@@ -2,4 +2,5 @@ User-agent: *
 Allow: /
 Disallow: /studio/
 
-Sitemap: https://tower-voices-pdf.vercel.app/sitemap.xml
+# التحديث النهائي لتوجيه جوجل للعنوان الجديد
+Sitemap: https://towervoices.online/sitemap.xml

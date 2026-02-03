@@ -7,21 +7,22 @@ import {
   FaArrowLeft
 } from "react-icons/fa";
 
-// 1. إعدادات السيو المتقدمة (استهداف Re:Zero IF, EX, والمسارات باللغتين)
+// 1. إعدادات السيو المحدثة للنطاق الجديد
 export const metadata: Metadata = {
-  title: "ترجمة Re:Zero EX و Re:Zero IF بالعربية | أرشيف المسارات (Routes) | أصوات البرج",
+  title: "أصوات البرج | أرشيف ترجمة Re:Zero EX و Re:Zero IF بالعربية",
   description: "المكان الأول لأحدث ترجمات روايات ريزيرو. استكشف مسارات Re:Zero IF وقصص Re:Zero EX الجانبية، رواية الويب واللايت نوفل (Web & Light Novel) بأسلوب عربي فصيح.",
   keywords: [
     "ترجمة روايات ريزيرو", "Re:Zero novel translation", "Re:Zero IF Routes", "مسارات ريزيرو ماذا لو", 
     "Re:Zero EX", "رواية ويب ريزيرو", "Light Novel", "أصوات البرج", "Tower Voices"
   ],
   alternates: {
-    canonical: "https://tower-voices-pdf.vercel.app/works", 
+    // تم التحديث إلى النطاق الجديد
+    canonical: "https://towervoices.online", 
   },
   openGraph: {
-    title: "أرشيف ترجمة ريزيرو: Re:Zero EX & IF Routes Archive",
+    title: "أصوات البرج: أرشيف ترجمة ريزيرو الرسمي",
     description: "استكشف كافة مسارات ريزيرو IF ومجلدات EX المترجمة باحترافية.",
-    url: "https://tower-voices-pdf.vercel.app/works",
+    url: "https://towervoices.online",
     siteName: "أصوات البرج",
     locale: "ar_SA",
     type: "website",
@@ -30,9 +31,8 @@ export const metadata: Metadata = {
 
 async function getLatestWorks() {
   /**
-   * شرح التعديل:
-   * تم إضافة { next: { revalidate: 60 } } لإجبار الموقع على تحديث البيانات 
-   * من Sanity كل 60 ثانية، مما يحل مشكلة الروابط القديمة (خطأ 404).
+   * نظام التحديث التلقائي يضمن ظهور الأعمال الـ 16 فوراً 
+   * دون الحاجة لإعادة بناء الموقع يدوياً
    */
   const query = `*[_type == "work"] | order(priority asc, _createdAt desc) [0..3] {
     title,
@@ -43,7 +43,6 @@ async function getLatestWorks() {
     priority
   }`;
   
-  // تحديث السطر التالي ليشمل خيارات التحديث التلقائي
   const data = await client.fetch(query, {}, { next: { revalidate: 60 } });
   return data;
 }
@@ -54,7 +53,7 @@ export default async function HomePage() {
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans selection:bg-blue-500/30">
 
-      {/* 1. قسم الهيرو (Hero Section) - تم الحفاظ عليه كما هو */}
+      {/* 1. قسم الهيرو (Hero Section) */}
       <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-[url('/hero.jpg')] bg-cover bg-center opacity-30 scale-105" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-[#050505]/80 to-[#050505]" />
@@ -90,7 +89,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 2. شبكة الأعمال (تظهر 4 أعمال مرتبة) - تم الحفاظ عليها كما هي */}
+      {/* 2. شبكة الأعمال */}
       <section id="works" className="max-w-7xl mx-auto px-6 py-24">
         <div className="flex items-end justify-between mb-12">
           <div>

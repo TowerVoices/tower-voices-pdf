@@ -2,9 +2,10 @@ import { MetadataRoute } from 'next';
 import { client } from './sanity.client';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://tower-voices-pdf.vercel.app"; 
+  // التحديث النهائي للنطاق الرسمي الجديد
+  const baseUrl = "https://towervoices.online"; 
 
-  // جلب كل الروابط (slugs) من سانتي مع تحديث تلقائي كل 60 ثانية
+  // جلب كل الروابط (slugs) لـ 16 عملاً مع ضمان التحديث التلقائي
   const query = `*[_type == "work"]{ "slug": slug.current, _updatedAt }`;
   const works = await client.fetch(query, {}, { next: { revalidate: 60 } });
 
@@ -17,13 +18,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     {
-      url: baseUrl, // الصفحة الرئيسية
+      url: baseUrl, // الواجهة الرئيسية للنطاق الجديد
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 1,
     },
     {
-      url: `${baseUrl}/works`, // صفحة المكتبة - ضرورية جداً لأرشفة الكلمات المفتاحية
+      url: `${baseUrl}/works`, // صفحة المكتبة الشاملة
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
