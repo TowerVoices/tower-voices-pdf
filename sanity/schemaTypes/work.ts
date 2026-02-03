@@ -1,97 +1,126 @@
 import { defineType, defineField } from 'sanity'
+import { FaBook, FaLink, FaImage, FaMapSigns, FaInfoCircle } from 'react-icons/fa'
 
 export default defineType({
   name: 'work',
   title: 'الأعمال (الروايات)',
   type: 'document',
+  icon: FaBook,
+
+  // 1. تعريف المجموعات (التبويبات العلوية) لتقليل الازدحام
+  groups: [
+    { name: 'main', title: 'المعلومات الأساسية', icon: FaInfoCircle },
+    { name: 'content', title: 'المحتوى والقصة', icon: FaBook },
+    { name: 'media', title: 'الوسائط والأغلفة', icon: FaImage },
+    { name: 'links', title: 'الروابط والملفات', icon: FaLink },
+    { name: 'navigation', title: 'رحلة البرج (التنقل)', icon: FaMapSigns },
+  ],
+
   fields: [
-    defineField({ name: 'title', title: 'عنوان العمل', type: 'string' }),
-    defineField({ name: 'slug', title: 'الرابط (Slug)', type: 'slug', options: { source: 'title' } }),
-    
+    /* --- مجموعة: المعلومات الأساسية --- */
+    defineField({ name: 'title', title: 'عنوان العمل', type: 'string', group: 'main' }),
+    defineField({ name: 'slug', title: 'الرابط (Slug)', type: 'slug', options: { source: 'title' }, group: 'main' }),
     defineField({ 
       name: 'priority', 
       title: 'الأولوية (للترتيب في الرئيسية)', 
       type: 'number',
       initialValue: 99,
-      description: 'ضع رقم 1 للعمل الذي تريده أن يظهر أولاً، ثم 2 للذي يليه، وهكذا.'
+      group: 'main',
+      description: 'ضع رقم 1 للعمل الذي تريده أن يظهر أولاً.'
     }),
+    defineField({ name: 'author', title: 'المؤلف', type: 'string', group: 'main' }),
+    defineField({ name: 'status', title: 'حالة الترجمة', type: 'string', group: 'main' }),
 
-    defineField({ 
-      name: 'author', 
-      title: 'المؤلف', 
-      type: 'string',
-      description: 'اسم كاتب الرواية الأصلي'
-    }),
+    /* --- مجموعة: الوسائط --- */
+    defineField({ name: 'cover', title: 'غلاف العمل', type: 'image', options: { hotspot: true }, group: 'media' }),
+    defineField({ name: 'tags', title: 'الوسوم (التصنيفات)', type: 'array', of: [{ type: 'string' }], group: 'media' }),
 
-    defineField({ name: 'cover', title: 'غلاف العمل', type: 'image', options: { hotspot: true } }),
-    defineField({ name: 'tags', title: 'الوسوم (التصنيفات)', type: 'array', of: [{ type: 'string' }] }),
-    defineField({ name: 'status', title: 'حالة الترجمة', type: 'string' }),
-    
-    defineField({ name: 'ratingWork', title: 'تقييم القصة', type: 'number' }),
-    defineField({ name: 'ratingTranslation', title: 'تقييم الترجمة', type: 'number' }),
-    
+    /* --- مجموعة: المحتوى --- */
+    defineField({ name: 'synopsis', title: 'الملخص', type: 'text', group: 'content' }),
+    defineField({ name: 'isSpoiler', title: 'تفعيل إخفاء الحرق (Blur)؟', type: 'boolean', initialValue: false, group: 'content' }),
+    defineField({ name: 'warning', title: 'نص التحذير (إن وجد)', type: 'string', group: 'content' }),
+    defineField({ name: 'ratingWork', title: 'تقييم القصة', type: 'number', group: 'content' }),
+    defineField({ name: 'ratingTranslation', title: 'تقييم الترجمة', type: 'number', group: 'content' }),
     defineField({ 
       name: 'ratingCount', 
       title: 'عدد المقيمين', 
       type: 'number', 
       initialValue: 0,
-      description: 'إجمالي عدد الأشخاص الذين قاموا بالتقييم'
+      group: 'content'
     }),
 
-    defineField({ name: 'synopsis', title: 'الملخص', type: 'text' }),
-    defineField({ name: 'isSpoiler', title: 'تفعيل إخفاء الحرق (Blur)؟', type: 'boolean', initialValue: false }),
-    defineField({ name: 'warning', title: 'نص التحذير (إن وجد)', type: 'string' }),
-    
-    /* --------------------------------------------------------- */
-    /* الحقول الخاصة بالملفات والروابط */
-    
-    defineField({ 
-      name: 'downloadUrl', 
-      title: 'رابط التحميل (Drive)', 
-      type: 'url',
-      description: 'هذا الرابط مخصص لزر "تحميل PDF" التقليدي ويفتح في صفحة قوقل درايف مباشرة.'
-    }),
-
-    defineField({ 
-      name: 'readerUrl', 
-      title: 'رابط القارئ المباشر (Reader URL)', 
-      type: 'url',
-      description: 'انسخ رابط Drive العادي هنا (الذي ينتهي بـ /view). سيقوم الموقع تلقائياً بمعالجته عبر "الجسر البرمي" ليعمل داخل القارئ دون أخطاء.'
-    }),
-
+    /* --- مجموعة: الروابط والملفات --- */
+    defineField({ name: 'downloadUrl', title: 'رابط التحميل (Drive)', type: 'url', group: 'links' }),
+    defineField({ name: 'readerUrl', title: 'رابط القارئ المباشر (Reader URL)', type: 'url', group: 'links' }),
     defineField({
       name: 'pdfFile',
       title: 'ملف PDF (رفع مباشر)',
       type: 'file',
       options: { accept: '.pdf' },
-      description: 'إذا واجهت مشكلة في روابط Drive، يمكنك رفع الملف مباشرة هنا كخيار بديل ومضمون.'
+      group: 'links'
     }),
 
-    /* --------------------------------------------------------- */
-    /* الحقول الجديدة لربط المجلدات والقصص الجانبية */
-
+    /* --- مجموعة: رحلة البرج (التنقل والترتيب) --- */
     defineField({
       name: 'previousWork',
       title: 'العمل السابق',
       type: 'reference',
       to: [{type: 'work'}],
-      description: 'اختر المجلد السابق ليظهر كبطاقة للقارئ للعودة للخلف.'
+      group: 'navigation'
     }),
-
     defineField({
       name: 'nextWork',
       title: 'العمل التالي (أو تخطي)',
       type: 'reference',
       to: [{type: 'work'}],
-      description: 'اختر المجلد الذي يلي هذا العمل، أو المجلد التالي مباشرة لتخطي القصة الجانبية.'
+      group: 'navigation'
     }),
-
     defineField({
       name: 'parentVolume',
       title: 'المجلد الأساسي (خاص بالقصص الجانبية)',
       type: 'reference',
       to: [{type: 'work'}],
-      description: 'إذا كان هذا العمل قصة قصيرة، اربطه بالمجلد الرئيسي الذي تنتمي له (مثلاً المجلد الثالث).'
+      group: 'navigation'
     }),
-  ]
+    defineField({
+      name: 'chronologicalOrder',
+      title: 'الترتيب الزمني (رقم)',
+      type: 'number',
+      initialValue: 0,
+      group: 'navigation'
+    }),
+    defineField({
+      name: 'storyType',
+      title: 'نوع المسار (للتصفية)',
+      type: 'string',
+      group: 'navigation',
+      options: {
+        list: [
+          { title: 'القصة الأساسية (Main)', value: 'main' },
+          { title: 'روايات (EX)', value: 'ex' },
+          { title: 'مسارات ماذا لو (IF)', value: 'if' },
+          { title: 'قصص جانبية (Side)', value: 'side' },
+        ],
+        layout: 'radio'
+      }
+    }),
+  ],
+
+  // 2. تحسين شكل القائمة الجانبية لعرض الأغلفة والحالة بوضوح
+  preview: {
+    select: {
+      title: 'title',
+      author: 'author',
+      media: 'cover',
+      status: 'status'
+    },
+    prepare(selection) {
+      const {title, author, media, status} = selection
+      return {
+        title: title,
+        subtitle: `${author || 'تابي ناجاتسوكي'} | [${status || 'قيد الترجمة'}]`,
+        media: media
+      }
+    }
+  }
 })
