@@ -4,7 +4,8 @@ import { client } from "./sanity.client";
 import { urlFor } from "./sanity.image";  
 import { 
   FaArrowRight,
-  FaArrowLeft
+  FaArrowLeft,
+  FaMapMarkedAlt // استيراد أيقونة الخريطة للبنر الجديد
 } from "react-icons/fa";
 
 // 1. إعدادات السيو المحدثة للنطاق الجديد
@@ -16,13 +17,12 @@ export const metadata: Metadata = {
     "Re:Zero EX", "رواية ويب ريزيرو", "Light Novel", "أصوات البرج", "Tower Voices"
   ],
   alternates: {
-    // تم التحديث إلى النطاق الجديد
-    canonical: "https://towervoices.online", 
+    canonical: "https://towerviews.online", 
   },
   openGraph: {
     title: "أصوات البرج: أرشيف ترجمة ريزيرو الرسمي",
     description: "استكشف كافة مسارات ريزيرو IF ومجلدات EX المترجمة باحترافية.",
-    url: "https://towervoices.online",
+    url: "https://towerviews.online",
     siteName: "أصوات البرج",
     locale: "ar_SA",
     type: "website",
@@ -30,10 +30,6 @@ export const metadata: Metadata = {
 };
 
 async function getLatestWorks() {
-  /**
-   * نظام التحديث التلقائي يضمن ظهور الأعمال الـ 16 فوراً 
-   * دون الحاجة لإعادة بناء الموقع يدوياً
-   */
   const query = `*[_type == "work"] | order(priority asc, _createdAt desc) [0..3] {
     title,
     "slug": slug.current,
@@ -99,7 +95,7 @@ export default async function HomePage() {
           <div className="h-[2px] flex-1 mx-8 bg-gradient-to-l from-zinc-800 to-transparent hidden md:block" />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
           {works.map((work: any) => (
             <Link
               key={work.slug}
@@ -140,8 +136,37 @@ export default async function HomePage() {
           ))}
         </div>
 
+        {/* --- الإضافة الجديدة: بنر خريطة البرج التفاعلي --- */}
+        <div className="relative overflow-hidden bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-8 md:p-12 shadow-2xl backdrop-blur-sm group mb-16">
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-600/10 rounded-full blur-[100px] group-hover:bg-blue-600/20 transition-all duration-700" />
+          
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-right">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="w-16 h-16 bg-blue-600/10 rounded-2xl flex items-center justify-center border border-blue-600/20 shadow-inner">
+                <FaMapMarkedAlt className="text-blue-500 text-3xl" />
+              </div>
+              <div>
+                <h3 className="text-xl md:text-2xl font-black text-white mb-2 tracking-tight">
+                  هل تشعر بالضياع في أحداث ريزيرو؟
+                </h3>
+                <p className="text-gray-400 font-bold text-sm md:text-base leading-relaxed">
+                  شاهد ترتيب المسارات الزمني من هنا وتتبع رحلة سوبارو وفيلهلم بدقة.
+                </p>
+              </div>
+            </div>
+
+            <Link 
+              href="/timeline" 
+              className="group/btn flex items-center gap-3 bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-black transition-all shadow-[0_0_20px_rgba(37,99,235,0.2)] hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] whitespace-nowrap"
+            >
+              شاهد الخريطة الزمنية
+              <FaArrowLeft className="group-hover:-translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </div>
+
         {/* 3. زر شاهد المزيد */}
-        <div className="mt-16 text-center">
+        <div className="text-center">
           <Link 
             href="/works" 
             className="inline-flex items-center gap-3 bg-zinc-900 border border-white/10 hover:border-blue-500/50 text-white px-10 py-4 rounded-2xl font-bold transition-all group"

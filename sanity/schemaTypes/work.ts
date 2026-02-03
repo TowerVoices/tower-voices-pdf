@@ -87,8 +87,19 @@ export default defineType({
       title: 'الترتيب الزمني (رقم)',
       type: 'number',
       initialValue: 0,
-      group: 'navigation'
+      group: 'navigation',
+      description: 'العمل الذي يحمل رقم 0 لن يظهر في الخريطة الزمنية.'
     }),
+    
+    // الحقل الجديد: شرح الفترة الزمنية
+    defineField({
+      name: 'timeDescription',
+      title: 'وصف الفترة الزمنية (شرح مبسط)',
+      type: 'string',
+      group: 'navigation',
+      description: 'مثال: "قبل 20 عاماً من القصة" أو "بعد أحداث المجلد الثالث".'
+    }),
+
     defineField({
       name: 'storyType',
       title: 'نوع المسار (للتصفية)',
@@ -96,13 +107,15 @@ export default defineType({
       group: 'navigation',
       options: {
         list: [
+          { title: 'بدون تصنيف (لاشيء)', value: 'none' }, // خيار لإلغاء الاختيار
           { title: 'القصة الأساسية (Main)', value: 'main' },
           { title: 'روايات (EX)', value: 'ex' },
           { title: 'مسارات ماذا لو (IF)', value: 'if' },
           { title: 'قصص جانبية (Side)', value: 'side' },
         ],
         layout: 'radio'
-      }
+      },
+      initialValue: 'none'
     }),
   ],
 
