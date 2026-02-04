@@ -57,7 +57,7 @@ export default function TimelinePage() {
             النسخة التجريبية (Beta)
           </div>
           <h1 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tighter">خريطة المسارات</h1>
-          <p className="text-gray-500 font-bold">دليلك البصري لترتيب أحداث ريزيرو الزمني داخل البرج</p>
+          <p className="text-gray-500 font-bold">دليلك البصري لترتيب أحداث ري زيرو الزمني داخل البرج</p>
         </header>
 
         {/* نظام التبويبات التفاعلي */}
