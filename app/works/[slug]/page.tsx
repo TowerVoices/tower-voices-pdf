@@ -12,13 +12,10 @@ import ReaderButton from "./ReaderButton";
 
 import { 
   FaDownload, 
-  FaExclamationTriangle, 
   FaBookOpen, 
-  FaShareAlt,
   FaComments,
   FaInfoCircle,
   FaChevronLeft,
-  FaChevronRight,
   FaArrowRight,
   FaArrowLeft,
   FaLayerGroup
@@ -70,7 +67,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// استعلام GROQ الشامل
 async function getWork(slug: string) {
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id,
@@ -80,16 +76,11 @@ async function getWork(slug: string) {
     author,
     tags,
     status,
-    ratingWork,
-    ratingTranslation,
-    ratingCount,
     synopsis,
     isSpoiler,
-    warning,
     "pdfUrl": coalesce(readerUrl, pdfFile.asset->url, downloadUrl),
     "previousWork": previousWork->{ title, "slug": slug.current, "rawCover": cover },
     "nextWork": nextWork->{ title, "slug": slug.current, "rawCover": cover },
-    "parentVolume": parentVolume->{ title, "slug": slug.current, "rawCover": cover },
     "relatedSideStories": *[_type == "work" && parentVolume._ref == ^._id] {
       title,
       "slug": slug.current,
@@ -101,18 +92,15 @@ async function getWork(slug: string) {
   return await client.fetch(query, { slug }, { next: { revalidate: 60 } });
 }
 
-// --- التحديث هنا: مكون البطاقة مع تأثير التوهج الذكي ---
+// مكون البطاقة مع الترتيب والأسهم المحسنة
 const NavCard = ({ work, label, isNext }: { work: any, label: string, isNext: boolean }) => {
     const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
     return (
         <Link href={`/works/${work.slug}`} className="group relative flex-1">
-            {/* هنا نطبق ستايل مختلف بناءً على هل هي البطاقة التالية أم السابقة */}
             <div className={`
                 rounded-2xl overflow-hidden transition-all duration-500
                 ${isNext 
-                    // ستايل المجلد التالي: توهج أزرق وخلفية مميزة
                     ? "bg-blue-900/10 border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.15)] hover:shadow-[0_0_40px_rgba(59,130,246,0.5)] hover:border-blue-400 hover:-translate-y-1"
-                    // ستايل المجلد السابق: ستايل هادئ
                     : "bg-zinc-900/50 border border-white/5 hover:border-white/20 hover:shadow-lg hover:-translate-y-1"
                 }
             `}>
@@ -121,10 +109,10 @@ const NavCard = ({ work, label, isNext }: { work: any, label: string, isNext: bo
                         <img src={coverUrl} alt={work.title} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        {/* تغيير لون النص حسب نوع البطاقة */}
                         <span className={`text-[10px] font-black uppercase tracking-widest block mb-1 ${isNext ? "text-blue-400" : "text-gray-500"}`}>{label}</span>
                         <h4 className={`text-sm font-bold truncate transition-colors ${isNext ? "text-white group-hover:text-blue-300" : "text-gray-300 group-hover:text-white"}`}>{work.title}</h4>
                         <div className="mt-2 flex items-center gap-1 text-gray-500 group-hover:text-gray-300">
+                             {/* المجلد التالي (يمين) يشير لليسار، والسابق (يسار) يشير لليمين */}
                              {isNext ? <FaArrowLeft className="text-[10px] text-blue-500" /> : <FaArrowRight className="text-[10px]" />}
                              <span className={`text-[10px] font-bold ${isNext ? "text-blue-500" : ""}`}>{isNext ? "اذهب للمجلد التالي" : "العودة للمجلد السابق"}</span>
                         </div>
@@ -141,8 +129,6 @@ export default async function WorkPage({ params }: Props) {
 
   if (!work) return notFound();
 
-  const workRating = work.ratingWork || 0; 
-  const translationRating = work.ratingTranslation || 0;
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
   const finalPdfUrl = work.pdfUrl; 
 
@@ -208,8 +194,8 @@ export default async function WorkPage({ params }: Props) {
               </div>
             </div>
 
-            {/* نظام التنقل الذكي والقصص الجانبية */}
-            {(work.previousWork || work.nextWork || work.parentVolume || work.relatedSideStories?.length > 0) && (
+            {/* تم عكس الترتيب هنا: المجلد التالي أولاً (يظهر يميناً في RTL) */}
+            {(work.previousWork || work.nextWork || work.relatedSideStories?.length > 0) && (
                 <div className="space-y-6 pt-4">
                     <div className="flex items-center gap-3 mb-2">
                          <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/10"></div>
@@ -220,8 +206,10 @@ export default async function WorkPage({ params }: Props) {
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {work.previousWork && <NavCard work={work.previousWork} label="المجلد السابق" isNext={false} />}
+                        {/* التالي أولاً ليأخذ جهة اليمين */}
                         {work.nextWork && <NavCard work={work.nextWork} label="المجلد التالي" isNext={true} />}
+                        {/* السابق ثانياً ليأخذ جهة اليسار */}
+                        {work.previousWork && <NavCard work={work.previousWork} label="المجلد السابق" isNext={false} />}
                     </div>
 
                     {work.relatedSideStories?.length > 0 && (
@@ -238,12 +226,6 @@ export default async function WorkPage({ params }: Props) {
                                 ))}
                             </div>
                         </div>
-                    )}
-
-                    {work.parentVolume && (
-                        <Link href={`/works/${work.parentVolume.slug}`} className="flex items-center justify-center gap-2 p-4 bg-blue-600/5 border border-blue-600/10 rounded-2xl text-xs font-bold text-blue-400 hover:bg-blue-600/10 transition-all mt-4">
-                            العودة للمجلد الرئيسي: {work.parentVolume.title}
-                        </Link>
                     )}
                 </div>
             )}
