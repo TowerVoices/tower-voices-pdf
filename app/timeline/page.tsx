@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { client } from "../sanity.client";
 import { urlFor } from "../sanity.image";
 import Link from "next/link";
-import { FaHistory, FaProjectDiagram, FaBook, FaLayerGroup, FaTags } from "react-icons/fa";
+import { FaHistory, FaProjectDiagram, FaBook, FaLayerGroup, FaTags, FaArrowRight } from "react-icons/fa";
 
 export default function TimelinePage() {
   const [works, setWorks] = useState<any[]>([]);
@@ -13,8 +13,7 @@ export default function TimelinePage() {
 
   useEffect(() => {
     const fetchTimeline = async () => {
-      // التحديث: إضافة شروط الإخفاء الصارمة في الاستعلام
-      // يستبعد العمل إذا كان: الترتيب 0، أو نوع المسار "none"، أو مفتاح الإخفاء مفعلاً
+      // التحديث: استعلام صارم يضمن جلب الأعمال المخصصة للخريطة فقط
       const query = `*[_type == "work" && chronologicalOrder > 0 && storyType != "none" && storyType != null && hideFromTimeline != true] | order(chronologicalOrder asc) {
         title,
         "slug": slug.current,
@@ -46,11 +45,22 @@ export default function TimelinePage() {
   return (
     <main dir="rtl" className="bg-[#050505] min-h-screen text-gray-200 py-12 px-4 font-sans">
       <div className="max-w-4xl mx-auto">
+        
+        {/* زر العودة للمكتبة لتحسين التنقل */}
+        <Link href="/works" className="inline-flex items-center gap-2 text-xs text-gray-500 hover:text-blue-500 mb-8 transition-colors group">
+           <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
+           العودة للمكتبة الشاملة
+        </Link>
+
         <header className="mb-12 text-center">
+          <div className="inline-block px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[10px] font-black uppercase tracking-widest mb-4">
+            النسخة التجريبية (Beta)
+          </div>
           <h1 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tighter">خريطة المسارات</h1>
           <p className="text-gray-500 font-bold">دليلك البصري لترتيب أحداث ريزيرو الزمني داخل البرج</p>
         </header>
 
+        {/* نظام التبويبات التفاعلي */}
         <div className="flex flex-wrap justify-center gap-3 mb-16 bg-white/5 p-2 rounded-3xl md:rounded-full w-fit mx-auto backdrop-blur-md border border-white/5 shadow-2xl">
           <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')} icon={<FaLayerGroup />} label="الكل" color="blue" />
           <TabButton active={activeTab === 'main'} onClick={() => setActiveTab('main')} icon={<FaBook />} label="القصة الأساسية" color="green" />
@@ -62,6 +72,8 @@ export default function TimelinePage() {
         <div className="relative border-r-2 border-white/5 mr-4 pr-8 space-y-12 transition-all duration-500">
           {filteredWorks.length > 0 ? filteredWorks.map((work) => (
             <div key={work.slug} className="relative group animate-in fade-in slide-in-from-right-4 duration-700">
+              
+              {/* النقطة الزمنية المتوهجة */}
               <div className={`absolute -right-[41px] top-2 w-5 h-5 rounded-full border-4 border-[#050505] transition-all
                 ${work.storyType === 'ex' ? 'bg-purple-600 shadow-[0_0_15px_rgba(147,51,234,0.5)]' : 
                   work.storyType === 'if' ? 'bg-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]' : 
@@ -77,13 +89,18 @@ export default function TimelinePage() {
                   border-white/5 shadow-xl`}>
                   
                   <div className="w-24 h-36 shrink-0 rounded-xl overflow-hidden border border-white/10 shadow-2xl">
-                    <img src={work.rawCover ? urlFor(work.rawCover).url() : ""} alt={work.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    <img 
+                      src={work.rawCover ? urlFor(work.rawCover).url() : ""} 
+                      alt={work.title} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                    />
                   </div>
                   
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">المرحلة {work.chronologicalOrder}</span>
                        
+                       {/* عرض الوصف الزمني من Sanity */}
                        {work.timeDescription && (
                          <span className="text-[10px] text-gray-400 font-bold border-r border-white/10 pr-2 mr-1">
                            {work.timeDescription}
