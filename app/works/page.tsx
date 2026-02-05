@@ -1,23 +1,21 @@
-// app/works/page.tsx
 import { client } from "../sanity.client";
 import { Metadata } from "next";
 import WorksClient from "./WorksClient";
 
-// 1. إعدادات السيو المحدثة للنطاق الجديد
+// 1. إعدادات السيو المتقدمة لتمييز المكتبة في نتائج البحث
 export const metadata: Metadata = {
-  title: "مكتبة الأعمال | أصوات البرج", 
-  description: "استعرض المكتبة الكاملة للروايات المترجمة، بما في ذلك ترجمة روايات ريزيرو (Re:Zero) بكافة مساراتها وقصصها الجانبية.",
+  title: "مكتبة الروايات المترجمة | تصفح أحدث الأعمال الحصرية", 
+  description: "استكشف أرشيف أصوات البرج للروايات المترجمة. نوفر لك وصولاً سهلاً لجميع المجلدات والفصول بأسلوب عربي فصيح وتجربة قراءة فريدة.",
   keywords: [
     "مكتبة الروايات", "ترجمة روايات", "أصوات البرج", "Re:Zero IF Routes", 
-    "Re:Zero EX", "روايات مترجمة بالعربية", "Tower Voices"
+    "Re:Zero EX", "روايات مترجمة بالعربية", "Tower Voices", "أرشيف الروايات"
   ],
   alternates: { 
-    // التحديث إلى النطاق الجديد
     canonical: "https://towervoices.online/works" 
   },
   openGraph: {
-    title: "مكتبة الأعمال - أصوات البرج",
-    description: "الأرشيف الكامل للروايات والقصص المترجمة باحترافية.",
+    title: "مكتبة أصوات البرج - أرشيف الروايات الحصرية",
+    description: "تصفح مئات الفصول والمجلدات المترجمة حصرياً لدى أصوات البرج.",
     url: "https://towervoices.online/works",
     siteName: "أصوات البرج",
     locale: "ar_SA",
@@ -26,10 +24,6 @@ export const metadata: Metadata = {
 };
 
 async function getAllWorks() {
-  /**
-   * جلب البيانات مع الترتيب وتفعيل التحديث التلقائي كل 60 ثانية
-   * لضمان ظهور الروايات الجديدة (مثل العمل رقم 16) فور إضافتها
-   */
   const query = `*[_type == "work"] | order(priority asc, _createdAt desc) {
     title,
     "slug": slug.current,
@@ -47,17 +41,17 @@ export default async function AllWorksPage() {
     <main dir="rtl" className="bg-[#050505] min-h-screen text-gray-200 pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-6">
         
-        {/* رأس الصفحة بتصميم عصري */}
+        {/* 2. رأس الصفحة - تم تغيير العنوان ليكون H1 فريداً */}
         <div className="mb-12 border-b border-white/5 pb-10">
-          <h1 className="text-4xl md:text-6xl font-black text-white mb-4">
-            مكتبة الأعمال
+          <h1 className="text-4xl md:text-6xl font-black text-white mb-4 border-r-8 border-blue-600 pr-6">
+            أرشيف الروايات المترجمة
           </h1>
-          <p className="text-gray-500 text-lg">
-            استعرض جميع الروايات المترجمة ({works.length} عمل متاح حالياً)
+          <p className="text-gray-500 text-lg pr-8">
+            تصفح مجموعتنا الكاملة ({works.length} عمل متاح حالياً)
           </p>
         </div>
 
-        {/* استدعاء مكون العميل الذي يحتوي على البحث والفلترة */}
+        {/* 3. مكون العميل للبحث والفلترة */}
         <WorksClient initialWorks={works} />
         
       </div>
