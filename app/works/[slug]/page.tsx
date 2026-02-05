@@ -116,8 +116,8 @@ export default async function WorkPage({ params }: Props) {
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-8 w-full pb-10 md:pb-16">
           
-          {/* محاذاة القمة: md:items-start تضمن أن النصوص تبدأ مع قمة الغلاف */}
-          <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-start w-full">
+          {/* محاذاة القاعدة: md:items-end تضمن توازي الأزرار مع أسفل الغلاف */}
+          <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-end w-full">
             <div className="relative group shrink-0">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
               <div className="relative w-40 md:w-64 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-white/10">
@@ -125,7 +125,7 @@ export default async function WorkPage({ params }: Props) {
               </div>
             </div>
             
-            <div className="flex-1 text-center md:text-right w-full flex flex-col justify-start">
+            <div className="flex-1 text-center md:text-right w-full flex flex-col justify-end">
               <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
                 {work.tags?.map((tag: string, index: number) => (
                   <span key={index} className="bg-blue-600/10 text-blue-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-blue-600/20">{tag}</span>
@@ -141,15 +141,7 @@ export default async function WorkPage({ params }: Props) {
                     <FaDownload /> تحميل PDF
                   </a>
                 )}
-                
-                {/* استعادة أزرار المشاركة المفقودة بجانب زر الإبلاغ */}
-                <div className="flex items-center gap-2">
-                   <ShareButtons 
-                      url={`${baseUrl}/works/${work.slug}`} 
-                      title={work.title} 
-                    />
-                   <ReportButton workTitle={work.title} />
-                </div>
+                <ReportButton workTitle={work.title} />
               </div>
             </div>
           </div>
@@ -225,6 +217,16 @@ export default async function WorkPage({ params }: Props) {
                     <span className="text-gray-500">المؤلف</span>
                     <span className="text-white font-bold">{work.author || "تابي ناجاتسوكي"}</span>
                 </div>
+              </div>
+            </div>
+
+            {/* أزرار المشاركة: تم نقلها هنا لتظهر أسفل خانة معلومات العمل */}
+            <div className="flex flex-col gap-4">
+              <div className="flex justify-center md:justify-start px-2">
+                 <ShareButtons 
+                    url={`${baseUrl}/works/${work.slug}`} 
+                    title={work.title} 
+                  />
               </div>
             </div>
           </div>
