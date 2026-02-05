@@ -12,7 +12,7 @@ interface Props {
 
 const baseUrl = "https://towervoices.online";
 
-// 1. توليد Metadata لحل الـ 17 خطأ حرج (Open Graph)
+// 1. توليد Metadata شاملة (حل الـ 17 خطأ حرج والـ Open Graph)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const work = await client.fetch(
@@ -26,8 +26,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `قراءة ${work.title} | أصوات البرج`,
     description: work.synopsis?.slice(0, 160),
+    alternates: { canonical: `${baseUrl}/reader/${slug}` }, // مهم جداً للأرشفة
     openGraph: {
       title: `قراءة ${work.title} - أصوات البرج`,
+      description: work.synopsis?.slice(0, 160),
+      url: `${baseUrl}/reader/${slug}`,
       images: [{ url: coverUrl }],
       type: "article",
     },
@@ -52,7 +55,7 @@ export default async function ReaderPage({ params }: Props) {
   return (
     <div className="flex flex-col h-screen bg-[#050505] overflow-hidden">
       
-      {/* 2. نظام المسارات (Breadcrumbs) - الربط الداخلي العلوي */}
+      {/* 2. نظام المسارات (Breadcrumbs) - حل مشكلة الربط الداخلي العلوي */}
       <nav dir="rtl" className="z-[100] px-6 py-3 border-b border-white/5 bg-[#080808]/90 backdrop-blur-md flex items-center gap-3 text-[11px] font-bold text-gray-500">
         <Link href="/" className="hover:text-white flex items-center gap-1 transition-colors">
           <FaHome className="text-blue-500" /> الرئيسية
@@ -67,12 +70,12 @@ export default async function ReaderPage({ params }: Props) {
         <span className="text-blue-500">وضع القراءة</span>
       </nav>
 
-      {/* 3. القارئ الفعلي - يأخذ المساحة الوسطى */}
+      {/* 3. القارئ الفعلي */}
       <main className="flex-1 relative overflow-hidden">
         <ModernReader pdfUrl={work.pdfUrl} title={work.title} />
       </main>
 
-      {/* 4. تذييل التنقل - الربط الداخلي السفلي لمنع "الصفحات اليتيمة" */}
+      {/* 4. تذييل التنقل - حل مشكلة "الصفحات اليتيمة" */}
       <footer dir="rtl" className="z-[100] p-4 border-t border-white/5 bg-[#080808] flex flex-row justify-between items-center">
           <Link href={`/works/${work.slug}`} className="text-[11px] text-gray-400 hover:text-white flex items-center gap-2 transition-colors">
               <FaArrowRight className="text-[10px]" /> العودة لتفاصيل المجلد
