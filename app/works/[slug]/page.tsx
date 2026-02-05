@@ -51,7 +51,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 async function getWork(slug: string) {
-  // تم استرجاع "relatedSideStories" في الاستعلام
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id, title, "slug": slug.current, "rawCover": cover, author, tags, status,
     synopsis, isSpoiler, timeDescription, chronologicalOrder,
@@ -110,7 +109,6 @@ export default async function WorkPage({ params }: Props) {
         <div className="absolute inset-0 bg-cover bg-center scale-110 blur-md opacity-30" style={{ backgroundImage: `url(${coverUrl})` }} />
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-8 w-full pb-10 md:pb-16">
-          
           <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-stretch w-full">
             <div className="relative group shrink-0">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
@@ -127,10 +125,8 @@ export default async function WorkPage({ params }: Props) {
                   ))}
                   <span className="bg-green-500/10 text-green-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-green-500/20">{work.status}</span>
                 </div>
-                <h1 className="text-3xl md:text-5xl lg:text-6xl font-black mb-6 text-white tracking-tight leading-tight">{work.title}</h1>
+                <h1 className="text-3xl md:text-6xl font-black mb-6 text-white tracking-tight leading-tight">{work.title}</h1>
               </div>
-
-              {/* الأزرار توازي قاعدة الغلاف */}
               <div className="md:mt-auto flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center">
                 <ReaderButton slug={work.slug} />
                 {work.pdfUrl && (
@@ -169,13 +165,10 @@ export default async function WorkPage({ params }: Props) {
                           </h3>
                           <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/10"></div>
                     </div>
-                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {work.nextWork && <NavCard work={work.nextWork} label="المجلد التالي" isNext={true} />}
                         {work.previousWork && <NavCard work={work.previousWork} label="المجلد السابق" isNext={false} />}
                     </div>
-
-                    {/* استرجاع قسم القصص الجانبية */}
                     {work.relatedSideStories?.length > 0 && (
                         <div className="mt-8 space-y-4">
                             <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-2">قصص جانبية تابعة لهذا المجلد</h4>
@@ -200,7 +193,7 @@ export default async function WorkPage({ params }: Props) {
               <h3 className="text-xl font-bold mb-8 text-white border-b border-white/5 pb-4 flex items-center gap-2">
                 <FaInfoCircle className="text-blue-500" /> معلومات العمل
               </h3>
-              <div className="space-y-6 text-sm flex-1">
+              <div className="space-y-6 text-sm flex-1 pb-6">
                 <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl">
                     <span className="text-gray-500">حالة العمل</span>
                     <span className="text-green-400 font-bold">{work.status}</span>
@@ -216,16 +209,24 @@ export default async function WorkPage({ params }: Props) {
                     <span className="text-white font-bold">{work.author || "تابي ناجاتسوكي"}</span>
                 </div>
               </div>
-
-              <div className="mt-8 pt-6 border-t border-white/5">
+              <div className="mt-auto pt-6 border-t border-white/5">
                 <div className="flex justify-center md:justify-start">
-                   <ShareButtons 
-                      url={`${baseUrl}/works/${work.slug}`} 
-                      title={work.title} 
-                    />
+                   <ShareButtons url={`${baseUrl}/works/${work.slug}`} title={work.title} />
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. قسم التعليقات (تمت استعادته بنجاح) */}
+      <section className="max-w-6xl mx-auto px-5 md:px-8 pb-20">
+        <div id="comments-section" className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-8 md:p-12 shadow-2xl space-y-10">
+          <h2 className="font-black text-2xl text-white flex items-center gap-3 border-b border-white/5 pb-6">
+            <FaComments className="text-blue-600 text-3xl" /> آراء القراء ({work.comments?.length || 0})
+          </h2>
+          <div className="pt-4">
+            <CommentForm workId={work._id} />
           </div>
         </div>
       </section>
