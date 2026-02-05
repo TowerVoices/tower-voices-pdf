@@ -28,7 +28,6 @@ interface Props {
 
 const baseUrl = "https://towervoices.online";
 
-// 1. توليد الـ Metadata مع الكلمات المفتاحية
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const work = await getWork(slug);
@@ -40,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${work.title} | أصوات البرج`,
     description: work.synopsis?.slice(0, 160),
-    keywords: [work.title, work.author, ... (work.tags || [])], // إضافة الكلمات المفتاحية من بيانات العمل
+    keywords: [work.title, work.author, ... (work.tags || [])],
     alternates: {
       canonical: `${baseUrl}/works/${slug}`,
     },
@@ -55,7 +54,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// جلب البيانات (لم يتغير)
 async function getWork(slug: string) {
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id, title, "slug": slug.current, "rawCover": cover, author, tags, status,
@@ -71,7 +69,6 @@ async function getWork(slug: string) {
   return await client.fetch(query, { slug }, { next: { revalidate: 60 } });
 }
 
-// مكون بطاقة التنقل (لم يتغير)
 const NavCard = ({ work, label, isNext }: { work: any, label: string, isNext: boolean }) => {
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
   return (
@@ -95,7 +92,6 @@ const NavCard = ({ work, label, isNext }: { work: any, label: string, isNext: bo
   );
 };
 
-// المكون الرئيسي للصفحة
 export default async function WorkPage({ params }: Props) {
   const { slug } = await params;
   const work = await getWork(slug);
@@ -107,7 +103,6 @@ export default async function WorkPage({ params }: Props) {
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans overflow-x-hidden">
       
-      {/* 2. شريط المسارات (Breadcrumbs) - تحسين الربط الداخلي */}
       <nav className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-2 text-[10px] md:text-xs text-gray-500 font-bold border-b border-white/5">
         <Link href="/" className="hover:text-blue-500 transition-colors">الرئيسية</Link>
         <FaChevronLeft className="text-[8px] opacity-30" />
@@ -116,27 +111,29 @@ export default async function WorkPage({ params }: Props) {
         <span className="text-gray-300 truncate max-w-[150px]">{work.title}</span>
       </nav>
       
-      {/* 3. قسم الرأس (Header) بتصميم متناسق */}
       <section className="relative min-h-[55vh] md:h-[65vh] w-full overflow-hidden flex items-end">
         <div className="absolute inset-0 bg-cover bg-center scale-110 blur-md opacity-30" style={{ backgroundImage: `url(${coverUrl})` }} />
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-8 w-full pb-10 md:pb-16">
-          <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-end w-full">
+          
+          {/* التعديل الجوهري: تم تغيير md:items-end إلى md:items-start لرفع كتلة النصوص للأعلى لتبدأ مع قمة الغلاف */}
+          <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-start w-full">
             <div className="relative group shrink-0">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
               <div className="relative w-40 md:w-64 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-white/10">
                 <img src={coverUrl} alt={work.title} className="w-full h-full object-cover transform group-hover:scale-105 transition duration-700" />
               </div>
             </div>
-            <div className="flex-1 text-center md:text-right w-full">
+            
+            {/* حاوية النصوص: إضافة flex-col و justify-start لضمان بقاء المحتوى في الأعلى */}
+            <div className="flex-1 text-center md:text-right w-full flex flex-col justify-start">
               <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
                 {work.tags?.map((tag: string, index: number) => (
                   <span key={index} className="bg-blue-600/10 text-blue-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-blue-600/20">{tag}</span>
                 ))}
                 <span className="bg-green-500/10 text-green-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-green-500/20">{work.status}</span>
               </div>
-              {/* 4. العنوان الرئيسي (H1) الوحيد في الصفحة */}
-              <h1 className="text-3xl md:text-6xl font-black mb-6 text-white tracking-tight">{work.title}</h1>
+              <h1 className="text-3xl md:text-6xl font-black mb-6 text-white tracking-tight leading-tight">{work.title}</h1>
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center">
                 <ReaderButton slug={work.slug} />
                 {work.pdfUrl && (
@@ -151,10 +148,8 @@ export default async function WorkPage({ params }: Props) {
         </div>
       </section>
 
-      {/* 5. باقي أقسام الصفحة (الملخص، الرحلة، التعليقات) - لم تتغير */}
       <section className="max-w-6xl mx-auto px-5 md:px-8 py-12">
-        {/* ... محتوى الملخص والرحلة ... */}
-         <div className="grid lg:grid-cols-12 gap-10">
+        <div className="grid lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8 space-y-8">
             <div className="bg-zinc-900/30 border border-white/5 rounded-[2.5rem] p-8 md:p-12 shadow-2xl backdrop-blur-sm">
               <div className="flex items-center gap-4 mb-8">
