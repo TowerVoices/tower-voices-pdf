@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FaXTwitter } from "react-icons/fa6";
-import { FaCompass } from "react-icons/fa"; // استيراد أيقونة البوصلة
+import { FaCompass, FaBook } from "react-icons/fa"; // إضافة أيقونة الكتاب للمكتبة
 
 export default function Navbar() {
   return (
@@ -13,19 +13,30 @@ export default function Navbar() {
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+            {/* استخدام span يمنع تكرار الـ H1 في كل الصفحات */}
             <span className="text-xl font-black tracking-tighter text-white group-hover:text-blue-500 transition-colors">
               أصوات البرج
             </span>
           </Link>
 
-          {/* زر خريطة البرج الجديد */}
-          <Link 
-            href="/timeline" 
-            className="flex items-center gap-2 text-gray-400 hover:text-blue-500 transition-all font-bold text-xs group/nav"
-          >
-            <FaCompass className="text-lg group-hover/nav:rotate-[360deg] transition-transform duration-700 ease-in-out" />
-            <span className="hidden md:inline">خريطة البرج</span>
-          </Link>
+          {/* روابط التنقل - لتعزيز الربط الداخلي */}
+          <div className="flex items-center gap-5">
+            <Link 
+              href="/works" 
+              className="flex items-center gap-2 text-gray-400 hover:text-white transition-all font-bold text-xs group/nav"
+            >
+              <FaBook className="text-sm" />
+              <span className="hidden md:inline">المكتبة</span>
+            </Link>
+
+            <Link 
+              href="/timeline" 
+              className="flex items-center gap-2 text-gray-400 hover:text-blue-500 transition-all font-bold text-xs group/nav"
+            >
+              <FaCompass className="text-lg group-hover/nav:rotate-[360deg] transition-transform duration-700 ease-in-out" />
+              <span className="hidden md:inline">خريطة البرج</span>
+            </Link>
+          </div>
         </div>
 
         {/* جهة اليسار: أيقونة حسابك في X */}
