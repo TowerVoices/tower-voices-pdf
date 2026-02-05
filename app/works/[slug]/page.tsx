@@ -31,18 +31,14 @@ const baseUrl = "https://towervoices.online";
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const work = await getWork(slug);
-
   if (!work) return {};
-
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
 
   return {
     title: `${work.title} | أصوات البرج`,
     description: work.synopsis?.slice(0, 160),
     keywords: [work.title, work.author, ... (work.tags || [])],
-    alternates: {
-      canonical: `${baseUrl}/works/${slug}`,
-    },
+    alternates: { canonical: `${baseUrl}/works/${slug}` },
     openGraph: {
       title: work.title,
       description: work.synopsis?.slice(0, 160),
@@ -55,6 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 async function getWork(slug: string) {
+  // تم استرجاع "relatedSideStories" في الاستعلام
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id, title, "slug": slug.current, "rawCover": cover, author, tags, status,
     synopsis, isSpoiler, timeDescription, chronologicalOrder,
@@ -95,9 +92,7 @@ const NavCard = ({ work, label, isNext }: { work: any, label: string, isNext: bo
 export default async function WorkPage({ params }: Props) {
   const { slug } = await params;
   const work = await getWork(slug);
-
   if (!work) return notFound();
-
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
 
   return (
@@ -116,7 +111,6 @@ export default async function WorkPage({ params }: Props) {
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-8 w-full pb-10 md:pb-16">
           
-          {/* التعديل: md:items-stretch تجعل حاوية النصوص بنفس ارتفاع الغلاف تماماً */}
           <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-stretch w-full">
             <div className="relative group shrink-0">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
@@ -125,9 +119,7 @@ export default async function WorkPage({ params }: Props) {
               </div>
             </div>
             
-            {/* حاوية النصوص: العنوان يبقى في مكانه (أعلى) والأزرار تدفع نفسها للأسفل (mt-auto) */}
             <div className="flex-1 text-center md:text-right w-full flex flex-col">
-              {/* القسم العلوي: التصنيفات والعنوان */}
               <div>
                 <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
                   {work.tags?.map((tag: string, index: number) => (
@@ -135,14 +127,14 @@ export default async function WorkPage({ params }: Props) {
                   ))}
                   <span className="bg-green-500/10 text-green-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-green-500/20">{work.status}</span>
                 </div>
-                <h1 className="text-3xl md:text-6xl font-black mb-6 text-white tracking-tight leading-tight">{work.title}</h1>
+                <h1 className="text-3xl md:text-5xl lg:text-6xl font-black mb-6 text-white tracking-tight leading-tight">{work.title}</h1>
               </div>
 
-              {/* القسم السفلي: الأزرار توازي الغلاف من الأسفل بفضل md:mt-auto */}
+              {/* الأزرار توازي قاعدة الغلاف */}
               <div className="md:mt-auto flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center">
                 <ReaderButton slug={work.slug} />
                 {work.pdfUrl && (
-                  <a href={work.pdfUrl} target="_blank" className="flex items-center justify-center gap-3 bg-zinc-800 hover:bg-zinc-700 text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/10 w-full sm:w-auto">
+                  <a href={work.pdfUrl} target="_blank" className="flex items-center justify-center gap-3 bg-zinc-800 hover:bg-zinc-700 text-white px-8 py-4 rounded-2xl font-bold transition border border-white/10 w-full sm:w-auto">
                     <FaDownload /> تحميل PDF
                   </a>
                 )}
@@ -167,7 +159,7 @@ export default async function WorkPage({ params }: Props) {
                 <SpoilerSynopsis text={work.synopsis || "لا يوجد ملخص متاح حالياً."} isSpoiler={work.isSpoiler || false} />
               </div>
             </div>
-            {/* ... (باقي كود الرحلة) ... */}
+
             {(work.previousWork || work.nextWork || work.relatedSideStories?.length > 0) && (
                 <div className="space-y-6 pt-4">
                     <div className="flex items-center gap-3 mb-2">
@@ -182,16 +174,33 @@ export default async function WorkPage({ params }: Props) {
                         {work.nextWork && <NavCard work={work.nextWork} label="المجلد التالي" isNext={true} />}
                         {work.previousWork && <NavCard work={work.previousWork} label="المجلد السابق" isNext={false} />}
                     </div>
+
+                    {/* استرجاع قسم القصص الجانبية */}
+                    {work.relatedSideStories?.length > 0 && (
+                        <div className="mt-8 space-y-4">
+                            <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-2">قصص جانبية تابعة لهذا المجلد</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {work.relatedSideStories.map((side: any) => (
+                                    <Link key={side.slug} href={`/works/${side.slug}`} className="group flex items-center gap-3 bg-white/5 border border-white/5 p-2 rounded-xl hover:border-blue-500/30 transition-all">
+                                            <div className="w-10 h-14 shrink-0 rounded-md overflow-hidden border border-white/5">
+                                                <img src={side.rawCover ? urlFor(side.rawCover).url() : ""} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
+                                            </div>
+                                            <span className="text-[11px] font-bold text-gray-400 group-hover:text-blue-400 transition-colors line-clamp-2">{side.title}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
           </div>
 
           <div className="lg:col-span-4 space-y-6">
-            <div className="bg-zinc-900/80 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl">
+            <div className="bg-zinc-900/80 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
               <h3 className="text-xl font-bold mb-8 text-white border-b border-white/5 pb-4 flex items-center gap-2">
                 <FaInfoCircle className="text-blue-500" /> معلومات العمل
               </h3>
-              <div className="space-y-6 text-sm">
+              <div className="space-y-6 text-sm flex-1">
                 <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl">
                     <span className="text-gray-500">حالة العمل</span>
                     <span className="text-green-400 font-bold">{work.status}</span>
@@ -208,7 +217,6 @@ export default async function WorkPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* أزرار المشاركة: تم وضعها هنا بناءً على طلبك لتكون أسفل معلومات العمل */}
               <div className="mt-8 pt-6 border-t border-white/5">
                 <div className="flex justify-center md:justify-start">
                    <ShareButtons 
@@ -218,17 +226,6 @@ export default async function WorkPage({ params }: Props) {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="max-w-6xl mx-auto px-5 md:px-8 pb-20">
-        <div id="comments-section" className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-8 md:p-12 shadow-2xl space-y-10">
-          <h2 className="font-black text-2xl text-white flex items-center gap-3 border-b border-white/5 pb-6">
-            <FaComments className="text-blue-600 text-3xl" /> آراء القراء ({work.comments?.length || 0})
-          </h2>
-          <div className="pt-4">
-            <CommentForm workId={work._id} />
           </div>
         </div>
       </section>
