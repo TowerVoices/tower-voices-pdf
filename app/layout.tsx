@@ -1,9 +1,9 @@
 import type { Metadata } from "next"; 
 import Navbar from "@/components/Navbar";
-import { SpeedInsights } from "@vercel/speed-insights/next"; // استيراد الخدمة الجديدة
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
-// إضافة بيانات السيو المتقدمة لتغيير اسم الموقع في جوجل
+// 1. إعدادات السيو الأساسية (Metadata)
 export const metadata: Metadata = {
   title: {
     default: "أصوات البرج | منصة الروايات المترجمة",
@@ -11,22 +11,19 @@ export const metadata: Metadata = {
   },
   description: "المكان الأول لأحدث الروايات المترجمة والحصرية بأسلوب عربي فصيح.",
   
-  // إثبات ملكية جوجل (لا تلمس هذا الكود)
   verification: {
-    google: "QCWLh4mWPB2AX43U4UtzDMwux8SU0ntiDJ_ybRfchcc",
+    google: "QCWLh4mWPB2AX43U4UtzDMwux8SU0ntiDJ_ybRfchcc", // إثبات الملكية
   },
 
-  // الكود المسؤول عن تعريف هويتك الرقمية الجديدة
   openGraph: {
     title: "أصوات البرج",
     description: "المكان الأول لأحدث الروايات المترجمة والحصرية بأسلوب عربي فصيح.",
-    url: "https://towervoices.online", // التحديث النهائي للرابط
+    url: "https://towervoices.online",
     siteName: "أصوات البرج", 
     locale: "ar_SA",
     type: "website",
   },
 
-  // تعريف إضافي للأجهزة الذكية للمساعدة في الفهرسة
   other: {
     "apple-mobile-web-app-title": "أصوات البرج",
   },
@@ -37,17 +34,41 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // 2. كود الـ Schema لتعريف المسارات (Breadcrumbs JSON-LD)
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "الرئيسية",
+        "item": "https://towervoices.online"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "المكتبة",
+        "item": "https://towervoices.online/works"
+      }
+    ]
+  };
+
   return (
     <html lang="ar" dir="rtl">
       <head>
-        {/* رابط الأيقونة لضمان ظهور شعارك بدلاً من شعار Vercel */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
+        {/* حقن كود الـ Schema في رأس الصفحة لتعرفه محركات البحث فوراً */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        />
       </head>
       <body className="bg-[#050505]">
         <Navbar /> 
         {children}
         
-        {/* إضافة مكون قياس السرعة لجمع البيانات وتحسين السيو */}
+        {/* قياس السرعة لتحسين السيو التقني */}
         <SpeedInsights /> 
       </body>
     </html>
