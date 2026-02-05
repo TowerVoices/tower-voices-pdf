@@ -28,6 +28,7 @@ interface Props {
 
 const baseUrl = "https://towervoices.online";
 
+// 1. استعادة تحسينات Metadata بالكامل
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const work = await getWork(slug);
@@ -37,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${work.title} | أصوات البرج`,
     description: work.synopsis?.slice(0, 160),
-    keywords: [work.title, work.author, ... (work.tags || [])],
+    keywords: [work.title, work.author, ...(work.tags || [])], // استعادة تصنيفات البحث
     alternates: { canonical: `${baseUrl}/works/${slug}` },
     openGraph: {
       title: work.title,
@@ -50,6 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+// 2. استعلام Sanity الشامل (يحتوي على كل البيانات)
 async function getWork(slug: string) {
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id, title, "slug": slug.current, "rawCover": cover, author, tags, status,
@@ -118,6 +120,7 @@ export default async function WorkPage({ params }: Props) {
             </div>
             
             <div className="flex-1 text-center md:text-right w-full flex flex-col">
+              {/* العنوان في القمة */}
               <div>
                 <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
                   {work.tags?.map((tag: string, index: number) => (
@@ -127,6 +130,7 @@ export default async function WorkPage({ params }: Props) {
                 </div>
                 <h1 className="text-3xl md:text-6xl font-black mb-6 text-white tracking-tight leading-tight">{work.title}</h1>
               </div>
+              {/* الأزرار في القاع */}
               <div className="md:mt-auto flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center">
                 <ReaderButton slug={work.slug} />
                 {work.pdfUrl && (
@@ -169,6 +173,7 @@ export default async function WorkPage({ params }: Props) {
                         {work.nextWork && <NavCard work={work.nextWork} label="المجلد التالي" isNext={true} />}
                         {work.previousWork && <NavCard work={work.previousWork} label="المجلد السابق" isNext={false} />}
                     </div>
+                    {/* استعادة القصص الجانبية */}
                     {work.relatedSideStories?.length > 0 && (
                         <div className="mt-8 space-y-4">
                             <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-2">قصص جانبية تابعة لهذا المجلد</h4>
@@ -219,7 +224,7 @@ export default async function WorkPage({ params }: Props) {
         </div>
       </section>
 
-      {/* 4. قسم التعليقات (تمت استعادته بنجاح) */}
+      {/* قسم التعليقات النهائي */}
       <section className="max-w-6xl mx-auto px-5 md:px-8 pb-20">
         <div id="comments-section" className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-8 md:p-12 shadow-2xl space-y-10">
           <h2 className="font-black text-2xl text-white flex items-center gap-3 border-b border-white/5 pb-6">
