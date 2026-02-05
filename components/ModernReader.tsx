@@ -39,7 +39,8 @@ export default function ModernReader({
   const zoomPluginInstance = zoomPlugin();
   const { ZoomIn, ZoomOut, CurrentScale } = zoomPluginInstance;
 
-  const handleClose = () => router.back();
+  // تغيير وظيفة الإغلاق لتعود للمكتبة لضمان تجربة سيو أفضل
+  const handleClose = () => router.push("/works");
 
   const finalPdfUrl = useMemo(() => {
     if (!pdfUrl) return "";
@@ -53,15 +54,17 @@ export default function ModernReader({
   }, [pdfUrl]);
 
   return (
+    /* تعديل هام: تم تغيير fixed inset-0 إلى relative w-full h-full 
+       للسماح بظهور عناصر الـ SEO (المسارات والتذييل) من الصفحة الأب.
+    */
     <div
       dir="rtl"
-      className="fixed inset-0 z-[9999] bg-[#050505] flex flex-col font-sans select-none overflow-hidden"
+      className="relative w-full h-full bg-[#050505] flex flex-col font-sans select-none overflow-hidden"
     >
-      {/* 1. مُبيد الخطوط والظلال البيضاء (الأقوى على الإطلاق) */}
+      {/* 1. مُبيد الخطوط والظلال البيضاء */}
       <style
         dangerouslySetInnerHTML={{
           __html: `
-            /* قتل الخلفية والظلال في كل طبقات المكتبة */
             .rpv-core__viewer,
             .rpv-core__inner-pages,
             .rpv-core__page-container,
@@ -75,18 +78,15 @@ export default function ModernReader({
               outline: none !important;
             }
 
-            /* جعل المنطقة المحيطة بالصفحات سوداء تماماً */
             .rpv-core__inner-pages {
               background-color: #050505 !important;
             }
 
-            /* إزالة أي هوامش أو فواصل بيضاء/رمادية بين الصفحات */
             .rpv-core__page-container {
               margin: 0 auto !important;
               padding: 0 !important;
             }
 
-            /* إخفاء شريط التمرير (السكروول) تماماً لمظهر سينمائي */
             .rpv-core__viewer::-webkit-scrollbar {
               width: 0px !important;
               height: 0px !important;
@@ -96,7 +96,6 @@ export default function ModernReader({
               -ms-overflow-style: none !important;
             }
 
-            /* التأكد من عدم وجود إطار حول الـ Canvas */
             canvas {
               border: none !important;
               box-shadow: none !important;
@@ -105,41 +104,42 @@ export default function ModernReader({
         }}
       />
 
-      {/* البار العلوي */}
-      <header className="h-14 bg-black/90 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6 z-[10001]">
+      {/* البار العلوي الخاص بالتحكم في الـ PDF */}
+      <header className="h-12 bg-black/40 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6 z-[50]">
         <button
           onClick={() => setShowControls(!showControls)}
-          className={`p-2.5 rounded-xl transition-all ${
+          className={`p-2 rounded-xl transition-all ${
             showControls
               ? "bg-blue-600 text-white"
               : "bg-white/5 text-gray-400 hover:bg-white/10"
           }`}
         >
-          <FaCog size={18} className={showControls ? "rotate-90" : ""} />
+          <FaCog size={16} className={showControls ? "rotate-90" : ""} />
         </button>
-        <h1 className="text-gray-300 font-bold text-xs truncate max-w-md">
+        
+        <h1 className="text-gray-400 font-medium text-[10px] truncate max-w-xs md:max-w-md">
           {title}
         </h1>
+
         <button
           onClick={handleClose}
-          className="p-2.5 bg-white/5 hover:bg-red-600/20 text-gray-400 rounded-xl transition-all"
+          className="p-2 bg-white/5 hover:bg-red-600/20 text-gray-400 rounded-xl transition-all"
         >
-          <FaTimes size={18} />
+          <FaTimes size={16} />
         </button>
       </header>
 
       {/* منطقة العرض الرئيسية */}
-      <main className="flex-1 relative bg-[#050505] flex justify-center items-start overflow-y-auto">
+      <main className="flex-1 relative bg-[#050505] flex justify-center items-start overflow-y-auto custom-scrollbar">
         {isLoading && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#050505] gap-4">
             <FaSpinner className="animate-spin text-blue-600 text-3xl" />
-            <p className="text-[10px] text-gray-600 tracking-widest font-bold">
+            <p className="text-[10px] text-gray-600 tracking-widest font-bold uppercase">
               جاري استحضار الصفحات...
             </p>
           </div>
         )}
 
-        {/* الحاوية - أزلنا الـ shadow والـ border تماماً */}
         <div className="w-full max-w-4xl bg-transparent overflow-hidden relative border-none shadow-none">
           <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
             {finalPdfUrl && (
@@ -155,33 +155,33 @@ export default function ModernReader({
         </div>
       </main>
 
-      {/* القائمة الجانبية */}
+      {/* القائمة الجانبية للتحكم */}
       <AnimatePresence>
         {showControls && (
           <motion.aside
             initial={{ x: 320 }}
             animate={{ x: 0 }}
             exit={{ x: 320 }}
-            className="fixed top-14 right-0 bottom-0 w-72 bg-[#0d0d12]/95 backdrop-blur-3xl border-l border-white/5 p-8 flex flex-col gap-10 z-[10000] shadow-2xl"
+            className="absolute top-12 right-0 bottom-0 w-64 bg-[#0d0d12]/95 backdrop-blur-3xl border-l border-white/5 p-6 flex flex-col gap-8 z-[60] shadow-2xl"
           >
-            <section className="space-y-6">
-              <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest text-right">
+            <section className="space-y-4">
+              <h4 className="text-[9px] text-gray-500 font-bold uppercase tracking-widest text-right">
                 التحكم في التكبير
               </h4>
-              <div className="flex items-center justify-between bg-white/5 p-1.5 rounded-2xl border border-white/5">
+              <div className="flex items-center justify-between bg-white/5 p-1 rounded-xl border border-white/5">
                 <ZoomOut>
                   {(p) => (
                     <button
                       onClick={p.onClick}
-                      className="p-4 hover:bg-white/10 rounded-xl text-gray-400 transition-all"
+                      className="p-3 hover:bg-white/10 rounded-lg text-gray-400 transition-all"
                     >
-                      <FaMinus />
+                      <FaMinus size={12} />
                     </button>
                   )}
                 </ZoomOut>
                 <CurrentScale>
                   {(p) => (
-                    <span className="text-blue-500 font-black text-xs">
+                    <span className="text-blue-500 font-black text-[11px]">
                       {Math.round(p.scale * 100)}%
                     </span>
                   )}
@@ -190,39 +190,39 @@ export default function ModernReader({
                   {(p) => (
                     <button
                       onClick={p.onClick}
-                      className="p-4 hover:bg-white/10 rounded-xl text-gray-400 transition-all"
+                      className="p-3 hover:bg-white/10 rounded-lg text-gray-400 transition-all"
                     >
-                      <FaPlus />
+                      <FaPlus size={12} />
                     </button>
                   )}
                 </ZoomIn>
               </div>
             </section>
 
-            <section className="space-y-6 text-right">
-              <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+            <section className="space-y-4 text-right">
+              <h4 className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
                 نمط العرض
               </h4>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setViewMode(ViewMode.SinglePage)}
-                  className={`p-4 rounded-2xl flex flex-col items-center gap-3 text-[10px] border transition-all ${
+                  className={`p-3 rounded-xl flex flex-col items-center gap-2 text-[9px] border transition-all ${
                     viewMode === ViewMode.SinglePage
-                      ? "bg-blue-600 border-blue-400 text-white shadow-xl"
+                      ? "bg-blue-600 border-blue-400 text-white shadow-lg"
                       : "bg-white/5 border-transparent text-gray-500 hover:bg-white/10"
                   }`}
                 >
-                  <FaRegFileAlt size={20} /> صفحة
+                  <FaRegFileAlt size={16} /> صفحة
                 </button>
                 <button
                   onClick={() => setViewMode(undefined)}
-                  className={`p-4 rounded-2xl flex flex-col items-center gap-3 text-[10px] border transition-all ${
+                  className={`p-3 rounded-xl flex flex-col items-center gap-2 text-[9px] border transition-all ${
                     viewMode === undefined
-                      ? "bg-blue-600 border-blue-400 text-white shadow-xl"
+                      ? "bg-blue-600 border-blue-400 text-white shadow-lg"
                       : "bg-white/5 border-transparent text-gray-500 hover:bg-white/10"
                   }`}
                 >
-                  <FaThList size={20} /> مستمر
+                  <FaThList size={16} /> مستمر
                 </button>
               </div>
             </section>
