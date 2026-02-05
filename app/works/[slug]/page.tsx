@@ -116,8 +116,8 @@ export default async function WorkPage({ params }: Props) {
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-8 w-full pb-10 md:pb-16">
           
-          {/* محاذاة القاعدة: md:items-end تضمن توازي الأزرار مع أسفل الغلاف */}
-          <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-end w-full">
+          {/* التعديل: md:items-stretch تجعل حاوية النصوص بنفس ارتفاع الغلاف تماماً */}
+          <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-stretch w-full">
             <div className="relative group shrink-0">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
               <div className="relative w-40 md:w-64 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-white/10">
@@ -125,16 +125,21 @@ export default async function WorkPage({ params }: Props) {
               </div>
             </div>
             
-            <div className="flex-1 text-center md:text-right w-full flex flex-col justify-end">
-              <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
-                {work.tags?.map((tag: string, index: number) => (
-                  <span key={index} className="bg-blue-600/10 text-blue-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-blue-600/20">{tag}</span>
-                ))}
-                <span className="bg-green-500/10 text-green-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-green-500/20">{work.status}</span>
+            {/* حاوية النصوص: العنوان يبقى في مكانه (أعلى) والأزرار تدفع نفسها للأسفل (mt-auto) */}
+            <div className="flex-1 text-center md:text-right w-full flex flex-col">
+              {/* القسم العلوي: التصنيفات والعنوان */}
+              <div>
+                <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
+                  {work.tags?.map((tag: string, index: number) => (
+                    <span key={index} className="bg-blue-600/10 text-blue-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-blue-600/20">{tag}</span>
+                  ))}
+                  <span className="bg-green-500/10 text-green-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-green-500/20">{work.status}</span>
+                </div>
+                <h1 className="text-3xl md:text-6xl font-black mb-6 text-white tracking-tight leading-tight">{work.title}</h1>
               </div>
-              <h1 className="text-3xl md:text-6xl font-black mb-6 text-white tracking-tight leading-tight">{work.title}</h1>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center">
+
+              {/* القسم السفلي: الأزرار توازي الغلاف من الأسفل بفضل md:mt-auto */}
+              <div className="md:mt-auto flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center">
                 <ReaderButton slug={work.slug} />
                 {work.pdfUrl && (
                   <a href={work.pdfUrl} target="_blank" className="flex items-center justify-center gap-3 bg-zinc-800 hover:bg-zinc-700 text-white px-8 py-4 rounded-2xl font-bold transition-all border border-white/10 w-full sm:w-auto">
@@ -162,7 +167,7 @@ export default async function WorkPage({ params }: Props) {
                 <SpoilerSynopsis text={work.synopsis || "لا يوجد ملخص متاح حالياً."} isSpoiler={work.isSpoiler || false} />
               </div>
             </div>
-
+            {/* ... (باقي كود الرحلة) ... */}
             {(work.previousWork || work.nextWork || work.relatedSideStories?.length > 0) && (
                 <div className="space-y-6 pt-4">
                     <div className="flex items-center gap-3 mb-2">
@@ -177,22 +182,6 @@ export default async function WorkPage({ params }: Props) {
                         {work.nextWork && <NavCard work={work.nextWork} label="المجلد التالي" isNext={true} />}
                         {work.previousWork && <NavCard work={work.previousWork} label="المجلد السابق" isNext={false} />}
                     </div>
-
-                    {work.relatedSideStories?.length > 0 && (
-                        <div className="mt-8 space-y-4">
-                            <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-2">قصص جانبية تابعة لهذا المجلد</h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {work.relatedSideStories.map((side: any) => (
-                                    <Link key={side.slug} href={`/works/${side.slug}`} className="group flex items-center gap-3 bg-white/5 border border-white/5 p-2 rounded-xl hover:border-blue-500/30 transition-all">
-                                            <div className="w-10 h-14 shrink-0 rounded-md overflow-hidden border border-white/5">
-                                                <img src={side.rawCover ? urlFor(side.rawCover).url() : ""} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
-                                            </div>
-                                            <span className="text-[11px] font-bold text-gray-400 group-hover:text-blue-400 transition-colors line-clamp-2">{side.title}</span>
-                                    </Link>
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </div>
             )}
           </div>
@@ -218,15 +207,15 @@ export default async function WorkPage({ params }: Props) {
                     <span className="text-white font-bold">{work.author || "تابي ناجاتسوكي"}</span>
                 </div>
               </div>
-            </div>
 
-            {/* أزرار المشاركة: تم نقلها هنا لتظهر أسفل خانة معلومات العمل */}
-            <div className="flex flex-col gap-4">
-              <div className="flex justify-center md:justify-start px-2">
-                 <ShareButtons 
-                    url={`${baseUrl}/works/${work.slug}`} 
-                    title={work.title} 
-                  />
+              {/* أزرار المشاركة: تم وضعها هنا بناءً على طلبك لتكون أسفل معلومات العمل */}
+              <div className="mt-8 pt-6 border-t border-white/5">
+                <div className="flex justify-center md:justify-start">
+                   <ShareButtons 
+                      url={`${baseUrl}/works/${work.slug}`} 
+                      title={work.title} 
+                    />
+                </div>
               </div>
             </div>
           </div>
