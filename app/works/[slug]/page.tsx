@@ -116,7 +116,7 @@ export default async function WorkPage({ params }: Props) {
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-8 w-full pb-10 md:pb-16">
           
-          {/* التعديل الجوهري: تم تغيير md:items-end إلى md:items-start لرفع كتلة النصوص للأعلى لتبدأ مع قمة الغلاف */}
+          {/* محاذاة القمة: md:items-start تضمن أن النصوص تبدأ مع قمة الغلاف */}
           <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-start w-full">
             <div className="relative group shrink-0">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
@@ -125,7 +125,6 @@ export default async function WorkPage({ params }: Props) {
               </div>
             </div>
             
-            {/* حاوية النصوص: إضافة flex-col و justify-start لضمان بقاء المحتوى في الأعلى */}
             <div className="flex-1 text-center md:text-right w-full flex flex-col justify-start">
               <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
                 {work.tags?.map((tag: string, index: number) => (
@@ -134,6 +133,7 @@ export default async function WorkPage({ params }: Props) {
                 <span className="bg-green-500/10 text-green-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-green-500/20">{work.status}</span>
               </div>
               <h1 className="text-3xl md:text-6xl font-black mb-6 text-white tracking-tight leading-tight">{work.title}</h1>
+              
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center">
                 <ReaderButton slug={work.slug} />
                 {work.pdfUrl && (
@@ -141,7 +141,15 @@ export default async function WorkPage({ params }: Props) {
                     <FaDownload /> تحميل PDF
                   </a>
                 )}
-                <ReportButton workTitle={work.title} />
+                
+                {/* استعادة أزرار المشاركة المفقودة بجانب زر الإبلاغ */}
+                <div className="flex items-center gap-2">
+                   <ShareButtons 
+                      url={`${baseUrl}/works/${work.slug}`} 
+                      title={work.title} 
+                    />
+                   <ReportButton workTitle={work.title} />
+                </div>
               </div>
             </div>
           </div>
