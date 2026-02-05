@@ -12,26 +12,33 @@ interface Props {
 
 const baseUrl = "https://towervoices.online";
 
-// 1. توليد Metadata شاملة (حل الـ 17 خطأ حرج والـ Open Graph)
+/**
+ * 1. توليد Metadata مطورة لمعالجة أخطاء Sitechecker
+ * تم إضافة الكلمات المفتاحية (Keywords) لضمان تمييز جوجل لتصنيفات الأرك والاكس
+ */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const work = await client.fetch(
-    `*[_type == "work" && slug.current == $slug][0]{ title, synopsis, "rawCover": cover }`, 
+    `*[_type == "work" && slug.current == $slug][0]{ 
+      title, synopsis, "rawCover": cover, tags, author 
+    }`, 
     { slug }
   );
   
-  if (!work) return {};
+  if (!work) return { title: "الصفحة غير موجودة | أصوات البرج" };
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
 
   return {
     title: `قراءة ${work.title} | أصوات البرج`,
     description: work.synopsis?.slice(0, 160),
-    alternates: { canonical: `${baseUrl}/reader/${slug}` }, // مهم جداً للأرشفة
+    // دمج التصنيفات (arc, ex) مباشرة في كلمات البحث
+    keywords: [work.title, work.author, ...(work.tags || []), "رواية خفيفة", "ترجمة أصوات البرج"],
+    alternates: { canonical: `${baseUrl}/reader/${slug}` },
     openGraph: {
       title: `قراءة ${work.title} - أصوات البرج`,
       description: work.synopsis?.slice(0, 160),
       url: `${baseUrl}/reader/${slug}`,
-      images: [{ url: coverUrl }],
+      images: [{ url: coverUrl, width: 800, height: 1200 }],
       type: "article",
     },
     twitter: { card: "summary_large_image", images: [coverUrl] }
@@ -41,7 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ReaderPage({ params }: Props) {
   const { slug } = await params;
 
-  // جلب البيانات مع روابط التنقل لحل مشكلة "الرابط الداخلي الواحد"
+  // جلب البيانات مع روابط التنقل لتقليل عدد التحذيرات الخاصة بالروابط الداخلية
   const work = await client.fetch(
     `*[_type == "work" && slug.current == $slug][0]{
       title, "slug": slug.current,
@@ -55,8 +62,8 @@ export default async function ReaderPage({ params }: Props) {
   return (
     <div className="flex flex-col h-screen bg-[#050505] overflow-hidden">
       
-      {/* 2. نظام المسارات (Breadcrumbs) - حل مشكلة الربط الداخلي العلوي */}
-      <nav dir="rtl" className="z-[100] px-6 py-3 border-b border-white/5 bg-[#080808]/90 backdrop-blur-md flex items-center gap-3 text-[11px] font-bold text-gray-500">
+      {/* 2. نظام Breadcrumbs: يحل مشكلة "Internal Linking" في التقارير */}
+      <nav dir="rtl" className="z-[100] px-6 py-3 border-b border-white/5 bg-[#080808]/90 backdrop-blur-md flex items-center gap-3 text-[10px] md:text-[11px] font-bold text-gray-500">
         <Link href="/" className="hover:text-white flex items-center gap-1 transition-colors">
           <FaHome className="text-blue-500" /> الرئيسية
         </Link>
@@ -70,24 +77,24 @@ export default async function ReaderPage({ params }: Props) {
         <span className="text-blue-500">وضع القراءة</span>
       </nav>
 
-      {/* 3. القارئ الفعلي */}
+      {/* 3. القارئ (ModernReader) */}
       <main className="flex-1 relative overflow-hidden">
         <ModernReader pdfUrl={work.pdfUrl} title={work.title} />
       </main>
 
-      {/* 4. تذييل التنقل - حل مشكلة "الصفحات اليتيمة" */}
+      {/* 4. تذييل التنقل: يمنع اعتبار الصفحة "يتيمة" (Orphan Page) بربطها بباقي الموقع */}
       <footer dir="rtl" className="z-[100] p-4 border-t border-white/5 bg-[#080808] flex flex-row justify-between items-center">
-          <Link href={`/works/${work.slug}`} className="text-[11px] text-gray-400 hover:text-white flex items-center gap-2 transition-colors">
+          <Link href={`/works/${work.slug}`} className="text-[10px] md:text-[11px] text-gray-400 hover:text-white flex items-center gap-2 transition-colors">
               <FaArrowRight className="text-[10px]" /> العودة لتفاصيل المجلد
           </Link>
 
           <div className="flex items-center gap-4">
             {work.nextWork ? (
-                <Link href={`/reader/${work.nextWork.slug}`} className="bg-blue-600/10 text-blue-400 border border-blue-600/20 px-4 py-2 rounded-lg text-[10px] font-black hover:bg-blue-600 hover:text-white transition-all">
+                <Link href={`/reader/${work.nextWork.slug}`} className="bg-blue-600/10 text-blue-400 border border-blue-600/20 px-3 md:px-4 py-2 rounded-lg text-[9px] md:text-[10px] font-black hover:bg-blue-600 hover:text-white transition-all">
                     المجلد التالي: {work.nextWork.title} ←
                 </Link>
             ) : (
-                <Link href="/works" className="text-[11px] text-gray-500 hover:text-blue-400 flex items-center gap-2">
+                <Link href="/works" className="text-[10px] md:text-[11px] text-gray-500 hover:text-blue-400 flex items-center gap-2">
                     <FaBook /> تصفح أعمال أخرى
                 </Link>
             )}
