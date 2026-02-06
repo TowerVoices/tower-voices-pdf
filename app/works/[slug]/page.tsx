@@ -20,7 +20,9 @@ import {
   FaClock,
   FaStar,
   FaLanguage,
-  FaExclamationTriangle // أيقونة التحذير
+  FaExclamationTriangle,
+  FaPlusSquare,
+  FaShareAlt
 } from "react-icons/fa";
 
 interface Props {
@@ -30,7 +32,7 @@ interface Props {
 const baseUrl = "https://towervoices.online";
 
 /**
- * 1. السيو (SEO): استعادة الكلمات المفتاحية بالكامل
+ * 1. محرك SEO المتكامل: استعادة كافة الكلمات المفتاحية الضخمة لضمان تصدر البحث
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -40,20 +42,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: work.title,
-    description: work.synopsis?.slice(0, 160),
+    description: work.synopsis?.slice(0, 160) || "استكشف ترجمة رواية ريزيرو الحصرية على منصة أصوات البرج.",
     keywords: [
       work.title, work.author, "rezero", "Re Zero", "re:zero", "re zero novel", 
-      "ريزيرو", "ري زيرو", "رواية ريزيرو", "أصوات البرج", "Tower Voices",
+      "rezero light novel", "ريزيرو", "ري زيرو", "رواية ري زيرو", "رواية ريزيرو", 
+      "رواية خفيفة", "ترجمة ريزيرو", "أصوات البرج", "Tower Voices", "روايات مترجمة", 
+      "ارك", "arc", "ex", "مجلد", "قراءة اونلاين", "فيلت", "راينهارد", "ساتيلا",
       ...(work.tags || [])
     ],
     alternates: { canonical: `${baseUrl}/works/${slug}` },
     twitter: {
       card: "summary_large_image",
       title: `${work.title} - أصوات البرج`,
+      description: work.synopsis?.slice(0, 160),
       images: [coverUrl],
+      site: "@TowerVoices",
+      creator: "@TowerVoices"
     },
     openGraph: {
       title: work.title,
+      description: work.synopsis?.slice(0, 160),
       url: `${baseUrl}/works/${slug}`,
       siteName: "أصوات البرج",
       images: [{ url: coverUrl, width: 800, height: 1200 }],
@@ -63,12 +71,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /**
- * 2. استعلام GROQ: جلب كافة الحقول بناءً على الـ Schema المحدثة
+ * 2. استعلام GROQ الاحترافي: جلب كافة المميزات وحساب المتوسطات بدقة
  */
 async function getWork(slug: string) {
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id, title, "slug": slug.current, cover, author, tags, status, priority,
-    synopsis, isSpoiler, warning, // ميزات القصة
+    synopsis, isSpoiler, warning, // ميزات القصة والتحذير
     ratingWork, ratingTranslation, ratingCount, // ميزات التقييم
     downloadUrl, readerUrl, "pdfFileUrl": pdfFile.asset->url, // الروابط والملفات
     timeDescription, storyType, chronologicalOrder, // رحلة البرج
@@ -79,7 +87,7 @@ async function getWork(slug: string) {
     },
     "comments": *[_type == "comment" && work._ref == ^._id && approved == true] | order(_createdAt desc),
     
-    // حساب المتوسط الحقيقي (التقييم اليدوي + تقييمات الجمهور)
+    // معادلة المتوسط الحسابي الحقيقي (Manual + Automatic)
     "currentStoryRating": select(
       (coalesce(ratingCount, 0) + count(*[_type == "rating" && work._ref == ^._id])) > 0 => 
       ((coalesce(ratingWork, 0) * coalesce(ratingCount, 0)) + coalesce(math::sum(*[_type == "rating" && work._ref == ^._id].ratingWork), 0)) 
@@ -111,63 +119,64 @@ export default async function WorkPage({ params }: Props) {
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans text-right overflow-x-hidden">
       
-      {/* شريط المسارات */}
-      <nav className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-2 text-[10px] md:text-xs text-gray-500 font-bold border-b border-white/5">
+      {/* 3. شريط المسارات المطور */}
+      <nav className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-3 text-[10px] md:text-[11px] text-gray-500 font-bold border-b border-white/5">
         <Link href="/" className="hover:text-blue-500 transition-colors">الرئيسية</Link>
-        <FaChevronLeft className="text-[8px] opacity-30" />
+        <FaChevronLeft className="text-[7px] opacity-20" />
         <Link href="/works" className="hover:text-blue-500 transition-colors">المكتبة</Link>
-        <FaChevronLeft className="text-[8px] opacity-30" />
-        <span className="text-gray-300 truncate max-w-[150px]">{work.title}</span>
+        <FaChevronLeft className="text-[7px] opacity-20" />
+        <span className="text-gray-300 truncate max-w-[200px]">{work.title}</span>
       </nav>
       
-      {/* 3. قسم الهيرو: (الغلاف يمين، النص يسار) */}
-      <section className="relative min-h-[65vh] w-full overflow-hidden flex items-end">
-        <div className="absolute inset-0 bg-cover bg-center scale-110 blur-md opacity-30" style={{ backgroundImage: `url(${coverUrl})` }} />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent" />
+      {/* 4. قسم الهيرو: (الغلاف يمين، النص يسار) - تنسيق ثابت */}
+      <section className="relative min-h-[70vh] w-full overflow-hidden flex items-end">
+        <div className="absolute inset-0 bg-cover bg-center scale-110 blur-xl opacity-20" style={{ backgroundImage: `url(${coverUrl})` }} />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/90 to-transparent" />
         
-        <div className="relative z-10 max-w-6xl mx-auto px-6 w-full pb-12">
-          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center md:items-end">
+        <div className="relative z-10 max-w-6xl mx-auto px-6 w-full pb-16">
+          <div className="flex flex-col md:flex-row gap-10 md:gap-16 items-center md:items-end">
             
-            {/* جهة اليمين: الغلاف والتقييمات */}
+            {/* جهة اليمين: الغلاف والتقييمات الرقمية */}
             <div className="relative group shrink-0 flex flex-col items-center">
-              <div className="relative w-44 md:w-64 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-white/10">
-                <img src={coverUrl} alt={work.title} className="w-full h-full object-cover transform group-hover:scale-105 transition duration-700" />
+              <div className="absolute -inset-2 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-[2rem] blur-xl opacity-10 group-hover:opacity-30 transition duration-700"></div>
+              <div className="relative w-48 md:w-72 aspect-[2/3] rounded-[1.5rem] overflow-hidden shadow-2xl border border-white/10">
+                <img src={coverUrl} alt={work.title} className="w-full h-full object-cover transform group-hover:scale-105 transition duration-1000" />
               </div>
               
-              <div className="mt-4 w-full space-y-3">
-                {/* تقييم القصة */}
-                <div className="bg-zinc-900/80 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 shadow-xl flex flex-col items-center">
-                    <div className="w-full flex justify-between items-center text-[10px] font-bold text-yellow-500 uppercase tracking-wider mb-1">
+              {/* مربعات التقييم Google Style */}
+              <div className="mt-6 w-full space-y-3">
+                <div className="bg-zinc-900/60 backdrop-blur-xl px-4 py-3 rounded-2xl border border-white/5 shadow-2xl flex flex-col items-center gap-1">
+                    <div className="w-full flex justify-between items-center text-[10px] font-black text-yellow-500 mb-1">
                       <div className="flex items-center gap-2"><FaStar /> تقييم القصة</div>
-                      <span className="bg-yellow-500/20 px-2 py-0.5 rounded text-yellow-400 font-mono text-xs">{formatRating(work.currentStoryRating)}</span>
+                      <span className="bg-yellow-500/10 px-2 py-0.5 rounded text-yellow-400 font-mono text-xs">{formatRating(work.currentStoryRating)}</span>
                     </div>
                     <InteractiveRating workId={work._id} initialRating={work.currentStoryRating || 0} fieldName="ratingWork" />
                 </div>
-                {/* تقييم الترجمة */}
-                <div className="bg-zinc-900/80 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 shadow-xl flex flex-col items-center">
-                    <div className="w-full flex justify-between items-center text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">
-                        <div className="flex items-center gap-2"><FaLanguage className="text-lg" /> تقييم الترجمة</div>
-                        <span className="bg-blue-500/20 px-2 py-0.5 rounded text-blue-400 font-mono text-xs">{formatRating(work.currentTransRating)}</span>
+                <div className="bg-zinc-900/60 backdrop-blur-xl px-4 py-3 rounded-2xl border border-white/5 shadow-2xl flex flex-col items-center gap-1">
+                    <div className="w-full flex justify-between items-center text-[10px] font-black text-blue-400 mb-1">
+                        <div className="flex items-center gap-2"><FaLanguage className="text-sm" /> تقييم الترجمة</div>
+                        <span className="bg-blue-500/10 px-2 py-0.5 rounded text-blue-400 font-mono text-xs">{formatRating(work.currentTransRating)}</span>
                     </div>
                     <InteractiveRating workId={work._id} initialRating={work.currentTransRating || 0} fieldName="ratingTranslation" />
                 </div>
               </div>
             </div>
             
-            {/* جهة اليسار: العناوين والأزرار */}
+            {/* جهة اليسار: العنوان الضخم والأزرار */}
             <div className="flex-1 text-center md:text-right w-full flex flex-col">
-              <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-6 flex-row-reverse">
-                {work.tags?.map((tag: string, index: number) => (
-                  <span key={index} className="bg-blue-600/10 text-blue-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-blue-600/20">{tag}</span>
+              <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-8 flex-row-reverse">
+                {work.tags?.map((tag: string, i: number) => (
+                  <span key={i} className="bg-blue-600/5 text-blue-400 text-[10px] font-black px-4 py-1.5 rounded-full border border-blue-600/10 uppercase tracking-wider">{tag}</span>
                 ))}
-                <span className="bg-green-500/10 text-green-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-green-500/20">{work.status}</span>
+                <span className="bg-green-500/5 text-green-400 text-[10px] font-black px-4 py-1.5 rounded-full border border-green-500/10 uppercase tracking-wider">{work.status}</span>
               </div>
-              <h1 className="text-3xl md:text-6xl font-black mb-8 text-white tracking-tight leading-tight w-full">{work.title}</h1>
+              
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-10 text-white tracking-tight leading-[1.1]">{work.title}</h1>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center">
+              <div className="flex flex-col sm:flex-row-reverse gap-4 justify-center md:justify-start items-center">
                 <ReaderButton slug={work.slug} />
                 {(work.pdfFileUrl || work.downloadUrl) && (
-                  <a href={work.pdfFileUrl || work.downloadUrl} target="_blank" className="flex items-center justify-center gap-3 bg-zinc-800 hover:bg-zinc-700 text-white px-8 py-4 rounded-2xl font-bold transition border border-white/10 w-full sm:w-auto">
+                  <a href={work.pdfFileUrl || work.downloadUrl} target="_blank" className="flex items-center justify-center gap-3 bg-zinc-900/80 hover:bg-zinc-800 text-white px-10 py-4 rounded-2xl font-black transition-all border border-white/5 w-full sm:w-auto shadow-xl">
                     <FaDownload /> تحميل PDF
                   </a>
                 )}
@@ -178,117 +187,142 @@ export default async function WorkPage({ params }: Props) {
         </div>
       </section>
 
-      {/* 4. منطقة المحتوى: (الملخص يمين، المعلومات يسار) */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="grid lg:grid-cols-12 gap-12">
+      {/* 5. منطقة المحتوى: (الملخص يمين، المعلومات يسار) */}
+      <section className="max-w-6xl mx-auto px-6 py-20">
+        <div className="grid lg:grid-cols-12 gap-16 items-start">
           
-          {/* العمود الأيمن (الملخص والتحذير) */}
-          <div className="lg:col-span-8 space-y-10 order-1">
-            {/* عرض نص التحذير إذا وجد */}
+          {/* العمود الرئيسي (الملخص + رحلة البرج) - جهة اليمين */}
+          <div className="lg:col-span-8 space-y-12 order-1">
+            {/* تنبيه المترجم */}
             {work.warning && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-3xl p-6 flex items-start gap-4 text-red-400">
-                <FaExclamationTriangle className="text-2xl shrink-0 mt-1" />
+              <div className="bg-red-500/5 border border-red-500/10 rounded-[2rem] p-8 flex items-start gap-5 text-red-400">
+                <FaExclamationTriangle className="text-xl shrink-0 mt-1" />
                 <div>
-                  <h4 className="font-black text-sm mb-1 uppercase tracking-widest">تنبيه من المترجم</h4>
-                  <p className="text-sm font-bold leading-relaxed">{work.warning}</p>
+                  <h4 className="font-black text-xs mb-1 uppercase tracking-widest opacity-80">تنبيه من المترجم</h4>
+                  <p className="text-sm md:text-base font-bold leading-relaxed">{work.warning}</p>
                 </div>
               </div>
             )}
 
-            <div className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-10 shadow-2xl backdrop-blur-md">
-              <div className="flex items-center gap-4 mb-8 justify-end">
-                <h2 className="font-black text-2xl text-white">ملخص القصة</h2>
-                <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center border border-blue-600/20">
-                    <FaBookOpen className="text-blue-500 text-xl" />
-                </div>
+            <div className="bg-zinc-900/20 border border-white/5 rounded-[3rem] p-10 md:p-14 shadow-2xl relative overflow-hidden">
+              <div className="flex items-center gap-5 mb-10 justify-end">
+                <h2 className="font-black text-3xl text-white">ملخص القصة</h2>
+                <div className="w-14 h-14 bg-blue-600/10 rounded-2xl flex items-center justify-center"><FaBookOpen className="text-blue-500 text-2xl" /></div>
               </div>
-              <div className="prose prose-invert max-w-none text-gray-300 leading-loose text-lg font-medium text-right">
+              <div className="prose prose-invert max-w-none text-gray-300 leading-[2.2] text-lg font-medium text-right">
                 <SpoilerSynopsis text={work.synopsis || "لا يوجد ملخص متاح حالياً."} isSpoiler={work.isSpoiler} />
               </div>
             </div>
 
-            {/* رحلة البرج والقصص الجانبية */}
-            {(work.previousWork || work.nextWork || (work.relatedSideStories && work.relatedSideStories.length > 0)) && (
-                <div className="space-y-8 pt-4">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/10"></div>
-                        <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                           رحلة البرج <FaLayerGroup className="text-blue-600" />
+            {/* رحلة البرج + القصص الجانبية (المستعادة 100%) */}
+            <div className="space-y-12">
+                {(work.previousWork || work.nextWork) && (
+                  <>
+                    <div className="flex items-center gap-4 px-2">
+                        <div className="h-px flex-1 bg-gradient-to-l from-transparent via-white/5 to-transparent"></div>
+                        <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.3em] flex items-center gap-3">
+                           <FaLayerGroup className="text-blue-600 opacity-50" /> رحلة البرج
                         </h3>
-                        <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/10"></div>
+                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {work.nextWork && <NavCard work={work.nextWork} label="المجلد التالي" isNext={true} />}
                         {work.previousWork && <NavCard work={work.previousWork} label="المجلد السابق" isNext={false} />}
                     </div>
-                </div>
-            )}
+                  </>
+                )}
+
+                {/* استعادة القصص الجانبية المرتبطة */}
+                {work.relatedSideStories && work.relatedSideStories.length > 0 && (
+                    <div className="pt-6 space-y-8">
+                        <div className="flex items-center gap-4 px-2">
+                            <div className="h-px flex-1 bg-gradient-to-l from-transparent via-blue-500/10 to-transparent"></div>
+                            <h3 className="text-[11px] font-black text-blue-500 uppercase tracking-[0.3em] flex items-center gap-2">
+                                <FaPlusSquare /> قصص جانبية تابعة
+                            </h3>
+                            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-500/10 to-transparent"></div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            {work.relatedSideStories.map((side: any) => (
+                                <Link key={side.slug} href={`/works/${side.slug}`} className="group bg-white/[0.01] border border-white/5 p-3 rounded-2xl hover:border-blue-500/40 transition-all flex items-center gap-4 flex-row-reverse">
+                                    <div className="w-14 h-20 shrink-0 rounded-xl overflow-hidden border border-white/5 shadow-lg">
+                                        <img src={side.cover ? urlFor(side.cover).url() : ""} className="w-full h-full object-cover group-hover:scale-110 transition duration-700" />
+                                    </div>
+                                    <span className="text-[13px] font-black text-gray-400 group-hover:text-blue-400 transition-colors line-clamp-2 text-right flex-1">{side.title}</span>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
           </div>
 
-          {/* العمود الأيسر (معلومات العمل) */}
-          <div className="lg:col-span-4 space-y-8 order-2">
-            <div className="bg-zinc-900/80 border border-white/10 rounded-[2.5rem] p-10 shadow-2xl flex flex-col sticky top-24">
-              <h3 className="text-xl font-bold mb-10 text-white border-b border-white/5 pb-6 flex items-center gap-2 justify-end">
+          {/* العمود الجانبي (معلومات العمل) - جهة اليسار */}
+          <div className="lg:col-span-4 space-y-8 order-2 sticky top-28">
+            <div className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-10 shadow-2xl flex flex-col">
+              <h3 className="text-xl font-black mb-10 text-white border-b border-white/5 pb-6 flex items-center gap-3 justify-end uppercase">
                  معلومات العمل <FaInfoCircle className="text-blue-500" />
               </h3>
-              <div className="space-y-8 text-sm flex-1">
-                <div className="flex justify-between items-center bg-white/5 p-5 rounded-2xl flex-row-reverse">
-                    <span className="text-gray-500">حالة العمل</span>
-                    <span className="text-green-400 font-bold">{work.status}</span>
+              
+              <div className="space-y-6 text-sm flex-1">
+                <div className="flex justify-between items-center bg-white/[0.02] p-5 rounded-[1.5rem] border border-white/5 flex-row-reverse">
+                    <span className="text-gray-500 font-bold">حالة العمل</span>
+                    <span className="text-green-400 font-black">{work.status}</span>
                 </div>
                 {work.timeDescription && (
-                  <div className="flex flex-col gap-3 bg-white/5 p-5 rounded-2xl text-right">
-                      <span className="text-gray-500 flex items-center gap-2 justify-end"> الموقع الزمني <FaClock className="text-blue-500" /></span>
-                      <span className="text-white font-bold leading-relaxed">{work.timeDescription}</span>
+                  <div className="flex flex-col gap-3 bg-white/[0.02] p-5 rounded-[1.5rem] border border-white/5 text-right">
+                      <span className="text-gray-500 font-bold flex items-center gap-2 justify-end"> الموقع الزمني <FaClock className="text-blue-500 text-xs" /></span>
+                      <span className="text-white font-black leading-relaxed">{work.timeDescription}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-center bg-white/5 p-5 rounded-2xl flex-row-reverse">
-                    <span className="text-gray-500">المؤلف</span>
-                    <span className="text-white font-bold">{work.author || "تابِي ناغاتسُكي"}</span>
+                <div className="flex justify-between items-center bg-white/[0.02] p-5 rounded-[1.5rem] border border-white/5 flex-row-reverse">
+                    <span className="text-gray-500 font-bold">المؤلف</span>
+                    <span className="text-white font-black">{work.author || "تابِي ناغاتسُكي"}</span>
                 </div>
-                <div className="flex justify-between items-center bg-blue-500/5 p-4 rounded-2xl border border-blue-500/10 flex-row-reverse">
-                    <span className="text-gray-500">عدد المقيمين</span>
-                    <span className="text-blue-400 font-bold">{work.totalCount || 0}</span>
+                <div className="flex justify-between items-center bg-blue-500/[0.03] p-5 rounded-[1.5rem] border border-blue-500/10 flex-row-reverse">
+                    <span className="text-gray-500 font-bold">عدد المقيمين</span>
+                    <span className="text-blue-400 font-black font-mono text-base">{work.totalCount || 0}</span>
                 </div>
               </div>
-              <div className="mt-10 pt-8 border-t border-white/5">
-                <div className="flex justify-center md:justify-end">
-                   <ShareButtons url={`${baseUrl}/works/${work.slug}`} title={work.title} />
-                </div>
+
+              <div className="mt-12 pt-8 border-t border-white/5 flex flex-col items-center md:items-end">
+                  <span className="text-[9px] font-black text-gray-600 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">مشاركة العمل <FaShareAlt className="text-[8px]" /></span>
+                  <ShareButtons url={`${baseUrl}/works/${work.slug}`} title={work.title} />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* قسم التعليقات */}
-      <section className="max-w-6xl mx-auto px-6 pb-24">
-        <div id="comments-section" className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-10 md:p-14 shadow-2xl space-y-12">
-          <h2 className="font-black text-2xl text-white flex items-center gap-4 border-b border-white/5 pb-8 justify-end">
-            آراء القراء ({work.comments?.length || 0}) <FaComments className="text-blue-600 text-3xl" />
-          </h2>
-          <div className="pt-4">
-            <CommentForm workId={work._id} />
+      {/* 6. قسم التعليقات المنسق */}
+      <section className="max-w-6xl mx-auto px-6 pb-28">
+        <div id="comments-section" className="bg-zinc-900/10 border border-white/5 rounded-[3.5rem] p-10 md:p-20 shadow-inner space-y-16">
+          <div className="flex flex-col items-center md:items-end gap-3 border-b border-white/5 pb-10">
+              <div className="flex items-center gap-5 justify-end w-full">
+                <h2 className="font-black text-3xl text-white">آراء القراء</h2>
+                <div className="w-16 h-16 bg-blue-600/10 rounded-2xl flex items-center justify-center"><FaComments className="text-blue-500 text-3xl" /></div>
+              </div>
+              <span className="text-gray-500 font-bold text-xs">يوجد ({work.comments?.length || 0}) تعليق على هذا العمل</span>
           </div>
+          <div className="pt-4"><CommentForm workId={work._id} /></div>
         </div>
       </section>
     </main>
   );
 }
 
-// دالة مساعدة لبطاقات التنقل
 const NavCard = ({ work, label, isNext }: { work: any, label: string, isNext: boolean }) => {
   const coverUrl = work.cover ? urlFor(work.cover).url() : "";
   return (
     <Link href={`/works/${work.slug}`} className="group relative flex-1">
-      <div className={`rounded-2xl overflow-hidden transition-all duration-500 border ${isNext ? "bg-blue-900/10 border-blue-500/30 shadow-lg hover:border-blue-400" : "bg-zinc-900/50 border-white/5 hover:border-white/20"} hover:-translate-y-1`}>
-        <div className="flex items-center gap-4 p-3 flex-row-reverse">
-          <div className="relative w-16 h-24 shrink-0 rounded-lg overflow-hidden border border-white/10">
-            <img src={coverUrl} alt={work.title} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
+      <div className={`rounded-[1.5rem] overflow-hidden transition-all duration-700 border ${isNext ? "bg-blue-600/[0.03] border-blue-500/20 shadow-2xl" : "bg-white/[0.01] border-white/5"} group-hover:-translate-y-2`}>
+        <div className="flex items-center gap-5 p-4 flex-row-reverse">
+          <div className="relative w-20 h-28 shrink-0 rounded-xl overflow-hidden border border-white/5 shadow-lg">
+            <img src={coverUrl} alt={work.title} className="w-full h-full object-cover group-hover:scale-110 transition duration-1000" />
           </div>
           <div className="flex-1 min-w-0 text-right">
-            <span className={`text-[10px] font-black uppercase tracking-widest block mb-1 ${isNext ? "text-blue-400" : "text-gray-500"}`}>{label}</span>
-            <h4 className="text-sm font-bold truncate text-white">{work.title}</h4>
+            <span className={`text-[9px] font-black uppercase block mb-2 ${isNext ? "text-blue-500" : "text-gray-600"}`}>{label}</span>
+            <h4 className="text-base font-black truncate text-white group-hover:text-blue-400 transition-colors">{work.title}</h4>
           </div>
         </div>
       </div>
