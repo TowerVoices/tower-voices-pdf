@@ -101,6 +101,9 @@ export default async function WorkPage({ params }: Props) {
   if (!work) return notFound();
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
 
+  // Helper to format rating nicely
+  const formatRating = (rating: number) => rating ? rating.toFixed(1) : "0.0";
+
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans text-right overflow-x-hidden">
       
@@ -113,28 +116,27 @@ export default async function WorkPage({ params }: Props) {
         <span className="text-gray-300 truncate max-w-[150px]">{work.title}</span>
       </nav>
       
-      {/* 1. قسم الهيرو المعدل (الصورة يمين - النص يسار) */}
+      {/* 1. قسم الهيرو */}
       <section className="relative min-h-[60vh] w-full overflow-hidden flex items-center">
         <div className="absolute inset-0 bg-cover bg-center scale-110 blur-md opacity-30" style={{ backgroundImage: `url(${coverUrl})` }} />
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent" />
         
         <div className="relative z-10 max-w-6xl mx-auto px-6 w-full py-12">
-          {/* flex-row عادي جداً بدون reverse وبدون تلاعب بالترتيب */}
-          {/* في RTL: العنصر الأول (الصورة) سيظهر يمين، والعنصر الثاني (النص) سيظهر يسار */}
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center">
             
-            {/* 1. الغلاف (سيظهر على اليمين تلقائياً) */}
-            <div className="relative group shrink-0 flex flex-col items-center">
+            {/* الغلاف + التقييم */}
+            <div className="relative group shrink-0 flex flex-col items-center order-1 md:order-2">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
               <div className="relative w-44 md:w-64 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-white/10">
                 <img src={coverUrl} alt={work.title} className="w-full h-full object-cover transform group-hover:scale-105 transition duration-700" />
               </div>
               
-              {/* التقييمات أسفل الغلاف */}
+              {/* التقييمات - تم التعديل لإظهار الرقم */}
               <div className="mt-4 w-full space-y-3">
                 <div className="bg-zinc-900/80 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 shadow-xl flex flex-col items-center gap-1">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-yellow-500 uppercase tracking-wider">
-                      <FaStar /> تقييم القصة
+                    <div className="w-full flex justify-between items-center text-[10px] font-bold text-yellow-500 uppercase tracking-wider mb-1">
+                      <div className="flex items-center gap-2"><FaStar /> تقييم القصة</div>
+                      <span className="bg-yellow-500/10 px-2 py-0.5 rounded text-yellow-400 font-mono text-xs">{formatRating(work.storyRating)}</span>
                     </div>
                     <InteractiveRating 
                       workId={work._id} 
@@ -143,8 +145,9 @@ export default async function WorkPage({ params }: Props) {
                     />
                 </div>
                 <div className="bg-zinc-900/80 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 shadow-xl flex flex-col items-center gap-1">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-blue-400 uppercase tracking-wider">
-                      <FaLanguage className="text-lg" /> تقييم الترجمة
+                    <div className="w-full flex justify-between items-center text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">
+                       <div className="flex items-center gap-2"><FaLanguage className="text-lg" /> تقييم الترجمة</div>
+                       <span className="bg-blue-500/10 px-2 py-0.5 rounded text-blue-400 font-mono text-xs">{formatRating(work.translationRating)}</span>
                     </div>
                     <InteractiveRating 
                       workId={work._id} 
@@ -155,10 +158,8 @@ export default async function WorkPage({ params }: Props) {
               </div>
             </div>
             
-            {/* 2. النصوص والأزرار (ستظهر على اليسار تلقائياً، ولكن محاذاة النص ستكون لليمين) */}
-            <div className="flex-1 w-full flex flex-col items-center md:items-start text-center md:text-right">
-              
-              {/* الوسوم */}
+            {/* النصوص */}
+            <div className="flex-1 w-full flex flex-col order-2 md:order-1 items-center md:items-start text-center md:text-right">
               <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-6 w-full">
                 {work.tags?.map((tag: string, index: number) => (
                   <span key={index} className="bg-blue-600/10 text-blue-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-blue-600/20">{tag}</span>
@@ -166,12 +167,10 @@ export default async function WorkPage({ params }: Props) {
                 <span className="bg-green-500/10 text-green-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-green-500/20">{work.status}</span>
               </div>
               
-              {/* العنوان */}
               <h1 className="text-3xl md:text-5xl lg:text-6xl font-black mb-8 text-white tracking-tight leading-tight w-full">
                 {work.title}
               </h1>
 
-              {/* الأزرار */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center w-full">
                 <div className="w-full sm:w-auto">
                     <ReaderButton slug={work.slug} />
@@ -185,7 +184,6 @@ export default async function WorkPage({ params }: Props) {
                     <ReportButton workTitle={work.title} />
                 </div>
               </div>
-
             </div>
           </div>
         </div>
@@ -197,12 +195,14 @@ export default async function WorkPage({ params }: Props) {
           
           <div className="lg:col-span-8 space-y-10">
             <div className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-10 shadow-2xl backdrop-blur-md">
-              <div className="flex items-center gap-4 mb-8 justify-end">
-                <h2 className="font-black text-2xl text-white">ملخص القصة</h2>
+              {/* تم إصلاح عنوان الملخص ليظهر على اليمين */}
+              <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center border border-blue-600/20">
                     <FaBookOpen className="text-blue-500 text-xl" />
                 </div>
+                <h2 className="font-black text-2xl text-white">ملخص القصة</h2>
               </div>
+              
               <div className="prose prose-invert max-w-none text-gray-300 leading-loose text-lg font-medium text-right">
                 <SpoilerSynopsis text={work.synopsis || "لا يوجد ملخص متاح حالياً."} isSpoiler={work.isSpoiler || false} />
               </div>
