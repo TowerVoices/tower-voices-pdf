@@ -183,13 +183,11 @@ export default async function WorkPage({ params }: Props) {
           </div>
         </div>
       </section>
-
-      {/* منطقة المحتوى السفلي: (الملخص يمين، المعلومات يسار) */}
+{/* منطقة المحتوى السفلي */}
       <section className="max-w-6xl mx-auto px-6 py-20">
         <div className="grid lg:grid-cols-12 gap-16 items-start">
           
           <div className="lg:col-span-8 space-y-12 order-1">
-            {/* تنبيه المترجم */}
             {work.warning && (
               <div className="bg-red-500/5 border border-red-500/10 rounded-[2rem] p-8 flex items-start gap-5 text-red-400">
                 <FaExclamationTriangle className="text-xl shrink-0" />
@@ -197,10 +195,13 @@ export default async function WorkPage({ params }: Props) {
               </div>
             )}
 
+            {/* تم تعديل "ملخص القصة" لتصبح محاذاته لليمين تماماً */}
             <div className="bg-zinc-900/20 border border-white/5 rounded-[3rem] p-10 md:p-14 shadow-2xl relative overflow-hidden">
-              <div className="flex items-center gap-5 mb-10 justify-end">
-                <h2 className="font-black text-3xl text-white">ملخص القصة</h2>
-                <div className="w-14 h-14 bg-blue-600/10 rounded-2xl flex items-center justify-center shadow-inner"><FaBookOpen className="text-blue-500 text-2xl" /></div>
+              <div className="flex items-center gap-5 mb-10 justify-start"> {/* تم التغيير لـ justify-start لتناسب RTL */}
+                <div className="w-14 h-14 bg-blue-600/10 rounded-2xl flex items-center justify-center shadow-inner order-2"> {/* order-2 لوضع الأيقونة يميناً */}
+                    <FaBookOpen className="text-blue-500 text-2xl" />
+                </div>
+                <h2 className="font-black text-3xl text-white order-1">ملخص القصة</h2> {/* order-1 لوضع النص بجانب الأيقونة */}
               </div>
               <div className="prose prose-invert max-w-none text-gray-300 leading-[2.2] text-lg font-medium text-right">
                 <SpoilerSynopsis text={work.synopsis || "لا يوجد ملخص متاح حالياً."} isSpoiler={work.isSpoiler} />
