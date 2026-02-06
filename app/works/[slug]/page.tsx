@@ -5,7 +5,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import ShareButtons from "./ShareButtons";
 import SpoilerSynopsis from "./SpoilerSynopsis";
-import InteractiveRating from "@/components/InteractiveRating"; // تأكدنا من وجوده
+import InteractiveRating from "@/components/InteractiveRating";
 import ReportButton from "@/components/ReportButton";
 import CommentForm from "@/components/CommentForm";
 import ReaderButton from "./ReaderButton";
@@ -16,7 +16,6 @@ import {
   FaComments,
   FaInfoCircle,
   FaChevronLeft,
-  FaArrowRight,
   FaLayerGroup,
   FaClock,
   FaStar,
@@ -105,25 +104,25 @@ export default async function WorkPage({ params }: Props) {
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans text-right overflow-x-hidden">
       
-      {/* Breadcrumbs */}
-      <nav className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-2 text-[10px] md:text-xs text-gray-500 font-bold border-b border-white/5 justify-end">
-        <span className="text-gray-300 truncate max-w-[150px]">{work.title}</span>
+      {/* Breadcrumbs: تم تعديل الترتيب ليظهر بشكل صحيح من اليمين لليسار */}
+      <nav className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-2 text-[10px] md:text-xs text-gray-500 font-bold border-b border-white/5 justify-start">
+        <Link href="/" className="hover:text-blue-500 transition-colors">الرئيسية</Link>
         <FaChevronLeft className="text-[8px] opacity-30" />
         <Link href="/works" className="hover:text-blue-500 transition-colors">المكتبة</Link>
         <FaChevronLeft className="text-[8px] opacity-30" />
-        <Link href="/" className="hover:text-blue-500 transition-colors">الرئيسية</Link>
+        <span className="text-gray-300 truncate max-w-[150px]">{work.title}</span>
       </nav>
       
-      {/* 1. قسم الهيرو: تم إزالة flex-row-reverse ليعود الغلاف لليمين تلقائياً في الـ RTL */}
+      {/* 1. قسم الهيرو */}
       <section className="relative min-h-[60vh] w-full overflow-hidden flex items-end">
         <div className="absolute inset-0 bg-cover bg-center scale-110 blur-md opacity-30" style={{ backgroundImage: `url(${coverUrl})` }} />
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent" />
         
         <div className="relative z-10 max-w-6xl mx-auto px-6 w-full pb-12">
-          {/* هنا التعديل: flex-row عادي، فالأول (الغلاف) سيأتي يمين، والثاني (النص) يسار */}
-          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center md:items-end">
+          {/* تم تغيير items-end إلى items-center لمحاذاة أجمل بين النص والغلاف */}
+          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center md:items-center">
             
-            {/* الغلاف + التقييم (سيكون على اليمين الآن) */}
+            {/* الغلاف + التقييم (يمين في RTL) */}
             <div className="relative group shrink-0 flex flex-col items-center">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
               <div className="relative w-44 md:w-64 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-white/10">
@@ -136,7 +135,6 @@ export default async function WorkPage({ params }: Props) {
                     <div className="flex items-center gap-2 text-[10px] font-bold text-yellow-500 uppercase tracking-wider">
                       <FaStar /> تقييم القصة
                     </div>
-                    {/* تم استخدام ratingWork لتصحيح الخطأ */}
                     <InteractiveRating 
                       workId={work._id} 
                       initialRating={work.storyRating || 0} 
@@ -147,7 +145,6 @@ export default async function WorkPage({ params }: Props) {
                     <div className="flex items-center gap-2 text-[10px] font-bold text-blue-400 uppercase tracking-wider">
                       <FaLanguage className="text-lg" /> تقييم الترجمة
                     </div>
-                    {/* تم استخدام ratingTranslation */}
                     <InteractiveRating 
                       workId={work._id} 
                       initialRating={work.translationRating || 0} 
@@ -157,7 +154,7 @@ export default async function WorkPage({ params }: Props) {
               </div>
             </div>
             
-            {/* النصوص (ستكون على اليسار) */}
+            {/* النصوص (يسار في RTL) */}
             <div className="flex-1 text-center md:text-right w-full flex flex-col">
               <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-6 flex-row-reverse">
                 {work.tags?.map((tag: string, index: number) => (
@@ -165,6 +162,7 @@ export default async function WorkPage({ params }: Props) {
                 ))}
                 <span className="bg-green-500/10 text-green-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-green-500/20">{work.status}</span>
               </div>
+              
               <h1 className="text-3xl md:text-6xl font-black mb-8 text-white tracking-tight leading-tight w-full">{work.title}</h1>
 
               <div className="flex flex-col sm:flex-row-reverse gap-4 justify-center md:justify-start items-center">
@@ -181,11 +179,11 @@ export default async function WorkPage({ params }: Props) {
         </div>
       </section>
 
-      {/* 2. الشبكة: ملخص القصة يمين (الأول) والقائمة الجانبية يسار (الثاني) بشكل تلقائي */}
+      {/* 2. الشبكة: ملخص القصة يمين والقائمة الجانبية يسار */}
       <section className="max-w-6xl mx-auto px-6 py-16">
         <div className="grid lg:grid-cols-12 gap-12">
           
-          {/* العمود الأكبر (الملخص) يأتي أولاً لذا سيكون يمين */}
+          {/* العمود الأكبر (الملخص) يأتي أولاً في الكود ليظهر يمين في RTL */}
           <div className="lg:col-span-8 space-y-10">
             <div className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-10 shadow-2xl backdrop-blur-md">
               <div className="flex items-center gap-4 mb-8 justify-end">
@@ -233,7 +231,7 @@ export default async function WorkPage({ params }: Props) {
             )}
           </div>
 
-          {/* القائمة الجانبية (تأتي ثانياً لذا ستكون يسار) */}
+          {/* القائمة الجانبية (تأتي ثانياً لتظهر يسار في RTL) */}
           <div className="lg:col-span-4 space-y-8">
             <div className="bg-zinc-900/80 border border-white/10 rounded-[2.5rem] p-10 shadow-2xl flex flex-col sticky top-24">
               <h3 className="text-xl font-bold mb-10 text-white border-b border-white/5 pb-6 flex items-center gap-2 justify-end">
