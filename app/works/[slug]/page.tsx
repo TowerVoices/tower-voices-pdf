@@ -129,7 +129,7 @@ export default async function WorkPage({ params }: Props) {
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/90 to-transparent" />
         
         <div className="relative z-10 max-w-6xl mx-auto px-6 w-full py-12">
-          <div className="flex flex-col md:flex-row gap-10 md:gap-16 items-center md:items-start">
+          <div className="flex flex-col md:flex-row gap-10 md:gap-16 items-center md:items-stretch">
             
             {/* جهة اليمين: الغلاف والتقييمات */}
             <div className="relative group shrink-0 flex flex-col items-center">
@@ -154,19 +154,30 @@ export default async function WorkPage({ params }: Props) {
               </div>
             </div>
 
-            {/* جهة اليسار: النصوص (مرتفعة للأعلى items-center) */}
-            <div className="flex-1 text-center md:text-right w-full flex flex-col">
+            {/* جهة اليسار: النصوص (تم دمج التنسيق القديم مع توزيع justify-between) */}
+          <div className="flex-1 text-center md:text-right w-full flex flex-col justify-between py-2">
+            
+            {/* حاوية علوية لربط الوسوم والعنوان معاً في الأعلى */}
+            <div>
               {/* الوسوم تبدأ من اليمين */}
               <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-8">
                 {work.tags?.map((tag: string, i: number) => (
-                  <span key={i} className="bg-blue-600/5 text-blue-400 text-[10px] font-black px-4 py-1.5 rounded-full border border-blue-600/10 uppercase tracking-wider">{tag}</span>
+                  <span key={i} className="bg-blue-600/5 text-blue-400 text-[10px] font-black px-4 py-1.5 rounded-full border border-blue-600/10 uppercase tracking-wider">
+                    {tag}
+                  </span>
                 ))}
-                <span className="bg-green-500/5 text-green-400 text-[10px] font-black px-4 py-1.5 rounded-full border border-green-500/10 uppercase tracking-wider">{work.status}</span>
+                <span className="bg-green-500/5 text-green-400 text-[10px] font-black px-4 py-1.5 rounded-full border border-green-500/10 uppercase tracking-wider">
+                  {work.status}
+                </span>
               </div>
               
+              {/* العنوان: مرتفع للأعلى بمحاذاة قمة الغلاف */}
               <h1 className="text-3xl md:text-6xl lg:text-7xl font-black mb-10 text-white tracking-tight leading-[1.2] w-full break-words">
                 {work.title}
               </h1>
+            </div> {/* إغلاق الحاوية العلوية */}
+
+            {/* ملاحظة: الأزرار التي تأتي بعد هذا الـ div ستندفع تلقائياً للأسفل بفضل justify-between */}
 
               {/* الأزرار: ترتيبها الصحيح (القراءة -> التحميل -> الإبلاغ) */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center w-full">

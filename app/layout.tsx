@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   description: "المكان الأول والحصري لقراءة رواية ريزيرو Re:Zero بجميع أجزائها (المجلدات، EX، وقصص الـ IF) مترجمة بأسلوب عربي فصيح.",
   
   // استهداف كلمات البحث العالمية في الهيكل الأساسي للموقع
-  keywords: ["ريزيرو", "ري زيرو", "Re:Zero", "Re Zero", "رواية ريزيرو مترجمة", "أصوات البرج", "Tower Voices", "روايات خفيفة", "Light Novel", "ترجمة روايات"],
+  keywords: ["ريزيرو", "ري زيرو", "Re:Zero", "Re Zero", "رواية ري زيرو مترجمة", "أصوات البرج", "Tower Voices", "روايات خفيفة", "Light Novel", "ترجمة روايات"],
 
   verification: {
     google: "QCWLh4mWPB2AX43U4UtzDMwux8SU0ntiDJ_ybRfchcc", 
