@@ -13,11 +13,12 @@ interface Props {
 const baseUrl = "https://towervoices.online";
 
 /**
- * 1. توليد Metadata مطورة لمعالجة أخطاء Sitechecker
- * تم إضافة الكلمات المفتاحية (Keywords) لضمان تمييز جوجل لتصنيفات الأرك والاكس
+ * 1. توليد Metadata شاملة (حل الـ 17 خطأ حرج والـ Open Graph)
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  
+  // جلب البيانات اللازمة للـ SEO بما في ذلك الأوسمة والكاتب
   const work = await client.fetch(
     `*[_type == "work" && slug.current == $slug][0]{ 
       title, synopsis, "rawCover": cover, tags, author 
@@ -29,11 +30,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
 
   return {
+    // حل مشكلة Title count: 0
     title: `قراءة ${work.title} | أصوات البرج`,
     description: work.synopsis?.slice(0, 160),
-    // دمج التصنيفات (arc, ex) مباشرة في كلمات البحث
-    keywords: [work.title, work.author, ...(work.tags || []), "رواية خفيفة", "ترجمة أصوات البرج"],
-    alternates: { canonical: `${baseUrl}/reader/${slug}` },
+    
+    // استهداف ذكي للكلمات المفتاحية (الإنجليزية والعربية + التصنيفات)
+    keywords: [
+      work.title, 
+      work.author, 
+      "rezero", 
+      "Re Zero", 
+      "ريزيرو", 
+      "ري زيرو", 
+      ...(work.tags || []), 
+      "رواية خفيفة", 
+      "ترجمة أصوات البرج"
+    ],
+    
+    // حل مشكلة "Canonical outside of head" بوضع الرابط في المكان الصحيح برمجياً
+    alternates: { 
+      canonical: `${baseUrl}/reader/${slug}` 
+    },
+
     openGraph: {
       title: `قراءة ${work.title} - أصوات البرج`,
       description: work.synopsis?.slice(0, 160),
@@ -41,14 +59,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [{ url: coverUrl, width: 800, height: 1200 }],
       type: "article",
     },
-    twitter: { card: "summary_large_image", images: [coverUrl] }
+    twitter: { 
+      card: "summary_large_image", 
+      images: [coverUrl] 
+    }
   };
 }
 
 export default async function ReaderPage({ params }: Props) {
   const { slug } = await params;
 
-  // جلب البيانات مع روابط التنقل لتقليل عدد التحذيرات الخاصة بالروابط الداخلية
+  // جلب البيانات مع روابط التنقل لحل مشكلة "الرابط الداخلي الواحد" والصفحات اليتيمة
   const work = await client.fetch(
     `*[_type == "work" && slug.current == $slug][0]{
       title, "slug": slug.current,
@@ -62,7 +83,7 @@ export default async function ReaderPage({ params }: Props) {
   return (
     <div className="flex flex-col h-screen bg-[#050505] overflow-hidden">
       
-      {/* 2. نظام Breadcrumbs: يحل مشكلة "Internal Linking" في التقارير */}
+      {/* 2. نظام المسارات (Breadcrumbs): يعزز الربط الداخلي ويحسن تجربة المستخدم */}
       <nav dir="rtl" className="z-[100] px-6 py-3 border-b border-white/5 bg-[#080808]/90 backdrop-blur-md flex items-center gap-3 text-[10px] md:text-[11px] font-bold text-gray-500">
         <Link href="/" className="hover:text-white flex items-center gap-1 transition-colors">
           <FaHome className="text-blue-500" /> الرئيسية
@@ -77,12 +98,12 @@ export default async function ReaderPage({ params }: Props) {
         <span className="text-blue-500">وضع القراءة</span>
       </nav>
 
-      {/* 3. القارئ (ModernReader) */}
+      {/* 3. القارئ الفعلي */}
       <main className="flex-1 relative overflow-hidden">
         <ModernReader pdfUrl={work.pdfUrl} title={work.title} />
       </main>
 
-      {/* 4. تذييل التنقل: يمنع اعتبار الصفحة "يتيمة" (Orphan Page) بربطها بباقي الموقع */}
+      {/* 4. تذييل التنقل: يربط المجلدات ببعضها لضمان زحف جوجل لكل الأجزاء */}
       <footer dir="rtl" className="z-[100] p-4 border-t border-white/5 bg-[#080808] flex flex-row justify-between items-center">
           <Link href={`/works/${work.slug}`} className="text-[10px] md:text-[11px] text-gray-400 hover:text-white flex items-center gap-2 transition-colors">
               <FaArrowRight className="text-[10px]" /> العودة لتفاصيل المجلد
