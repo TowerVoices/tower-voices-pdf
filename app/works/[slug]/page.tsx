@@ -60,20 +60,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// تم تعديل هذه الدالة لحساب المتوسطات تلقائياً
+// دالة جلب البيانات المعدلة لحساب المتوسط المرجح (يدوي + تلقائي)
 async function getWork(slug: string) {
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id, title, "slug": slug.current, "rawCover": cover, author, tags, status,
     synopsis, isSpoiler, timeDescription, 
     
-    // حساب متوسط تقييم القصة
-    "storyRating": coalesce(math::avg(*[_type == "rating" && work._ref == ^._id].ratingWork), 0),
+    // 1. حساب تقييم القصة (يدوي + تلقائي)
+    "storyRating": 
+      ((coalesce(storyRating, 0) * coalesce(ratingCount, 0)) + 
+      coalesce(math::sum(*[_type == "rating" && work._ref == ^._id].ratingWork), 0)) 
+      / 
+      (coalesce(ratingCount, 0) + count(*[_type == "rating" && work._ref == ^._id])),
 
-    // حساب متوسط تقييم الترجمة
-    "translationRating": coalesce(math::avg(*[_type == "rating" && work._ref == ^._id].ratingTranslation), 0),
+    // 2. حساب تقييم الترجمة (يدوي + تلقائي)
+    "translationRating": 
+      ((coalesce(translationRating, 0) * coalesce(ratingCount, 0)) + 
+      coalesce(math::sum(*[_type == "rating" && work._ref == ^._id].ratingTranslation), 0)) 
+      / 
+      (coalesce(ratingCount, 0) + count(*[_type == "rating" && work._ref == ^._id])),
 
-    // حساب عدد المقيمين
-    "ratingCount": count(*[_type == "rating" && work._ref == ^._id]),
+    // 3. العدد الكلي للمقيمين (العدد اليدوي + عدد الزوار الفعليين)
+    // نعيد تسمية الحقل مؤقتاً لنتجنب التعارض، أو نستخدمه مباشرة
+    "totalRatingCount": coalesce(ratingCount, 0) + count(*[_type == "rating" && work._ref == ^._id]),
 
     "pdfUrl": coalesce(readerUrl, pdfFile.asset->url, downloadUrl),
     "previousWork": previousWork->{ title, "slug": slug.current, "rawCover": cover },
@@ -84,7 +93,8 @@ async function getWork(slug: string) {
     "comments": *[_type == "comment" && work._ref == ^._id && approved == true] | order(_createdAt desc)
   }`;
   
-  return await client.fetch(query, { slug }, { next: { revalidate: 60 } });
+  // revalidate: 0 مهم لتحديث التقييم فوراً عند كل زيارة
+  return await client.fetch(query, { slug }, { next: { revalidate: 0 } });
 }
 
 const NavCard = ({ work, label, isNext }: { work: any, label: string, isNext: boolean }) => {
@@ -113,7 +123,8 @@ export default async function WorkPage({ params }: Props) {
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
 
   // Helper to format rating nicely
-  const formatRating = (rating: number) => rating ? rating.toFixed(1) : "0.0";
+  // نتأكد من أن القيمة رقم صحيح قبل استخدام toFixed لتجنب الأخطاء إذا كانت null
+  const formatRating = (rating: number) => (rating && !isNaN(rating)) ? rating.toFixed(1) : "0.0";
 
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans text-right overflow-x-hidden">
@@ -274,7 +285,8 @@ export default async function WorkPage({ params }: Props) {
                 </div>
                 <div className="flex justify-between items-center bg-blue-500/5 p-4 rounded-2xl border border-blue-500/10 flex-row-reverse">
                     <span className="text-gray-500">عدد المقيمين</span>
-                    <span className="text-blue-400 font-bold">{work.ratingCount || 0}</span>
+                    {/* استخدام totalRatingCount المحسوب حديثاً */}
+                    <span className="text-blue-400 font-bold">{work.totalRatingCount || 0}</span>
                 </div>
               </div>
 
