@@ -9,7 +9,7 @@ import InteractiveRating from "@/components/InteractiveRating";
 import ReportButton from "@/components/ReportButton";
 import CommentForm from "@/components/CommentForm";
 import ReaderButton from "./ReaderButton";
-
+import Image from 'next/image';
 import {
   FaDownload,
   FaBookOpen,
@@ -134,8 +134,15 @@ export default async function WorkPage({ params }: Props) {
             {/* جهة اليمين: الغلاف والتقييمات */}
             <div className="relative group shrink-0 flex flex-col items-center">
               <div className="relative w-44 md:w-64 aspect-[2/3] rounded-[1.5rem] overflow-hidden shadow-2xl border border-white/10">
-                <img src={coverUrl} alt={work.title} className="w-full h-full object-cover transform group-hover:scale-105 transition duration-1000" />
-              </div>
+{/* السطر 137 بعد التعديل */}
+<Image 
+  src={coverUrl} 
+  alt={work.title} 
+  width={300} 
+  height={450} 
+  priority 
+  className="w-full h-full object-cover transform group-hover:scale-105 transition duration-1000" 
+/>              </div>
               <div className="mt-4 w-full space-y-3">
                 <div className="bg-zinc-900/80 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 shadow-xl flex flex-col items-center">
                     <div className="w-full flex justify-between items-center text-[10px] font-bold text-yellow-500 mb-1 uppercase">
