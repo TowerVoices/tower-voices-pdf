@@ -296,14 +296,34 @@ export default async function WorkPage({ params }: Props) {
         </div>
       </section>
 
-      {/* قسم التعليقات */}
+     {/* قسم التعليقات: تم ضبط المحاذاة لليمين تماماً */}
       <section className="max-w-6xl mx-auto px-6 pb-28">
         <div id="comments-section" className="bg-zinc-900/10 border border-white/5 rounded-[3.5rem] p-10 md:p-20 shadow-inner space-y-16">
-          <div className="flex flex-col items-center md:items-end gap-3 border-b border-white/5 pb-10">
-              <div className="flex items-center gap-5 justify-end w-full"><h2 className="font-black text-3xl text-white">آراء القراء</h2><div className="w-16 h-16 bg-blue-600/10 rounded-2xl flex items-center justify-center shadow-lg"><FaComments className="text-blue-600 text-3xl" /></div></div>
-              <span className="text-gray-500 font-bold text-xs">يوجد ({work.comments?.length || 0}) تعليق على هذا العمل</span>
+          
+          {/* الحاوية العلوية: items-start تضمن البداية من اليمين في المتصفح العربي */}
+          <div className="flex flex-col items-start gap-3 border-b border-white/5 pb-10">
+              
+              {/* الصف الرئيسي: الأيقونة أولاً ثم النص لظهورهما يميناً */}
+              <div className="flex items-center gap-5 justify-start w-full">
+                  
+                  {/* الأيقونة: تظهر في اليمين */}
+                  <div className="w-16 h-16 bg-blue-600/10 rounded-2xl flex items-center justify-center shadow-lg">
+                      <FaComments className="text-blue-600 text-3xl" />
+                  </div>
+                  
+                  {/* العنوان: بجانب الأيقونة */}
+                  <h2 className="font-black text-3xl text-white">آراء القراء</h2>
+              </div>
+              
+              {/* نص عدد التعليقات: محاذى لليمين تحت العنوان مباشرة */}
+              <span className="text-gray-500 font-bold text-xs pr-1">
+                  يوجد ({work.comments?.length || 0}) تعليق على هذا العمل
+              </span>
           </div>
-          <div className="pt-4"><CommentForm workId={work._id} /></div>
+
+          <div className="pt-4">
+            <CommentForm workId={work._id} />
+          </div>
         </div>
       </section>
     </main>
