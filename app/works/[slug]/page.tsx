@@ -129,7 +129,7 @@ export default async function WorkPage({ params }: Props) {
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/90 to-transparent" />
         
         <div className="relative z-10 max-w-6xl mx-auto px-6 w-full py-12">
-          <div className="flex flex-col md:flex-row gap-10 md:gap-16 items-center md:items-center">
+          <div className="flex flex-col md:flex-row gap-10 md:gap-16 items-center md:items-start">
             
             {/* جهة اليمين: الغلاف والتقييمات */}
             <div className="relative group shrink-0 flex flex-col items-center">
