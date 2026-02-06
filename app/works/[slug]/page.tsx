@@ -60,11 +60,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+// تم تعديل هذه الدالة لحساب المتوسطات تلقائياً
 async function getWork(slug: string) {
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id, title, "slug": slug.current, "rawCover": cover, author, tags, status,
     synopsis, isSpoiler, timeDescription, 
-    storyRating, translationRating, ratingCount, 
+    
+    // حساب متوسط تقييم القصة
+    "storyRating": coalesce(math::avg(*[_type == "rating" && work._ref == ^._id].ratingWork), 0),
+
+    // حساب متوسط تقييم الترجمة
+    "translationRating": coalesce(math::avg(*[_type == "rating" && work._ref == ^._id].ratingTranslation), 0),
+
+    // حساب عدد المقيمين
+    "ratingCount": count(*[_type == "rating" && work._ref == ^._id]),
+
     "pdfUrl": coalesce(readerUrl, pdfFile.asset->url, downloadUrl),
     "previousWork": previousWork->{ title, "slug": slug.current, "rawCover": cover },
     "nextWork": nextWork->{ title, "slug": slug.current, "rawCover": cover },
@@ -73,6 +83,7 @@ async function getWork(slug: string) {
     },
     "comments": *[_type == "comment" && work._ref == ^._id && approved == true] | order(_createdAt desc)
   }`;
+  
   return await client.fetch(query, { slug }, { next: { revalidate: 60 } });
 }
 
@@ -131,7 +142,7 @@ export default async function WorkPage({ params }: Props) {
                 <img src={coverUrl} alt={work.title} className="w-full h-full object-cover transform group-hover:scale-105 transition duration-700" />
               </div>
               
-              {/* التقييمات - تم التعديل لإظهار الرقم */}
+              {/* التقييمات */}
               <div className="mt-4 w-full space-y-3">
                 <div className="bg-zinc-900/80 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 shadow-xl flex flex-col items-center gap-1">
                     <div className="w-full flex justify-between items-center text-[10px] font-bold text-yellow-500 uppercase tracking-wider mb-1">
@@ -195,7 +206,6 @@ export default async function WorkPage({ params }: Props) {
           
           <div className="lg:col-span-8 space-y-10">
             <div className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-10 shadow-2xl backdrop-blur-md">
-              {/* تم إصلاح عنوان الملخص ليظهر على اليمين */}
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center border border-blue-600/20">
                     <FaBookOpen className="text-blue-500 text-xl" />
