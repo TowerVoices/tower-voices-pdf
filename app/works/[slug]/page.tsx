@@ -5,7 +5,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import ShareButtons from "./ShareButtons";
 import SpoilerSynopsis from "./SpoilerSynopsis";
-import InteractiveRating from "@/components/InteractiveRating"; // استيراد مكون التقييم
+import InteractiveRating from "@/components/InteractiveRating";
 import ReportButton from "@/components/ReportButton";
 import CommentForm from "@/components/CommentForm";
 import ReaderButton from "./ReaderButton";
@@ -20,7 +20,7 @@ import {
   FaLayerGroup,
   FaClock,
   FaStar,
-  FaLanguage // أيقونة للترجمة
+  FaLanguage
 } from "react-icons/fa";
 
 interface Props {
@@ -29,12 +29,10 @@ interface Props {
 
 const baseUrl = "https://towervoices.online";
 
-// 1. الميتا داتا (محسنة وبدون تكرار العنوان)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const work = await getWork(slug);
   if (!work) return { title: "العمل غير موجود" };
-  
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
   const description = work.synopsis?.slice(0, 160) || "استكشف ترجمة رواية ريزيرو الحصرية على منصة أصوات البرج.";
 
@@ -42,8 +40,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: work.title,
     description: description,
     keywords: [
-      work.title, work.author, "rezero", "Re Zero", "re:zero", "ريزيرو", "ري زيرو",
-      "رواية ريزيرو", "رواية خفيفة", "ترجمة ريزيرو", "أصوات البرج", ...(work.tags || [])
+      work.title, work.author,  "rezero", "Re Zero", "re:zero", "re zero novel", 
+      "rezero light novel", "ريزيرو", "ري زيرو", "رواية ري زيرو", "رواية ريزيرو", 
+      "رواية خفيفة", "ترجمة ريزيرو", "أصوات البرج", "Tower Voices", "روايات مترجمة", 
+      "ارك", "arc", "ex", "مجلد", "قراءة اونلاين", "فيلت", "راينهارد", "ساتيلا", ...(work.tags || [])
     ],
     alternates: { canonical: `${baseUrl}/works/${slug}` },
     twitter: {
@@ -51,8 +51,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${work.title} - أصوات البرج`,
       description: description,
       images: [coverUrl],
-      site: "@TowerVoices",
-      creator: "@TowerVoices"
     },
     openGraph: {
       title: work.title,
@@ -65,7 +63,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// 2. استعلام Sanity (تمت إضافة storyRating و translationRating و ratingCount)
 async function getWork(slug: string) {
   const query = `*[_type == "work" && slug.current == $slug][0]{
     _id, title, "slug": slug.current, "rawCover": cover, author, tags, status,
@@ -89,7 +86,7 @@ const NavCard = ({ work, label, isNext }: { work: any, label: string, isNext: bo
       <div className={`rounded-2xl overflow-hidden transition-all duration-500 border ${isNext ? "bg-blue-900/10 border-blue-500/30 shadow-lg hover:border-blue-400" : "bg-zinc-900/50 border-white/5 hover:border-white/20"} hover:-translate-y-1`}>
         <div className="flex items-center gap-4 p-3 flex-row-reverse">
           <div className="relative w-16 h-24 shrink-0 rounded-lg overflow-hidden border border-white/10">
-            <img src={coverUrl} alt={work.title} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
+            <img src={coverUrl} alt={work.title} className="w-full h-full object-cover" />
           </div>
           <div className="flex-1 min-w-0 text-right">
             <span className={`text-[10px] font-black uppercase tracking-widest block mb-1 ${isNext ? "text-blue-400" : "text-gray-500"}`}>{label}</span>
@@ -110,7 +107,7 @@ export default async function WorkPage({ params }: Props) {
   return (
     <main dir="rtl" className="bg-[#050505] text-gray-200 min-h-screen font-sans text-right overflow-x-hidden">
       
-      {/* شريط المسارات */}
+      {/* Breadcrumbs */}
       <nav className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-2 text-[10px] md:text-xs text-gray-500 font-bold border-b border-white/5 justify-end">
         <span className="text-gray-300 truncate max-w-[150px]">{work.title}</span>
         <FaChevronLeft className="text-[8px] opacity-30" />
@@ -119,53 +116,50 @@ export default async function WorkPage({ params }: Props) {
         <Link href="/" className="hover:text-blue-500 transition-colors">الرئيسية</Link>
       </nav>
       
-      {/* قسم الهيرو */}
+      {/* 1. قسم الهيرو: تم إزالة flex-row-reverse ليعود الغلاف لليمين تلقائياً في الـ RTL */}
       <section className="relative min-h-[60vh] w-full overflow-hidden flex items-end">
         <div className="absolute inset-0 bg-cover bg-center scale-110 blur-md opacity-30" style={{ backgroundImage: `url(${coverUrl})` }} />
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent" />
         
         <div className="relative z-10 max-w-6xl mx-auto px-6 w-full pb-12">
-          <div className="flex flex-col md:flex-row-reverse gap-8 md:gap-12 items-center md:items-end">
+          {/* هنا التعديل: flex-row عادي، فالأول (الغلاف) سيأتي يمين، والثاني (النص) يسار */}
+          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center md:items-end">
             
-            {/* الغلاف ونظام التقييم */}
+            {/* الغلاف + التقييم (سيكون على اليمين الآن) */}
             <div className="relative group shrink-0 flex flex-col items-center">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
               <div className="relative w-44 md:w-64 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-white/10">
                 <img src={coverUrl} alt={work.title} className="w-full h-full object-cover transform group-hover:scale-105 transition duration-700" />
               </div>
               
-              {/* === نظام التقييم (قصة + ترجمة) === */}
+              {/* التقييمات */}
               <div className="mt-4 w-full space-y-3">
-                
-                {/* 1. تقييم القصة */}
                 <div className="bg-zinc-900/80 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 shadow-xl flex flex-col items-center gap-1">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-yellow-500 uppercase tracking-wider">
                       <FaStar /> تقييم القصة
                     </div>
+                    {/* تم استخدام ratingWork لتصحيح الخطأ */}
                     <InteractiveRating 
                       workId={work._id} 
                       initialRating={work.storyRating || 0} 
-                      fieldName="ratingWork" // الاسم الصحيح للحقل
+                      fieldName="ratingWork" 
                     />
                 </div>
-
-                {/* 2. تقييم الترجمة */}
                 <div className="bg-zinc-900/80 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 shadow-xl flex flex-col items-center gap-1">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-blue-400 uppercase tracking-wider">
                       <FaLanguage className="text-lg" /> تقييم الترجمة
                     </div>
+                    {/* تم استخدام ratingTranslation */}
                     <InteractiveRating 
                       workId={work._id} 
                       initialRating={work.translationRating || 0} 
-                      fieldName="ratingTranslation" // الاسم الصحيح للحقل
+                      fieldName="ratingTranslation" 
                     />
                 </div>
-
               </div>
-              {/* ================================ */}
             </div>
             
-            {/* تفاصيل العمل */}
+            {/* النصوص (ستكون على اليسار) */}
             <div className="flex-1 text-center md:text-right w-full flex flex-col">
               <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-6 flex-row-reverse">
                 {work.tags?.map((tag: string, index: number) => (
@@ -189,11 +183,12 @@ export default async function WorkPage({ params }: Props) {
         </div>
       </section>
 
-      {/* باقي الأقسام (الملخص، الجانبية، التعليقات) */}
+      {/* 2. الشبكة: ملخص القصة يمين (الأول) والقائمة الجانبية يسار (الثاني) بشكل تلقائي */}
       <section className="max-w-6xl mx-auto px-6 py-16">
         <div className="grid lg:grid-cols-12 gap-12">
           
-          <div className="lg:col-span-8 space-y-10 order-1">
+          {/* العمود الأكبر (الملخص) يأتي أولاً لذا سيكون يمين */}
+          <div className="lg:col-span-8 space-y-10">
             <div className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-10 shadow-2xl backdrop-blur-md">
               <div className="flex items-center gap-4 mb-8 justify-end">
                 <h2 className="font-black text-2xl text-white">ملخص القصة</h2>
@@ -240,7 +235,8 @@ export default async function WorkPage({ params }: Props) {
             )}
           </div>
 
-          <div className="lg:col-span-4 space-y-8 order-2">
+          {/* القائمة الجانبية (تأتي ثانياً لذا ستكون يسار) */}
+          <div className="lg:col-span-4 space-y-8">
             <div className="bg-zinc-900/80 border border-white/10 rounded-[2.5rem] p-10 shadow-2xl flex flex-col sticky top-24">
               <h3 className="text-xl font-bold mb-10 text-white border-b border-white/5 pb-6 flex items-center gap-2 justify-end">
                  معلومات العمل <FaInfoCircle className="text-blue-500" />
@@ -260,7 +256,6 @@ export default async function WorkPage({ params }: Props) {
                     <span className="text-gray-500">المؤلف</span>
                     <span className="text-white font-bold">{work.author || "تابِي ناغاتسُكي"}</span>
                 </div>
-                {/* عرض عدد المقيمين */}
                 <div className="flex justify-between items-center bg-blue-500/5 p-4 rounded-2xl border border-blue-500/10 flex-row-reverse">
                     <span className="text-gray-500">عدد المقيمين</span>
                     <span className="text-blue-400 font-bold">{work.ratingCount || 0}</span>
