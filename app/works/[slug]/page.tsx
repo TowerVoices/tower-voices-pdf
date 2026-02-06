@@ -113,22 +113,24 @@ export default async function WorkPage({ params }: Props) {
         <span className="text-gray-300 truncate max-w-[150px]">{work.title}</span>
       </nav>
       
-      {/* 1. قسم الهيرو (تم التعديل لإصلاح المحاذاة) */}
+      {/* 1. قسم الهيرو المعدل (الصورة يمين - النص يسار) */}
       <section className="relative min-h-[60vh] w-full overflow-hidden flex items-center">
         <div className="absolute inset-0 bg-cover bg-center scale-110 blur-md opacity-30" style={{ backgroundImage: `url(${coverUrl})` }} />
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent" />
         
         <div className="relative z-10 max-w-6xl mx-auto px-6 w-full py-12">
-          {/* تم إضافة items-center لضمان التوسط العمودي */}
+          {/* flex-row عادي جداً بدون reverse وبدون تلاعب بالترتيب */}
+          {/* في RTL: العنصر الأول (الصورة) سيظهر يمين، والعنصر الثاني (النص) سيظهر يسار */}
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center">
             
-            {/* الغلاف + التقييم: (order-2) ليظهر يساراً في الشاشات الكبيرة */}
-            <div className="relative group shrink-0 flex flex-col items-center order-1 md:order-2">
+            {/* 1. الغلاف (سيظهر على اليمين تلقائياً) */}
+            <div className="relative group shrink-0 flex flex-col items-center">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
               <div className="relative w-44 md:w-64 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-white/10">
                 <img src={coverUrl} alt={work.title} className="w-full h-full object-cover transform group-hover:scale-105 transition duration-700" />
               </div>
               
+              {/* التقييمات أسفل الغلاف */}
               <div className="mt-4 w-full space-y-3">
                 <div className="bg-zinc-900/80 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 shadow-xl flex flex-col items-center gap-1">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-yellow-500 uppercase tracking-wider">
@@ -153,9 +155,10 @@ export default async function WorkPage({ params }: Props) {
               </div>
             </div>
             
-            {/* النصوص: (order-1) ليظهر يميناً في الشاشات الكبيرة */}
-            <div className="flex-1 w-full flex flex-col order-2 md:order-1 items-center md:items-start text-center md:text-right">
-              {/* التصنيفات: إزالة reverse لترتيب منطقي */}
+            {/* 2. النصوص والأزرار (ستظهر على اليسار تلقائياً، ولكن محاذاة النص ستكون لليمين) */}
+            <div className="flex-1 w-full flex flex-col items-center md:items-start text-center md:text-right">
+              
+              {/* الوسوم */}
               <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-6 w-full">
                 {work.tags?.map((tag: string, index: number) => (
                   <span key={index} className="bg-blue-600/10 text-blue-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-blue-600/20">{tag}</span>
@@ -163,9 +166,12 @@ export default async function WorkPage({ params }: Props) {
                 <span className="bg-green-500/10 text-green-400 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full border border-green-500/20">{work.status}</span>
               </div>
               
-              <h1 className="text-3xl md:text-5xl lg:text-6xl font-black mb-8 text-white tracking-tight leading-tight w-full">{work.title}</h1>
+              {/* العنوان */}
+              <h1 className="text-3xl md:text-5xl lg:text-6xl font-black mb-8 text-white tracking-tight leading-tight w-full">
+                {work.title}
+              </h1>
 
-              {/* الأزرار: إزالة reverse وتوحيد الاتجاه */}
+              {/* الأزرار */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center w-full">
                 <div className="w-full sm:w-auto">
                     <ReaderButton slug={work.slug} />
@@ -179,12 +185,13 @@ export default async function WorkPage({ params }: Props) {
                     <ReportButton workTitle={work.title} />
                 </div>
               </div>
+
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. الشبكة: ملخص القصة يمين والقائمة الجانبية يسار */}
+      {/* 2. الشبكة: ملخص القصة والقائمة الجانبية */}
       <section className="max-w-6xl mx-auto px-6 py-16">
         <div className="grid lg:grid-cols-12 gap-12">
           
