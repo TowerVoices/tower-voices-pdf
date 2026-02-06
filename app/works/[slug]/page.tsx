@@ -5,7 +5,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import ShareButtons from "./ShareButtons";
 import SpoilerSynopsis from "./SpoilerSynopsis";
-import InteractiveRating from "@/components/InteractiveRating";
+import InteractiveRating from "@/components/InteractiveRating"; // تأكدنا من وجوده
 import ReportButton from "@/components/ReportButton";
 import CommentForm from "@/components/CommentForm";
 import ReaderButton from "./ReaderButton";
@@ -40,10 +40,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: work.title,
     description: description,
     keywords: [
-      work.title, work.author,  "rezero", "Re Zero", "re:zero", "re zero novel", 
-      "rezero light novel", "ريزيرو", "ري زيرو", "رواية ري زيرو", "رواية ريزيرو", 
-      "رواية خفيفة", "ترجمة ريزيرو", "أصوات البرج", "Tower Voices", "روايات مترجمة", 
-      "ارك", "arc", "ex", "مجلد", "قراءة اونلاين", "فيلت", "راينهارد", "ساتيلا", ...(work.tags || [])
+      work.title, work.author, "rezero", "Re Zero", "re:zero", "ريزيرو", "ري زيرو",
+      "رواية ريزيرو", "رواية خفيفة", "ترجمة ريزيرو", "أصوات البرج", ...(work.tags || [])
     ],
     alternates: { canonical: `${baseUrl}/works/${slug}` },
     twitter: {
