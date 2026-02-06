@@ -220,7 +220,7 @@ export default async function WorkPage({ params }: Props) {
                     <div className="pt-6 space-y-8">
                         <div className="flex items-center gap-4 px-2">
                             <div className="h-px flex-1 bg-gradient-to-l from-transparent via-blue-500/10 to-transparent"></div>
-                            <h3 className="text-[11px] font-black text-blue-500 uppercase tracking-[0.3em] flex items-center gap-2"><FaPlusSquare /> قصص جانبية تابعة</h3>
+                            <h2 className="text-[11px] font-black text-blue-500 uppercase tracking-[0.3em] flex items-center gap-2"><FaPlusSquare /> قصص جانبية تابعة</h2>
                             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-500/10 to-transparent"></div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -321,7 +321,7 @@ const NavCard = ({ work, label, isNext }: { work: any, label: string, isNext: bo
           </div>
           <div className="flex-1 min-w-0 text-right">
             <span className={`text-[9px] font-black uppercase block mb-2 ${isNext ? "text-blue-500" : "text-gray-600"}`}>{label}</span>
-            <h4 className="text-base font-black truncate text-white group-hover:text-blue-400 transition-colors">{work.title}</h4>
+            <h3 className="text-base font-black truncate text-white group-hover:text-blue-400 transition-colors">{work.title}</h3>
           </div>
         </div>
       </div>
