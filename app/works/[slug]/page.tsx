@@ -237,19 +237,36 @@ export default async function WorkPage({ params }: Props) {
                 )}
             </div>
           </div>
-
+{/* العمود الجانبي: معلومات العمل */}
           <div className="lg:col-span-4 space-y-8 order-2 sticky top-28">
             <div className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] p-10 shadow-2xl flex flex-col">
-              <h3 className="text-xl font-black mb-10 text-white border-b border-white/5 pb-6 flex items-center gap-3 justify-end uppercase tracking-widest">معلومات العمل <FaInfoCircle className="text-blue-500" /></h3>
+              <h3 className="text-xl font-black mb-10 text-white border-b border-white/5 pb-6 flex items-center gap-3 justify-end uppercase">معلومات العمل <FaInfoCircle className="text-blue-500" /></h3>
               <div className="space-y-6 text-sm flex-1">
-                <div className="flex justify-between p-5 rounded-[1.5rem] bg-white/[0.02] border border-white/5 flex-row-reverse"><span className="text-gray-500 font-bold">حالة العمل</span><span className="text-green-400 font-black">{work.status}</span></div>
-                {work.timeDescription && (<div className="flex flex-col gap-3 p-5 rounded-[1.5rem] bg-white/[0.02] border border-white/5 text-right"><span className="text-gray-500 font-bold flex items-center gap-2 justify-end">الموقع الزمني <FaClock className="text-blue-500 text-xs" /></span><span className="text-white font-black leading-relaxed">{work.timeDescription}</span></div>)}
-                <div className="flex justify-between p-5 rounded-[1.5rem] bg-white/[0.02] border border-white/5 flex-row-reverse"><span className="text-gray-500 font-bold">المؤلف</span><span className="text-white font-black">{work.author || "تابِي ناغاتسُكي"}</span></div>
-                <div className="flex justify-between p-5 rounded-[1.5rem] bg-blue-500/[0.03] border border-blue-500/10 flex-row-reverse"><span className="text-gray-500 font-bold">عدد المقيمين</span><span className="text-blue-400 font-black font-mono">{work.totalCount || 0}</span></div>
+                {/* محاذاة المعلومات لليمين (Label يمين، Value يسار) */}
+                <div className="flex justify-between p-5 rounded-[1.5rem] bg-white/[0.02] border border-white/5">
+                    <span className="text-green-400 font-black order-1">{work.status}</span>
+                    <span className="text-gray-500 font-bold order-2 text-right">حالة العمل</span>
+                </div>
+                {work.timeDescription && (
+                  <div className="flex flex-col gap-3 p-5 rounded-[1.5rem] bg-white/[0.02] border border-white/5 text-right">
+                      <span className="text-gray-500 font-bold flex items-center gap-2 justify-end">الموقع الزمني <FaClock className="text-blue-500 text-xs" /></span>
+                      <span className="text-white font-black leading-relaxed">{work.timeDescription}</span>
+                  </div>
+                )}
+                <div className="flex justify-between p-5 rounded-[1.5rem] bg-white/[0.02] border border-white/5">
+                    <span className="text-white font-black order-1">{work.author || "تابِي ناغاتسُكي"}</span>
+                    <span className="text-gray-500 font-bold order-2 text-right">المؤلف</span>
+                </div>
+                <div className="flex justify-between p-5 rounded-[1.5rem] bg-blue-500/[0.03] border border-blue-500/10">
+                    <span className="text-blue-400 font-black font-mono order-1">{work.totalCount || 0}</span>
+                    <span className="text-gray-500 font-bold order-2 text-right">عدد المقيمين</span>
+                </div>
               </div>
               <div className="mt-12 pt-8 border-t border-white/5 flex flex-col items-center md:items-end">
-                  <span className="text-[9px] font-black text-gray-600 mb-4 uppercase flex items-center gap-2">مشاركة العمل <FaShareAlt className="text-[8px]" /></span>
-                  <ShareButtons url={`${baseUrl}/works/${work.slug}`} title={work.title} />
+                  <span className="text-[9px] font-black text-gray-600 mb-4 tracking-[0.3em] uppercase flex items-center gap-2 text-right">مشاركة العمل <FaShareAlt className="text-[8px]" /></span>
+                  <div className="w-full flex justify-end">
+                     <ShareButtons url={`${baseUrl}/works/${work.slug}`} title={work.title} />
+                  </div>
               </div>
             </div>
           </div>
