@@ -13,7 +13,7 @@ interface Props {
 const baseUrl = "https://towervoices.online";
 
 /**
- * 1. توليد Metadata مطورة: تم حذف التكرار لحل مشكلة الطول (96 حرفاً)
+ * 1. توليد Metadata مطورة: تم حل مشكلة "الوصف المكرر" (Duplicate Description)
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -25,18 +25,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     { slug }
   );
   
-  // حذف اسم الموقع من عنوان الخطأ لتجنب التكرار
   if (!work) return { title: "الصفحة غير موجودة" };
   
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
-  const description = work.synopsis?.slice(0, 160) || "قراءة أحدث روايات ريزيرو المترجمة حصرياً على أصوات البرج.";
+  
+  // التعديل: جعل الوصف يبدأ بجملة فريدة لتمييز صفحة القارئ عن صفحة التفاصيل
+  const description = `استمتع الآن بقراءة ${work.title} بوضع القراءة المريح أونلاين. ${work.synopsis?.slice(0, 100)}...`;
 
   return {
-    // التعديل الأساسي: حذفنا "| أصوات البرج" يدوياً لأنها ستضاف من الـ Layout
+    // العنوان: Layout سيقوم بإضافة "| أصوات البرج" تلقائياً
     title: `قراءة ${work.title}`, 
     description: description,
     
-    // استهداف مكثف للكلمات المفتاحية
     keywords: [
       work.title, work.author, "rezero", "Re Zero", "re:zero", "re zero novel", 
       "rezero light novel", "ريزيرو", "ري زيرو", "رواية ري زيرو", "رواية ريزيرو", 
@@ -45,12 +45,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ...(work.tags || [])
     ],
     
-    // حل مشكلة "Canonical outside of head"
     alternates: { 
       canonical: `${baseUrl}/reader/${slug}` 
     },
 
-    // حل مشكلة Twitter card incomplete بإضافة الحساب الرسمي
     twitter: { 
       card: "summary_large_image",
       title: `قراءة ${work.title} - أصوات البرج`,
@@ -74,7 +72,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ReaderPage({ params }: Props) {
   const { slug } = await params;
 
-  // جلب البيانات مع روابط التنقل لتقليل الصفحات اليتيمة
+  // جلب البيانات مع روابط التنقل
   const work = await client.fetch(
     `*[_type == "work" && slug.current == $slug][0]{
       title, "slug": slug.current,
@@ -103,11 +101,12 @@ export default async function ReaderPage({ params }: Props) {
         <span className="text-blue-500">وضع القراءة</span>
       </nav>
 
+      {/* 3. منطقة القارئ: ModernReader سيتولى العرض المتقدم */}
       <main className="flex-1 relative overflow-hidden">
         <ModernReader pdfUrl={work.pdfUrl} title={work.title} />
       </main>
 
-      {/* 4. تذييل التنقل: يربط المجلدات ببعضها */}
+      {/* 4. تذييل التنقل: حل مشكلة "الصفحات اليتيمة" */}
       <footer dir="rtl" className="z-[100] p-4 border-t border-white/5 bg-[#080808] flex flex-row justify-between items-center">
           <Link href={`/works/${work.slug}`} className="text-[10px] md:text-[11px] text-gray-400 hover:text-white flex items-center gap-2 transition-colors">
               <FaArrowRight className="text-[10px]" /> العودة لتفاصيل المجلد
