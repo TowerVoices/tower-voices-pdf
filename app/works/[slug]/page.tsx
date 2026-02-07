@@ -83,7 +83,7 @@ async function getWork(slug: string) {
     },
     "comments": *[_type == "comment" && work._ref == ^._id && approved == true] | order(_createdAt desc) {
   name,
-  comment,
+  content,
   _createdAt
 },
     
@@ -358,7 +358,7 @@ export default async function WorkPage({ params }: Props) {
         </div>
       </div>
       <p className="text-gray-300 text-sm leading-relaxed pr-2 border-r-2 border-blue-600/30">
-        {comment.comment}
+        {comment.content}
       </p>
     </div>
   ))}
