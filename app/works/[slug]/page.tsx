@@ -81,7 +81,11 @@ async function getWork(slug: string) {
     "relatedSideStories": *[_type == "work" && parentVolume._ref == ^._id] {
       title, "slug": slug.current, cover
     },
-    "comments": *[_type == "comment" && work._ref == ^._id && approved == true] | order(_createdAt desc),
+    "comments": *[_type == "comment" && work._ref == ^._id && approved == true] | order(_createdAt desc) {
+  name,
+  comment,
+  _createdAt
+},
     
     "currentStoryRating": select(
       (coalesce(ratingCount, 0) + count(*[_type == "rating" && work._ref == ^._id])) > 0 => 
