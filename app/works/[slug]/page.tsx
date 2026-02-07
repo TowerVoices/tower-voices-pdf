@@ -338,7 +338,27 @@ export default async function WorkPage({ params }: Props) {
                   يوجد ({work.comments?.length || 0}) تعليق على هذا العمل
               </span>
           </div>
-
+{/* --- ضعه هنا في السطر 341 --- */}
+<div className="mt-8 space-y-6">
+  {work.comments?.map((comment: any, index: number) => (
+    <div key={index} className="bg-zinc-800/30 p-6 rounded-2xl border border-white/5">
+      <div className="flex items-center gap-4 mb-3">
+        <div className="w-10 h-10 bg-blue-600/20 text-blue-400 rounded-full flex items-center justify-center font-bold border border-blue-600/20">
+          {comment.name?.charAt(0) || "ق"}
+        </div>
+        <div>
+          <h4 className="text-white font-bold text-sm">{comment.name}</h4>
+          <span className="text-[10px] text-gray-500 block">
+            {new Date(comment._createdAt).toLocaleDateString('ar-EG')}
+          </span>
+        </div>
+      </div>
+      <p className="text-gray-300 text-sm leading-relaxed pr-2 border-r-2 border-blue-600/30">
+        {comment.comment}
+      </p>
+    </div>
+  ))}
+</div>
           <div className="pt-4">
             <CommentForm workId={work._id} />
           </div>
