@@ -1,6 +1,7 @@
 import type { Metadata } from "next"; 
 import Navbar from "@/components/Navbar";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { GoogleAnalytics } from '@next/third-parties/google';
 // 1. إعدادات السيو الاحترافية الموجهة لجمهور ريزيرو
@@ -78,7 +79,8 @@ export default function RootLayout({
         <Navbar />
         {children}
         <SpeedInsights />
-        {/* سطر واحد فقط من التحليلات */}
+        {/* هكذا يكون لديك الاثنان معاً دون تعارض */}
+        <Analytics /> 
         <GoogleAnalytics gaId="G-M3QBPNBGJH" /> 
       </body>
     </html>
