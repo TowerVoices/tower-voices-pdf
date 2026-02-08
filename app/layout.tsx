@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
-
+import { GoogleAnalytics } from '@next/third-parties/google';
 // 1. إعدادات السيو الاحترافية الموجهة لجمهور ريزيرو
 export const metadata: Metadata = {
   title: {
@@ -74,10 +74,12 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
         />
       </head>
-      <body className="bg-[#050505]">
-        <Navbar /> 
+ <body className="bg-[#050505]">
+        <Navbar />
         {children}
-        <SpeedInsights /> 
+        <SpeedInsights />
+        {/* سطر واحد فقط من التحليلات */}
+        <GoogleAnalytics gaId="G-M3QBPNBGJH" /> 
       </body>
     </html>
   );
