@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const work = await getWork(slug);
   if (!work) return { title: "العمل غير موجود" };
-  const coverUrl = work.cover ? urlFor(work.cover).url() : "";
+  const coverUrl = work.cover ? urlFor(work.cover).width(800).quality(75).url() : "";
 
   return {
     title: work.title,
@@ -108,7 +108,7 @@ export default async function WorkPage({ params }: Props) {
   const { slug } = await params;
   const work = await getWork(slug);
   if (!work) return notFound();
-  const coverUrl = work.cover ? urlFor(work.cover).url() : "";
+  const coverUrl = work.cover ? urlFor(work.cover).width(800).quality(75).url() : "";
 
   const formatRating = (val: any) => {
     const num = parseFloat(val);
