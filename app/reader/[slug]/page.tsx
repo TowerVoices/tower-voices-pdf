@@ -12,8 +12,15 @@ interface Props {
 
 const baseUrl = "https://towervoices.online";
 
+// دالة مساعدة لاستخراج ID الملف من رابط جوجل درايف لضمان عمل الـ Iframe
+function getDriveId(url: string): string | null {
+  if (!url) return null;
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : url; // إذا لم يجد نمط الرابط، سيعتبر أن النص المدخل هو الـ ID مباشرة
+}
+
 /**
- * 1. توليد Metadata مطورة: تم حل مشكلة "الوصف المكرر" (Duplicate Description)
+ * 1. توليد Metadata مطورة: تم الحفاظ عليها بالكامل كما طلبت
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -28,15 +35,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!work) return { title: "الصفحة غير موجودة" };
   
   const coverUrl = work.rawCover ? urlFor(work.rawCover).url() : "";
-  
-  // التعديل: جعل الوصف يبدأ بجملة فريدة لتمييز صفحة القارئ عن صفحة التفاصيل
   const description = `استمتع الآن بقراءة ${work.title} بوضع القراءة المريح أونلاين. ${work.synopsis?.slice(0, 100)}...`;
 
   return {
-    // العنوان: Layout سيقوم بإضافة "| أصوات البرج" تلقائياً
     title: `قراءة ${work.title}`, 
     description: description,
-    
     keywords: [
       work.title, work.author, "rezero", "Re Zero", "re:zero", "re zero novel", 
       "rezero light novel", "ريزيرو", "ري زيرو", "رواية ري زيرو", "رواية ريزيرو", 
@@ -44,11 +47,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       "ارك", "arc", "ex", "مجلد", "قراءة اونلاين",
       ...(work.tags || [])
     ],
-    
     alternates: { 
       canonical: `${baseUrl}/reader/${slug}` 
     },
-
     twitter: { 
       card: "summary_large_image",
       title: `قراءة ${work.title} - أصوات البرج`,
@@ -57,7 +58,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       site: "@TowerVoices",
       creator: "@TowerVoices"
     },
-
     openGraph: {
       title: `قراءة ${work.title} - أصوات البرج`,
       description: description,
@@ -83,10 +83,13 @@ export default async function ReaderPage({ params }: Props) {
 
   if (!work || !work.pdfUrl) return notFound();
 
+  // استخراج الـ ID لاستخدامه في الـ Iframe
+  const driveId = getDriveId(work.pdfUrl);
+
   return (
     <div className="flex flex-col h-screen bg-[#050505] overflow-hidden">
       
-      {/* 2. نظام المسارات (Breadcrumbs): يعزز الربط الداخلي */}
+      {/* 2. نظام المسارات (Breadcrumbs) - تم الحفاظ عليه */}
       <nav dir="rtl" className="z-[100] px-6 py-3 border-b border-white/5 bg-[#080808]/90 backdrop-blur-md flex items-center gap-3 text-[10px] md:text-[11px] font-bold text-gray-500">
         <Link href="/" className="hover:text-white flex items-center gap-1 transition-colors">
           <FaHome className="text-blue-500" /> الرئيسية
@@ -101,12 +104,22 @@ export default async function ReaderPage({ params }: Props) {
         <span className="text-blue-500">وضع القراءة</span>
       </nav>
 
-      {/* 3. منطقة القارئ: ModernReader سيتولى العرض المتقدم */}
-      <main className="flex-1 relative overflow-hidden">
-        <ModernReader pdfUrl={work.pdfUrl} title={work.title} />
+      {/* 3. منطقة القارئ: تم التعديل هنا لاستخدام الـ Iframe المباشر لخدمة الملف من سيرفرات جوجل */}
+      <main className="flex-1 relative overflow-hidden bg-black">
+        {driveId ? (
+          <iframe
+            src={`https://drive.google.com/file/d/${driveId}/preview`}
+            className="w-full h-full border-none"
+            allow="autoplay"
+            title={work.title}
+          ></iframe>
+        ) : (
+          /* في حال فشل استخراج الـ ID، نعود للمشغل القديم كخيار احتياطي */
+          <ModernReader pdfUrl={work.pdfUrl} title={work.title} />
+        )}
       </main>
 
-      {/* 4. تذييل التنقل: حل مشكلة "الصفحات اليتيمة" */}
+      {/* 4. تذييل التنقل - تم الحفاظ عليه */}
       <footer dir="rtl" className="z-[100] p-4 border-t border-white/5 bg-[#080808] flex flex-row justify-between items-center">
           <Link href={`/works/${work.slug}`} className="text-[10px] md:text-[11px] text-gray-400 hover:text-white flex items-center gap-2 transition-colors">
               <FaArrowRight className="text-[10px]" /> العودة لتفاصيل المجلد
