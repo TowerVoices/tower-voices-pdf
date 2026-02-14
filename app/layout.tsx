@@ -4,6 +4,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { GoogleAnalytics } from '@next/third-parties/google';
+import { Cairo } from "next/font/google";
 // 1. إعدادات السيو الاحترافية الموجهة لجمهور ريزيرو
 export const metadata: Metadata = {
   title: {
@@ -41,6 +42,12 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-title": "أصوات البرج",
   },
 };
+const cairo = Cairo({
+  subsets: ["arabic"],
+  weight: ["400", "700", "900"],
+  variable: "--font-cairo",
+  display: 'swap',
+});
 
 export default function RootLayout({
   children,
@@ -75,7 +82,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
         />
       </head>
- <body className="bg-[#050505]">
+ <body className={`${cairo.variable} font-sans bg-[#050505]`}>
         <Navbar />
         {children}
         <SpeedInsights />
