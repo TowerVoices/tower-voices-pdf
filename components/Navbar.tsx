@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FaXTwitter } from "react-icons/fa6";
-import { FaCompass, FaBook } from "react-icons/fa"; // إضافة أيقونة الكتاب للمكتبة
+import { FaCompass, FaBook, FaGamepad } from "react-icons/fa"; // أضفنا أيقونة FaGamepad هنا
 
 export default function Navbar() {
   return (
@@ -35,6 +35,15 @@ export default function Navbar() {
             >
               <FaCompass className="text-lg group-hover/nav:rotate-[360deg] transition-transform duration-700 ease-in-out" />
               <span className="hidden md:inline">خريطة البرج</span>
+            </Link>
+
+            {/* الرابط الجديد: الفعاليات */}
+            <Link 
+              href="/activities" 
+              className="flex items-center gap-2 text-gray-400 hover:text-indigo-400 transition-all font-bold text-xs group/nav"
+            >
+              <FaGamepad className="text-lg group-hover/nav:-rotate-12 group-hover/nav:scale-110 transition-transform duration-300 ease-in-out" />
+              <span className="hidden md:inline">الفعاليات</span>
             </Link>
           </div>
         </div>
