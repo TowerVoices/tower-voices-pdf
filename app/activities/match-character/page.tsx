@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { client } from "@/app/sanity.client"; 
+import html2canvas from "html2canvas";
 
 interface CharacterFromSanity {
   pairId: number;
@@ -35,7 +36,9 @@ export default function MatchCharacterPage() {
   const [currentLevel, setCurrentLevel] = useState(1);
   const [reward, setReward] = useState<any>(null);
   const [showRewardModal, setShowRewardModal] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
+  
+  // 🔥 حالة جديدة لحفظ الصورة كملف جاهز للمشاركة
+  const [shareFile, setShareFile] = useState<File | null>(null);
 
   const [attempts, setAttempts] = useState(0);
   const [seconds, setSeconds] = useState(0);
@@ -107,6 +110,7 @@ export default function MatchCharacterPage() {
     setSeconds(0);
     setGameFinished(false);
     setReward(null);
+    setShareFile(null); // مسح الصورة القديمة
   };
 
   useEffect(() => {
@@ -121,44 +125,78 @@ export default function MatchCharacterPage() {
     return () => clearInterval(timer);
   }, [gameFinished, shuffledCards, isLoading]);
 
-  // 🔥 دالة المشاركة الذكية والجذرية عبر الـ API
-  const saveResultImage = async () => {
-    if (!reward) return;
-    
-    setIsSharing(true);
+  // 🔥 التجهيز المسبق للصورة بمجرد الفوز (لحل مشكلة حظر المتصفحات)
+  useEffect(() => {
+    if (showRewardModal && reward) {
+      const preGenerateImage = async () => {
+        try {
+          const element = document.getElementById("capture-area");
+          if (!element) return;
+
+          // تحويل صورة الشخصية إلى Base64 لتخطي حماية السيرفرات (CORS)
+          const imgEl = element.querySelector('img');
+          if (imgEl && !imgEl.src.startsWith('data:')) {
+            const res = await fetch(reward.image);
+            const blob = await res.blob();
+            const base64 = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.readAsDataURL(blob);
+            });
+            imgEl.src = base64 as string;
+          }
+
+          // انتظار بسيط لتحديث الصورة
+          await new Promise(r => setTimeout(r, 300));
+
+          // رسم الصورة وحفظها في حالة (State)
+          const canvas = await html2canvas(element, { 
+            backgroundColor: "#000000", 
+            scale: 2 
+          });
+          
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const file = new File([blob], `tower-voices-level-${currentLevel}.png`, { type: 'image/png' });
+              setShareFile(file); // الصورة الآن جاهزة تماماً للمشاركة!
+            }
+          }, 'image/png');
+
+        } catch (error) {
+          console.error("Error pre-generating image:", error);
+        }
+      };
+      preGenerateImage();
+    }
+  }, [showRewardModal, reward, currentLevel]);
+
+  // دالة زر المشاركة (تعمل فوراً بدون تأخير)
+  const handleShareClick = async () => {
+    if (!shareFile) {
+      alert("جاري تجهيز الصورة بدقة عالية... يرجى الضغط مرة أخرى بعد ثانية ⏳");
+      return;
+    }
+
+    const shareData = {
+      title: 'تحدي أصوات البرج',
+      text: `أنهيت المستوى ${currentLevel} في تحدي الفعاليات! 🔥 هل يمكنك تحطيم رقمي؟`,
+      files: [shareFile]
+    };
 
     try {
-      // 1. بناء رابط الـ API وتمرير معلومات الجولة الحالية له عبر البارامترات
-      const apiUrl = `/api/share-image?level=${currentLevel}&seconds=${seconds}&attempts=${attempts}&completionRate=${completionRate}&rewardName=${encodeURIComponent(reward.name)}&rewardImage=${encodeURIComponent(reward.image)}`;
-
-      // 2. استدعاء السيرفر لجلب الصورة الجاهزة كملف Blob
-      const response = await fetch(apiUrl);
-      if (!response.ok) throw new Error("Image generation failed");
-      
-      const blob = await response.blob();
-      const file = new File([blob], `tower-voices-level-${currentLevel}.png`, { type: 'image/png' });
-
-      // 3. المشاركة المباشرة عبر تطبيقات الجوال (واتساب، تويتر...) إذا كان المتصفح يدعمها
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: 'تحدي أصوات البرج',
-          text: `أنهيت المستوى ${currentLevel} في تحدي الفعاليات! 🔥 هل يمكنك تحطيم رقمي؟`,
-          files: [file]
-        });
+      if (navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
       } else {
-        // 4. خيار بديل: تحميل الصورة تلقائياً للكمبيوتر أو المتصفحات القديمة
-        const dataUrl = URL.createObjectURL(blob);
+        // التحميل التلقائي للكمبيوتر (أو إذا كان الجوال لا يدعم المشاركة المباشرة)
+        const url = URL.createObjectURL(shareFile);
         const link = document.createElement("a");
-        link.download = `tower-voices-level-${currentLevel}.png`;
-        link.href = dataUrl;
+        link.href = url;
+        link.download = shareFile.name;
         link.click();
-        URL.revokeObjectURL(dataUrl);
+        URL.revokeObjectURL(url);
       }
     } catch (error) {
-      console.error("Error sharing image:", error);
-      alert("عذراً، حدث خطأ أثناء تجهيز الصورة.");
-    } finally {
-      setIsSharing(false);
+      console.log("Share cancelled or failed", error);
     }
   };
 
@@ -301,7 +339,36 @@ export default function MatchCharacterPage() {
         </div>
       </div>
 
-      {/* نافذة المكافأة التي تظهر للمستخدم عند الفوز */}
+      {/* منطقة التقاط الصورة المخفية برمجياً - جاهزة في الخلفية */}
+      <div className="overflow-hidden h-0 w-0 absolute opacity-0 pointer-events-none">
+        <div
+          id="capture-area"
+          className="w-[850px] bg-gradient-to-b from-zinc-900 to-black text-white p-12 rounded-3xl border border-zinc-800"
+        >
+          <div className="text-center">
+            <h1 className="text-5xl font-bold mb-4 text-indigo-400">أصوات البرج</h1>
+            <p className="text-zinc-400 mb-8 text-2xl">تحدي مطابقة الشخصيات</p>
+            {reward && (
+              <>
+                <img 
+                  src={reward.image} 
+                  alt="" 
+                  className="w-72 h-auto object-contain mx-auto mb-6 drop-shadow-[0_10px_25px_rgba(0,0,0,0.8)]" 
+                />
+                <h2 className="text-4xl font-bold mt-4">{reward.name}</h2>
+                <div className="mt-8 space-y-4 text-2xl bg-zinc-900/50 p-8 rounded-2xl inline-block text-right">
+                  <p>🏆 المستوى: <span className="text-indigo-400">{currentLevel}</span></p>
+                  <p>⏱️ الزمن: <span className="text-indigo-400">{seconds} ثانية</span></p>
+                  <p>🎯 المحاولات: <span className="text-indigo-400">{attempts}</span></p>
+                  <p>📊 تفوقت على <span className="text-green-400">{completionRate}%</span> من اللاعبين</p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* نافذة المكافأة التي تظهر للمستخدم */}
       {showRewardModal && reward && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-2xl p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
@@ -340,12 +407,11 @@ export default function MatchCharacterPage() {
             <div className="mt-6 space-y-3">
               <button
                 className={`w-full transition-colors text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 ${
-                  isSharing ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500'
+                  !shareFile ? 'bg-indigo-400 cursor-wait' : 'bg-indigo-600 hover:bg-indigo-500'
                 }`}
-                onClick={saveResultImage}
-                disabled={isSharing}
+                onClick={handleShareClick}
               >
-                {isSharing ? 'جاري تجهيز الصورة... ⏳' : '📸 مشاركة النتيجة'}
+                {!shareFile ? 'تجهيز الصورة... ⏳' : '📤 مشاركة النتيجة كصورة'}
               </button>
               <button
                 className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold"
