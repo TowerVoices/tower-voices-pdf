@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { client } from "@/app/sanity.client"; 
-import html2canvas from "html2canvas";
 
 interface CharacterFromSanity {
   pairId: number;
@@ -122,91 +121,29 @@ export default function MatchCharacterPage() {
     return () => clearInterval(timer);
   }, [gameFinished, shuffledCards, isLoading]);
 
-  // 🔥 الحل الجذري والنهائي 100% لمشكلة المشاركة
-  const saveResultImage = async () => {
-    const element = document.getElementById("share-card");
-    const shareImg = document.getElementById("share-img") as HTMLImageElement;
-    
-    if (!element || !shareImg || !reward) return;
-    
-    setIsSharing(true); 
+  // 🔥 نظام المشاركة الجديد المضمون 100% (طريقة Wordle)
+  const shareResult = async () => {
+    if (!reward) return;
+    setIsSharing(true);
+
+    // تجهيز النص المنسق للمشاركة
+    const shareText = `🏆 تحدي أصوات البرج 🏆\nطابقت الشخصيات وحصلت على بطاقة (${reward.name})!\n\n✨ المستوى: ${currentLevel}\n⏱️ الزمن: ${seconds} ثانية\n🎯 المحاولات: ${attempts}\n📊 تفوقت على ${completionRate}% من اللاعبين!\n\nهل يمكنك تحطيم رقمي؟ 👇\nhttps://towervoices.online/activities/match-character`;
 
     try {
-      // 1. تحويل الصورة إلى نص محلي (Base64) لتخطي حماية CORS والكاش نهائياً
-      const base64Image = await new Promise<string>((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext("2d");
-          if (ctx) ctx.drawImage(img, 0, 0);
-          resolve(canvas.toDataURL("image/png"));
-        };
-        img.onerror = () => reject(new Error("Image load failed"));
-        // خدعة لمنع المتصفح من استخدام نسخة الكاش المحظورة
-        img.src = `${reward.image}?v=${new Date().getTime()}`;
-      });
-
-      // 2. حقن الصورة كنص آمن داخل البطاقة
-      shareImg.src = base64Image;
-
-      // 3. خدعة الظهور: جلب البطاقة إلى الشاشة خلف النافذة السوداء لكي تصورها الأداة
-      const originalCss = element.style.cssText;
-      element.style.position = "fixed";
-      element.style.top = "0px";
-      element.style.left = "0px";
-      // النافذة المنبثقة تمتلك z-50، لذلك نضع البطاقة في z-10 لتكون خلفها تماماً
-      element.style.zIndex = "10"; 
-
-      // إعطاء المتصفح لحظة قصيرة جداً لترتيب الشاشة
-      await new Promise((res) => setTimeout(res, 200));
-
-      // 4. التقاط الصورة بأمان تام
-      const canvas = await html2canvas(element, { 
-        backgroundColor: "#000000", 
-        scale: 2,
-        useCORS: true 
-      });
-      
-      // 5. إخفاء البطاقة مجدداً
-      element.style.cssText = originalCss;
-
-      const dataUrl = canvas.toDataURL("image/png");
-
-      // 6. المشاركة عبر الجوال
+      // 1. محاولة استخدام نافذة المشاركة الأصلية في الجوال (واتساب، تويتر، الخ)
       if (navigator.share) {
-        try {
-          const response = await fetch(dataUrl);
-          const blob = await response.blob();
-          const file = new File([blob], `tower-voices-level-${currentLevel}.png`, { type: 'image/png' });
-          
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              title: 'تحدي أصوات البرج',
-              text: `أنهيت المستوى ${currentLevel} بـ ${attempts} محاولات خلال ${seconds} ثانية! 🔥 هل يمكنك تحطيم رقمي؟`,
-              files: [file]
-            });
-            setIsSharing(false);
-            return; 
-          }
-        } catch (e) {
-          console.log("المشاركة غير مدعومة بالكامل، سيتم التحميل...");
-        }
+        await navigator.share({
+          text: shareText
+        });
+      } else {
+        // 2. إذا كان على الكمبيوتر أو المتصفح لا يدعم، نقوم بنسخ النص للحافظة مباشرة
+        await navigator.clipboard.writeText(shareText);
+        alert("✅ تم نسخ النتيجة! يمكنك الآن لصقها ومشاركتها في أي مكان.");
       }
-
-      // 7. التحميل للكمبيوتر أو كخيار بديل
-      const link = document.createElement("a");
-      link.download = `tower-voices-level-${currentLevel}.png`;
-      link.href = dataUrl;
-      link.click();
-      
     } catch (error) {
-      console.error("Error generating image:", error);
-      alert("عذراً، حدث خطأ أثناء تجهيز الصورة. يرجى المحاولة مرة أخرى.");
+      console.log("تم إلغاء المشاركة أو حدث خطأ:", error);
     } finally {
-      setIsSharing(false); 
+      setIsSharing(false);
     }
   };
 
@@ -332,7 +269,6 @@ export default function MatchCharacterPage() {
                       <img
                         src={card.image}
                         alt="character"
-                        crossOrigin="anonymous" 
                         className="w-full h-full object-contain pointer-events-none animate-in fade-in zoom-in duration-300"
                       />
                     ) : (
@@ -347,37 +283,6 @@ export default function MatchCharacterPage() {
               );
             })}
           </div>
-        </div>
-      </div>
-
-      {/* الشاشة الخاصة بالتقاط الصورة (تم وضعها خارج الشاشة برمجياً) */}
-      <div
-        id="share-card"
-        style={{ position: "fixed", top: "-9999px", left: "-9999px" }}
-        className="w-[900px] bg-gradient-to-b from-zinc-900 to-black text-white p-12 rounded-3xl border border-zinc-800"
-      >
-        <div className="text-center">
-          <h1 className="text-5xl font-bold mb-4 text-indigo-400">أصوات البرج</h1>
-          <p className="text-zinc-400 mb-8 text-2xl">تحدي مطابقة الشخصيات</p>
-          {reward && (
-            <>
-              {/* تمت إضافة id هنا لنتمكن من حقن الصورة الآمنة (Base64) فيه */}
-              <img 
-                id="share-img"
-                src={reward.image} 
-                alt="" 
-                crossOrigin="anonymous" 
-                className="w-72 h-auto object-contain mx-auto mb-6 drop-shadow-[0_10px_25px_rgba(0,0,0,0.8)]" 
-              />
-              <h2 className="text-4xl font-bold mt-4">{reward.name}</h2>
-              <div className="mt-8 space-y-4 text-2xl bg-zinc-900/50 p-8 rounded-2xl inline-block text-right">
-                <p>🏆 المستوى: <span className="text-indigo-400">{currentLevel}</span></p>
-                <p>⏱️ الزمن: <span className="text-indigo-400">{seconds} ثانية</span></p>
-                <p>🎯 المحاولات: <span className="text-indigo-400">{attempts}</span></p>
-                <p>📊 تفوقت على <span className="text-green-400">{completionRate}%</span> من اللاعبين</p>
-              </div>
-            </>
-          )}
         </div>
       </div>
 
@@ -398,7 +303,6 @@ export default function MatchCharacterPage() {
               <img
                 src={reward.image}
                 alt={reward.name}
-                crossOrigin="anonymous" 
                 className="w-full h-auto object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500"
               />
             </div>
@@ -424,10 +328,10 @@ export default function MatchCharacterPage() {
                 className={`w-full transition-colors text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 ${
                   isSharing ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500'
                 }`}
-                onClick={saveResultImage}
+                onClick={shareResult}
                 disabled={isSharing}
               >
-                {isSharing ? 'جاري تجهيز الصورة... ⏳' : '📸 مشاركة النتيجة'}
+                {isSharing ? 'جاري المشاركة... ⏳' : '📤 مشاركة النتيجة'}
               </button>
               <button
                 className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold"
