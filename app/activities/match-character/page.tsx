@@ -121,27 +121,42 @@ export default function MatchCharacterPage() {
     return () => clearInterval(timer);
   }, [gameFinished, shuffledCards, isLoading]);
 
-  // 🔥 نظام المشاركة الجديد المضمون 100% (طريقة Wordle)
-  const shareResult = async () => {
+  // 🔥 دالة المشاركة الذكية والجذرية عبر الـ API
+  const saveResultImage = async () => {
     if (!reward) return;
+    
     setIsSharing(true);
 
-    // تجهيز النص المنسق للمشاركة
-    const shareText = `🏆 تحدي أصوات البرج 🏆\nطابقت الشخصيات وحصلت على بطاقة (${reward.name})!\n\n✨ المستوى: ${currentLevel}\n⏱️ الزمن: ${seconds} ثانية\n🎯 المحاولات: ${attempts}\n📊 تفوقت على ${completionRate}% من اللاعبين!\n\nهل يمكنك تحطيم رقمي؟ 👇\nhttps://towervoices.online/activities/match-character`;
-
     try {
-      // 1. محاولة استخدام نافذة المشاركة الأصلية في الجوال (واتساب، تويتر، الخ)
-      if (navigator.share) {
+      // 1. بناء رابط الـ API وتمرير معلومات الجولة الحالية له عبر البارامترات
+      const apiUrl = `/api/share-image?level=${currentLevel}&seconds=${seconds}&attempts=${attempts}&completionRate=${completionRate}&rewardName=${encodeURIComponent(reward.name)}&rewardImage=${encodeURIComponent(reward.image)}`;
+
+      // 2. استدعاء السيرفر لجلب الصورة الجاهزة كملف Blob
+      const response = await fetch(apiUrl);
+      if (!response.ok) throw new Error("Image generation failed");
+      
+      const blob = await response.blob();
+      const file = new File([blob], `tower-voices-level-${currentLevel}.png`, { type: 'image/png' });
+
+      // 3. المشاركة المباشرة عبر تطبيقات الجوال (واتساب، تويتر...) إذا كان المتصفح يدعمها
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          text: shareText
+          title: 'تحدي أصوات البرج',
+          text: `أنهيت المستوى ${currentLevel} في تحدي الفعاليات! 🔥 هل يمكنك تحطيم رقمي؟`,
+          files: [file]
         });
       } else {
-        // 2. إذا كان على الكمبيوتر أو المتصفح لا يدعم، نقوم بنسخ النص للحافظة مباشرة
-        await navigator.clipboard.writeText(shareText);
-        alert("✅ تم نسخ النتيجة! يمكنك الآن لصقها ومشاركتها في أي مكان.");
+        // 4. خيار بديل: تحميل الصورة تلقائياً للكمبيوتر أو المتصفحات القديمة
+        const dataUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.download = `tower-voices-level-${currentLevel}.png`;
+        link.href = dataUrl;
+        link.click();
+        URL.revokeObjectURL(dataUrl);
       }
     } catch (error) {
-      console.log("تم إلغاء المشاركة أو حدث خطأ:", error);
+      console.error("Error sharing image:", error);
+      alert("عذراً، حدث خطأ أثناء تجهيز الصورة.");
     } finally {
       setIsSharing(false);
     }
@@ -286,7 +301,7 @@ export default function MatchCharacterPage() {
         </div>
       </div>
 
-      {/* نافذة المكافأة التي تظهر للمستخدم */}
+      {/* نافذة المكافأة التي تظهر للمستخدم عند الفوز */}
       {showRewardModal && reward && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-2xl p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
@@ -296,7 +311,6 @@ export default function MatchCharacterPage() {
             <p className="mb-6 text-zinc-400">حصلت على بطاقة جديدة</p>
 
             <div className="relative mx-auto w-60 flex justify-center items-center mb-6 -mt-6">
-              
               {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
               {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
               
@@ -328,10 +342,10 @@ export default function MatchCharacterPage() {
                 className={`w-full transition-colors text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 ${
                   isSharing ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500'
                 }`}
-                onClick={shareResult}
+                onClick={saveResultImage}
                 disabled={isSharing}
               >
-                {isSharing ? 'جاري المشاركة... ⏳' : '📤 مشاركة النتيجة'}
+                {isSharing ? 'جاري تجهيز الصورة... ⏳' : '📸 مشاركة النتيجة'}
               </button>
               <button
                 className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold"
