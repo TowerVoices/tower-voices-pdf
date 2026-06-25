@@ -4,14 +4,12 @@ import { useState, useEffect } from "react";
 import { client } from "@/app/sanity.client"; 
 import html2canvas from "html2canvas";
 
-// واجهة الشخصيات
 interface CharacterFromSanity {
   pairId: number;
   image: string;
   infoTexts: string[];
 }
 
-// واجهة المكافآت الجديدة
 interface RewardFromSanity {
   name: string;
   image: string;
@@ -28,7 +26,7 @@ interface CardData {
 
 export default function MatchCharacterPage() {
   const [dbCharacters, setDbCharacters] = useState<CharacterFromSanity[]>([]);
-  const [dbRewards, setDbRewards] = useState<RewardFromSanity[]>([]); // حالة المكافآت
+  const [dbRewards, setDbRewards] = useState<RewardFromSanity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [shuffledCards, setShuffledCards] = useState<CardData[]>([]);
@@ -46,7 +44,6 @@ export default function MatchCharacterPage() {
 
   const completionRate = currentLevel === 1 ? 87 : currentLevel === 2 ? 62 : 34;
 
-  // 1️⃣ جلب الشخصيات والمكافآت من Sanity معاً
   useEffect(() => {
     const fetchSanityData = async () => {
       try {
@@ -62,7 +59,6 @@ export default function MatchCharacterPage() {
           rarity
         }`;
 
-        // جلب البيانات في نفس الوقت لتسريع التحميل
         const [charData, rewardData] = await Promise.all([
           client.fetch(charQuery),
           client.fetch(rewardQuery)
@@ -138,21 +134,17 @@ export default function MatchCharacterPage() {
     }
   };
 
-  // نظام السحب حسب الندرة
   const getRandomReward = () => {
     if (dbRewards.length === 0) return null;
     
-    const roll = Math.random() * 100; // رقم عشوائي من 0 إلى 100
+    const roll = Math.random() * 100;
     let targetRarity = 'common';
     
-    if (roll <= 10) targetRarity = 'legendary'; // 10% للأسطوري
-    else if (roll <= 40) targetRarity = 'rare'; // 30% للنادر
-    else targetRarity = 'common'; // 60% للعادي
+    if (roll <= 10) targetRarity = 'legendary'; 
+    else if (roll <= 40) targetRarity = 'rare'; 
+    else targetRarity = 'common'; 
 
-    // فلترة البطاقات حسب الندرة المطلوبة
     const filteredRewards = dbRewards.filter(r => r.rarity === targetRarity);
-    
-    // إذا لم يجد بطاقة بهذه الندرة، يختار من كل البطاقات كاحتياط
     const pool = filteredRewards.length > 0 ? filteredRewards : dbRewards;
     
     return pool[Math.floor(Math.random() * pool.length)];
@@ -176,7 +168,7 @@ export default function MatchCharacterPage() {
         setOpenedCards([]); 
 
         if (newMatched.length === shuffledCards.length) {
-          const wonReward = getRandomReward(); // 🎁 سحب الجائزة
+          const wonReward = getRandomReward(); 
           setReward(wonReward);
           setGameFinished(true);
           setTimeout(() => setShowRewardModal(true), 500);
@@ -281,6 +273,7 @@ export default function MatchCharacterPage() {
         </div>
       </div>
 
+      {/* الشاشة المخفية الخاصة بالتقاط الصورة (مشاركة النتيجة) */}
       <div
         id="share-card"
         className="fixed -left-[9999px] top-0 w-[900px] bg-gradient-to-b from-zinc-900 to-black text-white p-12 rounded-3xl border border-zinc-800"
@@ -290,7 +283,15 @@ export default function MatchCharacterPage() {
           <p className="text-zinc-400 mb-8 text-2xl">تحدي مطابقة الشخصيات</p>
           {reward && (
             <>
-              <img src={reward.image} alt="" className="w-72 mx-auto rounded-2xl shadow-2xl mb-6" />
+              {/* تعديل مقاس وأبعاد صورة المشاركة هنا */}
+              <img 
+                src={reward.image} 
+                alt="" 
+                className={`w-72 h-auto object-contain mx-auto rounded-2xl shadow-2xl mb-6 border-4 ${
+                  reward.rarity === 'legendary' ? 'border-yellow-500' : 
+                  reward.rarity === 'rare' ? 'border-blue-500' : 'border-zinc-700'
+                }`} 
+              />
               <h2 className="text-4xl font-bold mt-4">{reward.name}</h2>
               <div className="mt-8 space-y-4 text-2xl bg-zinc-900/50 p-8 rounded-2xl inline-block text-right">
                 <p>🏆 المستوى: <span className="text-indigo-400">{currentLevel}</span></p>
@@ -303,6 +304,7 @@ export default function MatchCharacterPage() {
         </div>
       </div>
 
+      {/* نافذة المكافأة التي تظهر للمستخدم */}
       {showRewardModal && reward && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-2xl p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
@@ -311,22 +313,24 @@ export default function MatchCharacterPage() {
             </h2>
             <p className="mb-6 text-zinc-400">حصلت على بطاقة جديدة</p>
 
-            <div className="relative inline-block">
-              {/* تأثير متوهج بسيط للبطاقات الأسطورية والنادرة */}
-              {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-xl opacity-20 rounded-full animate-pulse"></div>}
-              {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-xl opacity-20 rounded-full animate-pulse"></div>}
+            {/* الحاوية الجديدة لضبط الصورة والتوهج */}
+            <div className="relative mx-auto w-56 flex justify-center items-center mb-4">
+              {/* تأثير التوهج مضبوط ليكون خلف البطاقة بشكل مستطيل بحواف ناعمة */}
+              {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-2xl opacity-40 rounded-xl animate-pulse"></div>}
+              {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-2xl opacity-40 rounded-xl animate-pulse"></div>}
               
+              {/* الصورة مع خصائص الحفاظ على الأبعاد object-contain و h-auto */}
               <img
                 src={reward.image}
                 alt={reward.name}
-                className={`w-48 relative z-10 mx-auto rounded-xl shadow-lg border-2 ${
-                  reward.rarity === 'legendary' ? 'border-yellow-500' : 
-                  reward.rarity === 'rare' ? 'border-blue-500' : 'border-zinc-700/50'
+                className={`w-full h-auto object-contain relative z-10 rounded-xl shadow-lg border-2 ${
+                  reward.rarity === 'legendary' ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 
+                  reward.rarity === 'rare' ? 'border-blue-400 shadow-[0_0_20px_rgba(96,165,250,0.5)]' : 'border-zinc-600'
                 }`}
               />
             </div>
             
-            <p className={`mt-4 text-2xl font-bold ${
+            <p className={`text-2xl font-bold ${
               reward.rarity === 'legendary' ? 'text-yellow-400' : 
               reward.rarity === 'rare' ? 'text-blue-400' : 'text-white'
             }`}>
