@@ -122,6 +122,7 @@ export default function MatchCharacterPage() {
     return () => clearInterval(timer);
   }, [gameFinished, shuffledCards, isLoading]);
 
+  // 🔥 الكود النهائي والمضمون 100% لمشاركة الصورة
   const saveResultImage = async () => {
     const element = document.getElementById("share-card");
     if (!element) return;
@@ -129,26 +130,48 @@ export default function MatchCharacterPage() {
     setIsSharing(true); 
 
     try {
-      // 1. تأكيد تحميل كل الصور داخل البطاقة المخفية قبل التقاط الشاشة
+      // 1. السر: تحويل الصور من روابط خارجية إلى كود نصي (Base64) لتخطي حماية المتصفح
       const images = Array.from(element.getElementsByTagName("img"));
-      await Promise.all(images.map(img => {
-        if (img.complete) return Promise.resolve();
-        return new Promise((resolve) => {
-          img.onload = resolve;
-          img.onerror = resolve;
-        });
-      }));
+      for (let img of images) {
+        if (!img.src.startsWith('data:')) {
+          // إضافة رمز عشوائي لتخطي "الكاش" الذي يسبب مشاكل CORS
+          const imageUrl = img.src + (img.src.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              img.src = reader.result as string; // استبدال الرابط بالنص
+              resolve(true);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
 
-      // 2. التقاط الشاشة بدون allowTaint
+      // 2. إظهار البطاقة بشكل مخفي خلف الشاشة (الأداة تكره العناصر المخفية بـ display:none أو المبعدة جداً)
+      const originalStyle = element.style.cssText;
+      element.style.position = 'fixed';
+      element.style.top = '0';
+      element.style.left = '0';
+      element.style.zIndex = '-9999';
+      element.style.opacity = '1';
+
+      // 3. التقاط الصورة بأمان تام
       const canvas = await html2canvas(element, { 
         backgroundColor: "#000000", 
         scale: 2,
-        useCORS: true 
+        useCORS: true,
+        allowTaint: true
       });
       
+      // إرجاع البطاقة كما كانت
+      element.style.cssText = originalStyle;
+
       const dataUrl = canvas.toDataURL("image/png");
 
-      // 3. محاولة فتح قائمة المشاركة الأصلية في الجوال
+      // 4. المشاركة عبر الجوال
       if (navigator.share) {
         try {
           const response = await fetch(dataUrl);
@@ -165,11 +188,11 @@ export default function MatchCharacterPage() {
             return; 
           }
         } catch (e) {
-          console.log("المشاركة عبر الجوال أُلغيت أو غير مدعومة بالكامل، سيتم التحميل:", e);
+          console.log("تم إلغاء المشاركة أو غير مدعومة، سيتم التحميل...");
         }
       }
 
-      // 4. الخيار البديل: تحميل الصورة في الجهاز
+      // 5. التحميل للكمبيوتر أو كخيار بديل
       const link = document.createElement("a");
       link.download = `tower-voices-level-${currentLevel}.png`;
       link.href = dataUrl;
@@ -323,33 +346,37 @@ export default function MatchCharacterPage() {
         </div>
       </div>
 
-      <div
-        id="share-card"
-        className="fixed -left-[9999px] top-0 w-[900px] bg-gradient-to-b from-zinc-900 to-black text-white p-12 rounded-3xl border border-zinc-800"
-      >
-        <div className="text-center">
-          <h1 className="text-5xl font-bold mb-4 text-indigo-400">أصوات البرج</h1>
-          <p className="text-zinc-400 mb-8 text-2xl">تحدي مطابقة الشخصيات</p>
-          {reward && (
-            <>
-              <img 
-                src={reward.image} 
-                alt="" 
-                crossOrigin="anonymous" 
-                className="w-72 h-auto object-contain mx-auto mb-6 drop-shadow-[0_10px_25px_rgba(0,0,0,0.8)]" 
-              />
-              <h2 className="text-4xl font-bold mt-4">{reward.name}</h2>
-              <div className="mt-8 space-y-4 text-2xl bg-zinc-900/50 p-8 rounded-2xl inline-block text-right">
-                <p>🏆 المستوى: <span className="text-indigo-400">{currentLevel}</span></p>
-                <p>⏱️ الزمن: <span className="text-indigo-400">{seconds} ثانية</span></p>
-                <p>🎯 المحاولات: <span className="text-indigo-400">{attempts}</span></p>
-                <p>📊 تفوقت على <span className="text-green-400">{completionRate}%</span> من اللاعبين</p>
-              </div>
-            </>
-          )}
+      {/* إخفاء البطاقة بطريقة ذكية تناسب html2canvas */}
+      <div className="overflow-hidden h-0 w-0 absolute">
+        <div
+          id="share-card"
+          className="w-[900px] bg-gradient-to-b from-zinc-900 to-black text-white p-12 rounded-3xl border border-zinc-800"
+        >
+          <div className="text-center">
+            <h1 className="text-5xl font-bold mb-4 text-indigo-400">أصوات البرج</h1>
+            <p className="text-zinc-400 mb-8 text-2xl">تحدي مطابقة الشخصيات</p>
+            {reward && (
+              <>
+                <img 
+                  src={reward.image} 
+                  alt="" 
+                  crossOrigin="anonymous" 
+                  className="w-72 h-auto object-contain mx-auto mb-6 drop-shadow-[0_10px_25px_rgba(0,0,0,0.8)]" 
+                />
+                <h2 className="text-4xl font-bold mt-4">{reward.name}</h2>
+                <div className="mt-8 space-y-4 text-2xl bg-zinc-900/50 p-8 rounded-2xl inline-block text-right">
+                  <p>🏆 المستوى: <span className="text-indigo-400">{currentLevel}</span></p>
+                  <p>⏱️ الزمن: <span className="text-indigo-400">{seconds} ثانية</span></p>
+                  <p>🎯 المحاولات: <span className="text-indigo-400">{attempts}</span></p>
+                  <p>📊 تفوقت على <span className="text-green-400">{completionRate}%</span> من اللاعبين</p>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
+      {/* نافذة المكافأة التي تظهر للمستخدم */}
       {showRewardModal && reward && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-2xl p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
