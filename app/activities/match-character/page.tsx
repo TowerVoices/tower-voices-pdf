@@ -36,7 +36,7 @@ export default function MatchCharacterPage() {
   const [currentLevel, setCurrentLevel] = useState(1);
   const [reward, setReward] = useState<any>(null);
   const [showRewardModal, setShowRewardModal] = useState(false);
-  const [isSharing, setIsSharing] = useState(false); // حالة جديدة لزر المشاركة
+  const [isSharing, setIsSharing] = useState(false);
 
   const [attempts, setAttempts] = useState(0);
   const [seconds, setSeconds] = useState(0);
@@ -122,24 +122,33 @@ export default function MatchCharacterPage() {
     return () => clearInterval(timer);
   }, [gameFinished, shuffledCards, isLoading]);
 
-  // 🔥 الكود المحدث والمطور لمشاركة الصورة
   const saveResultImage = async () => {
     const element = document.getElementById("share-card");
     if (!element) return;
     
-    setIsSharing(true); // تغيير حالة الزر إلى "جاري التجهيز"
+    setIsSharing(true); 
 
     try {
+      // 1. تأكيد تحميل كل الصور داخل البطاقة المخفية قبل التقاط الشاشة
+      const images = Array.from(element.getElementsByTagName("img"));
+      await Promise.all(images.map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      }));
+
+      // 2. التقاط الشاشة بدون allowTaint
       const canvas = await html2canvas(element, { 
         backgroundColor: "#000000", 
         scale: 2,
-        useCORS: true, // 👈 السطر الذي يحل مشكلة الصور الخارجية من Sanity
-        allowTaint: true
+        useCORS: true 
       });
       
       const dataUrl = canvas.toDataURL("image/png");
 
-      // محاولة فتح قائمة المشاركة الأصلية في الجوال
+      // 3. محاولة فتح قائمة المشاركة الأصلية في الجوال
       if (navigator.share) {
         try {
           const response = await fetch(dataUrl);
@@ -153,14 +162,14 @@ export default function MatchCharacterPage() {
               files: [file]
             });
             setIsSharing(false);
-            return; // انتهينا بنجاح
+            return; 
           }
         } catch (e) {
           console.log("المشاركة عبر الجوال أُلغيت أو غير مدعومة بالكامل، سيتم التحميل:", e);
         }
       }
 
-      // الخيار البديل: تحميل الصورة في الجهاز (للكمبيوتر أو إذا فشلت المشاركة)
+      // 4. الخيار البديل: تحميل الصورة في الجهاز
       const link = document.createElement("a");
       link.download = `tower-voices-level-${currentLevel}.png`;
       link.href = dataUrl;
@@ -170,7 +179,7 @@ export default function MatchCharacterPage() {
       console.error("Error generating image:", error);
       alert("عذراً، حدث خطأ أثناء تجهيز الصورة.");
     } finally {
-      setIsSharing(false); // إعادة الزر لحالته الطبيعية
+      setIsSharing(false); 
     }
   };
 
@@ -296,7 +305,7 @@ export default function MatchCharacterPage() {
                       <img
                         src={card.image}
                         alt="character"
-                        crossOrigin="anonymous" // 👈 السماح للصور في الكروت
+                        crossOrigin="anonymous" 
                         className="w-full h-full object-contain pointer-events-none animate-in fade-in zoom-in duration-300"
                       />
                     ) : (
@@ -314,7 +323,6 @@ export default function MatchCharacterPage() {
         </div>
       </div>
 
-      {/* الشاشة المخفية الخاصة بالتقاط الصورة (مشاركة النتيجة) */}
       <div
         id="share-card"
         className="fixed -left-[9999px] top-0 w-[900px] bg-gradient-to-b from-zinc-900 to-black text-white p-12 rounded-3xl border border-zinc-800"
@@ -324,11 +332,10 @@ export default function MatchCharacterPage() {
           <p className="text-zinc-400 mb-8 text-2xl">تحدي مطابقة الشخصيات</p>
           {reward && (
             <>
-              {/* صورة المشاركة بدون إطار مع ظل محيط بالشخصية */}
               <img 
                 src={reward.image} 
                 alt="" 
-                crossOrigin="anonymous" // 👈 السطر الذي يحل مشكلة اختفاء الصورة عند التحميل
+                crossOrigin="anonymous" 
                 className="w-72 h-auto object-contain mx-auto mb-6 drop-shadow-[0_10px_25px_rgba(0,0,0,0.8)]" 
               />
               <h2 className="text-4xl font-bold mt-4">{reward.name}</h2>
@@ -343,7 +350,6 @@ export default function MatchCharacterPage() {
         </div>
       </div>
 
-      {/* نافذة المكافأة التي تظهر للمستخدم */}
       {showRewardModal && reward && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-2xl p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
@@ -352,7 +358,6 @@ export default function MatchCharacterPage() {
             </h2>
             <p className="mb-6 text-zinc-400">حصلت على بطاقة جديدة</p>
 
-            {/* الحاوية المرفوعة للأعلى (-mt-6) مع التوهج الدائري */}
             <div className="relative mx-auto w-60 flex justify-center items-center mb-6 -mt-6">
               
               {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
@@ -361,7 +366,7 @@ export default function MatchCharacterPage() {
               <img
                 src={reward.image}
                 alt={reward.name}
-                crossOrigin="anonymous" // 👈 مهم هنا أيضاً
+                crossOrigin="anonymous" 
                 className="w-full h-auto object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500"
               />
             </div>
