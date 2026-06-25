@@ -78,7 +78,9 @@ export default function MatchCharacterPage() {
   const initializeLevel = (level: number, characters: CharacterFromSanity[]) => {
     if (characters.length === 0) return;
 
-    const count = level === 1 ? 3 : level === 2 ? 5 : 7;
+    // تم ضبط الأرقام هنا لحل مشكلة الجوال: 3 أزواج للمستوى 1، و 6 للثاني، و 8 للثالث
+    const targetCount = level === 1 ? 3 : level === 2 ? 6 : 8;
+    const count = Math.min(targetCount, characters.length);
     
     const selected = [...characters]
       .sort(() => Math.random() - 0.5)
@@ -221,17 +223,19 @@ export default function MatchCharacterPage() {
       </div>
 
       <div className="flex-1 flex items-center justify-center w-full">
+        {/* تم تحديث عرض الحاوية ليتناسب مع زيادة عدد البطاقات */}
         <div 
-          className={`bg-zinc-800/80 border-4 border-zinc-900 rounded-3xl p-4 md:p-6 w-full mx-auto shadow-2xl backdrop-blur-sm transition-all duration-500 ${
-            shuffledCards.length === 10 ? 'max-w-5xl' : 
-            shuffledCards.length === 14 ? 'max-w-7xl' : 
-            'max-w-3xl' 
+          className={`bg-zinc-800/80 border-4 border-zinc-900 rounded-3xl p-3 sm:p-4 md:p-6 w-full mx-auto shadow-2xl backdrop-blur-sm transition-all duration-500 ${
+            shuffledCards.length === 12 ? 'max-w-4xl' : 
+            shuffledCards.length >= 14 ? 'max-w-6xl' : 
+            'max-w-2xl' 
           }`}
         >
+          {/* تم ضبط الأعمدة لتكون متناسقة تماماً مع الجوال بدون فراغات */}
           <div 
-            className={`grid gap-2 md:gap-4 w-full mx-auto ${
-              shuffledCards.length === 10 ? 'grid-cols-3 sm:grid-cols-5' : 
-              shuffledCards.length === 14 ? 'grid-cols-4 sm:grid-cols-7' : 
+            className={`grid gap-2 sm:gap-3 md:gap-4 w-full mx-auto ${
+              shuffledCards.length === 12 ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6' : 
+              shuffledCards.length >= 14 ? 'grid-cols-4 sm:grid-cols-4 md:grid-cols-8' : 
               'grid-cols-2 sm:grid-cols-3' 
             }`}
           >
@@ -259,7 +263,7 @@ export default function MatchCharacterPage() {
                         className="w-full h-full object-contain pointer-events-none animate-in fade-in zoom-in duration-300"
                       />
                     ) : (
-                      <div className="text-center font-bold text-zinc-100 text-[11px] sm:text-xs md:text-sm leading-snug animate-in fade-in duration-300">
+                      <div className="text-center font-bold text-zinc-100 text-[10px] sm:text-xs md:text-sm leading-snug animate-in fade-in duration-300">
                         {card.text}
                       </div>
                     )
@@ -310,14 +314,12 @@ export default function MatchCharacterPage() {
             </h2>
             <p className="mb-6 text-zinc-400">حصلت على بطاقة جديدة</p>
 
-            {/* الحاوية الجديدة: رفعناها للأعلى (-mt-6) وكبرنا العرض (w-60) */}
+            {/* الحاوية المرفوعة للأعلى (-mt-6) مع التوهج الدائري الخرافي */}
             <div className="relative mx-auto w-60 flex justify-center items-center mb-6 -mt-6">
               
-              {/* تأثير التوهج خلف الشخصية (دائري وأكثر نعومة) */}
               {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
               {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
               
-              {/* الصورة بدون إطار، مع drop-shadow ليتشكل الظل على تفاصيل الشخصية نفسها */}
               <img
                 src={reward.image}
                 alt={reward.name}
