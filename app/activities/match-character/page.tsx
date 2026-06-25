@@ -283,14 +283,11 @@ export default function MatchCharacterPage() {
           <p className="text-zinc-400 mb-8 text-2xl">تحدي مطابقة الشخصيات</p>
           {reward && (
             <>
-              {/* تعديل مقاس وأبعاد صورة المشاركة هنا */}
+              {/* صورة المشاركة بدون إطار مع ظل محيط بالشخصية */}
               <img 
                 src={reward.image} 
                 alt="" 
-                className={`w-72 h-auto object-contain mx-auto rounded-2xl shadow-2xl mb-6 border-4 ${
-                  reward.rarity === 'legendary' ? 'border-yellow-500' : 
-                  reward.rarity === 'rare' ? 'border-blue-500' : 'border-zinc-700'
-                }`} 
+                className="w-72 h-auto object-contain mx-auto mb-6 drop-shadow-[0_10px_25px_rgba(0,0,0,0.8)]" 
               />
               <h2 className="text-4xl font-bold mt-4">{reward.name}</h2>
               <div className="mt-8 space-y-4 text-2xl bg-zinc-900/50 p-8 rounded-2xl inline-block text-right">
@@ -313,20 +310,18 @@ export default function MatchCharacterPage() {
             </h2>
             <p className="mb-6 text-zinc-400">حصلت على بطاقة جديدة</p>
 
-            {/* الحاوية الجديدة لضبط الصورة والتوهج */}
-            <div className="relative mx-auto w-56 flex justify-center items-center mb-4">
-              {/* تأثير التوهج مضبوط ليكون خلف البطاقة بشكل مستطيل بحواف ناعمة */}
-              {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-2xl opacity-40 rounded-xl animate-pulse"></div>}
-              {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-2xl opacity-40 rounded-xl animate-pulse"></div>}
+            {/* الحاوية الجديدة: رفعناها للأعلى (-mt-6) وكبرنا العرض (w-60) */}
+            <div className="relative mx-auto w-60 flex justify-center items-center mb-6 -mt-6">
               
-              {/* الصورة مع خصائص الحفاظ على الأبعاد object-contain و h-auto */}
+              {/* تأثير التوهج خلف الشخصية (دائري وأكثر نعومة) */}
+              {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
+              {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
+              
+              {/* الصورة بدون إطار، مع drop-shadow ليتشكل الظل على تفاصيل الشخصية نفسها */}
               <img
                 src={reward.image}
                 alt={reward.name}
-                className={`w-full h-auto object-contain relative z-10 rounded-xl shadow-lg border-2 ${
-                  reward.rarity === 'legendary' ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 
-                  reward.rarity === 'rare' ? 'border-blue-400 shadow-[0_0_20px_rgba(96,165,250,0.5)]' : 'border-zinc-600'
-                }`}
+                className="w-full h-auto object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500"
               />
             </div>
             
