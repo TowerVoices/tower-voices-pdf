@@ -122,56 +122,60 @@ export default function MatchCharacterPage() {
     return () => clearInterval(timer);
   }, [gameFinished, shuffledCards, isLoading]);
 
-  // 🔥 الكود النهائي والمضمون 100% لمشاركة الصورة
+  // 🔥 الحل الجذري والنهائي 100% لمشكلة المشاركة
   const saveResultImage = async () => {
     const element = document.getElementById("share-card");
-    if (!element) return;
+    const shareImg = document.getElementById("share-img") as HTMLImageElement;
+    
+    if (!element || !shareImg || !reward) return;
     
     setIsSharing(true); 
 
     try {
-      // 1. السر: تحويل الصور من روابط خارجية إلى كود نصي (Base64) لتخطي حماية المتصفح
-      const images = Array.from(element.getElementsByTagName("img"));
-      for (let img of images) {
-        if (!img.src.startsWith('data:')) {
-          // إضافة رمز عشوائي لتخطي "الكاش" الذي يسبب مشاكل CORS
-          const imageUrl = img.src + (img.src.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
-          const response = await fetch(imageUrl);
-          const blob = await response.blob();
-          await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              img.src = reader.result as string; // استبدال الرابط بالنص
-              resolve(true);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-        }
-      }
+      // 1. تحويل الصورة إلى نص محلي (Base64) لتخطي حماية CORS والكاش نهائياً
+      const base64Image = await new Promise<string>((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL("image/png"));
+        };
+        img.onerror = () => reject(new Error("Image load failed"));
+        // خدعة لمنع المتصفح من استخدام نسخة الكاش المحظورة
+        img.src = `${reward.image}?v=${new Date().getTime()}`;
+      });
 
-      // 2. إظهار البطاقة بشكل مخفي خلف الشاشة (الأداة تكره العناصر المخفية بـ display:none أو المبعدة جداً)
-      const originalStyle = element.style.cssText;
-      element.style.position = 'fixed';
-      element.style.top = '0';
-      element.style.left = '0';
-      element.style.zIndex = '-9999';
-      element.style.opacity = '1';
+      // 2. حقن الصورة كنص آمن داخل البطاقة
+      shareImg.src = base64Image;
 
-      // 3. التقاط الصورة بأمان تام
+      // 3. خدعة الظهور: جلب البطاقة إلى الشاشة خلف النافذة السوداء لكي تصورها الأداة
+      const originalCss = element.style.cssText;
+      element.style.position = "fixed";
+      element.style.top = "0px";
+      element.style.left = "0px";
+      // النافذة المنبثقة تمتلك z-50، لذلك نضع البطاقة في z-10 لتكون خلفها تماماً
+      element.style.zIndex = "10"; 
+
+      // إعطاء المتصفح لحظة قصيرة جداً لترتيب الشاشة
+      await new Promise((res) => setTimeout(res, 200));
+
+      // 4. التقاط الصورة بأمان تام
       const canvas = await html2canvas(element, { 
         backgroundColor: "#000000", 
         scale: 2,
-        useCORS: true,
-        allowTaint: true
+        useCORS: true 
       });
       
-      // إرجاع البطاقة كما كانت
-      element.style.cssText = originalStyle;
+      // 5. إخفاء البطاقة مجدداً
+      element.style.cssText = originalCss;
 
       const dataUrl = canvas.toDataURL("image/png");
 
-      // 4. المشاركة عبر الجوال
+      // 6. المشاركة عبر الجوال
       if (navigator.share) {
         try {
           const response = await fetch(dataUrl);
@@ -188,11 +192,11 @@ export default function MatchCharacterPage() {
             return; 
           }
         } catch (e) {
-          console.log("تم إلغاء المشاركة أو غير مدعومة، سيتم التحميل...");
+          console.log("المشاركة غير مدعومة بالكامل، سيتم التحميل...");
         }
       }
 
-      // 5. التحميل للكمبيوتر أو كخيار بديل
+      // 7. التحميل للكمبيوتر أو كخيار بديل
       const link = document.createElement("a");
       link.download = `tower-voices-level-${currentLevel}.png`;
       link.href = dataUrl;
@@ -200,7 +204,7 @@ export default function MatchCharacterPage() {
       
     } catch (error) {
       console.error("Error generating image:", error);
-      alert("عذراً، حدث خطأ أثناء تجهيز الصورة.");
+      alert("عذراً، حدث خطأ أثناء تجهيز الصورة. يرجى المحاولة مرة أخرى.");
     } finally {
       setIsSharing(false); 
     }
@@ -272,7 +276,7 @@ export default function MatchCharacterPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col p-4 md:p-8 bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white">
+    <main className="min-h-screen flex flex-col p-4 md:p-8 bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white relative z-0">
       
       <div className="w-full max-w-6xl mx-auto flex-shrink-0">
         <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-center md:text-right">
@@ -346,33 +350,34 @@ export default function MatchCharacterPage() {
         </div>
       </div>
 
-      {/* إخفاء البطاقة بطريقة ذكية تناسب html2canvas */}
-      <div className="overflow-hidden h-0 w-0 absolute">
-        <div
-          id="share-card"
-          className="w-[900px] bg-gradient-to-b from-zinc-900 to-black text-white p-12 rounded-3xl border border-zinc-800"
-        >
-          <div className="text-center">
-            <h1 className="text-5xl font-bold mb-4 text-indigo-400">أصوات البرج</h1>
-            <p className="text-zinc-400 mb-8 text-2xl">تحدي مطابقة الشخصيات</p>
-            {reward && (
-              <>
-                <img 
-                  src={reward.image} 
-                  alt="" 
-                  crossOrigin="anonymous" 
-                  className="w-72 h-auto object-contain mx-auto mb-6 drop-shadow-[0_10px_25px_rgba(0,0,0,0.8)]" 
-                />
-                <h2 className="text-4xl font-bold mt-4">{reward.name}</h2>
-                <div className="mt-8 space-y-4 text-2xl bg-zinc-900/50 p-8 rounded-2xl inline-block text-right">
-                  <p>🏆 المستوى: <span className="text-indigo-400">{currentLevel}</span></p>
-                  <p>⏱️ الزمن: <span className="text-indigo-400">{seconds} ثانية</span></p>
-                  <p>🎯 المحاولات: <span className="text-indigo-400">{attempts}</span></p>
-                  <p>📊 تفوقت على <span className="text-green-400">{completionRate}%</span> من اللاعبين</p>
-                </div>
-              </>
-            )}
-          </div>
+      {/* الشاشة الخاصة بالتقاط الصورة (تم وضعها خارج الشاشة برمجياً) */}
+      <div
+        id="share-card"
+        style={{ position: "fixed", top: "-9999px", left: "-9999px" }}
+        className="w-[900px] bg-gradient-to-b from-zinc-900 to-black text-white p-12 rounded-3xl border border-zinc-800"
+      >
+        <div className="text-center">
+          <h1 className="text-5xl font-bold mb-4 text-indigo-400">أصوات البرج</h1>
+          <p className="text-zinc-400 mb-8 text-2xl">تحدي مطابقة الشخصيات</p>
+          {reward && (
+            <>
+              {/* تمت إضافة id هنا لنتمكن من حقن الصورة الآمنة (Base64) فيه */}
+              <img 
+                id="share-img"
+                src={reward.image} 
+                alt="" 
+                crossOrigin="anonymous" 
+                className="w-72 h-auto object-contain mx-auto mb-6 drop-shadow-[0_10px_25px_rgba(0,0,0,0.8)]" 
+              />
+              <h2 className="text-4xl font-bold mt-4">{reward.name}</h2>
+              <div className="mt-8 space-y-4 text-2xl bg-zinc-900/50 p-8 rounded-2xl inline-block text-right">
+                <p>🏆 المستوى: <span className="text-indigo-400">{currentLevel}</span></p>
+                <p>⏱️ الزمن: <span className="text-indigo-400">{seconds} ثانية</span></p>
+                <p>🎯 المحاولات: <span className="text-indigo-400">{attempts}</span></p>
+                <p>📊 تفوقت على <span className="text-green-400">{completionRate}%</span> من اللاعبين</p>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
