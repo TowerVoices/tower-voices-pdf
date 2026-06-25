@@ -36,6 +36,7 @@ export default function MatchCharacterPage() {
   const [currentLevel, setCurrentLevel] = useState(1);
   const [reward, setReward] = useState<any>(null);
   const [showRewardModal, setShowRewardModal] = useState(false);
+  const [isSharing, setIsSharing] = useState(false); // حالة جديدة لزر المشاركة
 
   const [attempts, setAttempts] = useState(0);
   const [seconds, setSeconds] = useState(0);
@@ -78,7 +79,6 @@ export default function MatchCharacterPage() {
   const initializeLevel = (level: number, characters: CharacterFromSanity[]) => {
     if (characters.length === 0) return;
 
-    // تم ضبط الأرقام هنا لحل مشكلة الجوال: 3 أزواج للمستوى 1، و 6 للثاني، و 8 للثالث
     const targetCount = level === 1 ? 3 : level === 2 ? 6 : 8;
     const count = Math.min(targetCount, characters.length);
     
@@ -122,17 +122,55 @@ export default function MatchCharacterPage() {
     return () => clearInterval(timer);
   }, [gameFinished, shuffledCards, isLoading]);
 
+  // 🔥 الكود المحدث والمطور لمشاركة الصورة
   const saveResultImage = async () => {
     const element = document.getElementById("share-card");
     if (!element) return;
+    
+    setIsSharing(true); // تغيير حالة الزر إلى "جاري التجهيز"
+
     try {
-      const canvas = await html2canvas(element, { backgroundColor: "#000000", scale: 2 });
+      const canvas = await html2canvas(element, { 
+        backgroundColor: "#000000", 
+        scale: 2,
+        useCORS: true, // 👈 السطر الذي يحل مشكلة الصور الخارجية من Sanity
+        allowTaint: true
+      });
+      
+      const dataUrl = canvas.toDataURL("image/png");
+
+      // محاولة فتح قائمة المشاركة الأصلية في الجوال
+      if (navigator.share) {
+        try {
+          const response = await fetch(dataUrl);
+          const blob = await response.blob();
+          const file = new File([blob], `tower-voices-level-${currentLevel}.png`, { type: 'image/png' });
+          
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              title: 'تحدي أصوات البرج',
+              text: `أنهيت المستوى ${currentLevel} بـ ${attempts} محاولات خلال ${seconds} ثانية! 🔥 هل يمكنك تحطيم رقمي؟`,
+              files: [file]
+            });
+            setIsSharing(false);
+            return; // انتهينا بنجاح
+          }
+        } catch (e) {
+          console.log("المشاركة عبر الجوال أُلغيت أو غير مدعومة بالكامل، سيتم التحميل:", e);
+        }
+      }
+
+      // الخيار البديل: تحميل الصورة في الجهاز (للكمبيوتر أو إذا فشلت المشاركة)
       const link = document.createElement("a");
       link.download = `tower-voices-level-${currentLevel}.png`;
-      link.href = canvas.toDataURL("image/png");
+      link.href = dataUrl;
       link.click();
+      
     } catch (error) {
       console.error("Error generating image:", error);
+      alert("عذراً، حدث خطأ أثناء تجهيز الصورة.");
+    } finally {
+      setIsSharing(false); // إعادة الزر لحالته الطبيعية
     }
   };
 
@@ -223,7 +261,6 @@ export default function MatchCharacterPage() {
       </div>
 
       <div className="flex-1 flex items-center justify-center w-full">
-        {/* تم تحديث عرض الحاوية ليتناسب مع زيادة عدد البطاقات */}
         <div 
           className={`bg-zinc-800/80 border-4 border-zinc-900 rounded-3xl p-3 sm:p-4 md:p-6 w-full mx-auto shadow-2xl backdrop-blur-sm transition-all duration-500 ${
             shuffledCards.length === 12 ? 'max-w-4xl' : 
@@ -231,7 +268,6 @@ export default function MatchCharacterPage() {
             'max-w-2xl' 
           }`}
         >
-          {/* تم ضبط الأعمدة لتكون متناسقة تماماً مع الجوال بدون فراغات */}
           <div 
             className={`grid gap-2 sm:gap-3 md:gap-4 w-full mx-auto ${
               shuffledCards.length === 12 ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6' : 
@@ -260,6 +296,7 @@ export default function MatchCharacterPage() {
                       <img
                         src={card.image}
                         alt="character"
+                        crossOrigin="anonymous" // 👈 السماح للصور في الكروت
                         className="w-full h-full object-contain pointer-events-none animate-in fade-in zoom-in duration-300"
                       />
                     ) : (
@@ -291,6 +328,7 @@ export default function MatchCharacterPage() {
               <img 
                 src={reward.image} 
                 alt="" 
+                crossOrigin="anonymous" // 👈 السطر الذي يحل مشكلة اختفاء الصورة عند التحميل
                 className="w-72 h-auto object-contain mx-auto mb-6 drop-shadow-[0_10px_25px_rgba(0,0,0,0.8)]" 
               />
               <h2 className="text-4xl font-bold mt-4">{reward.name}</h2>
@@ -314,7 +352,7 @@ export default function MatchCharacterPage() {
             </h2>
             <p className="mb-6 text-zinc-400">حصلت على بطاقة جديدة</p>
 
-            {/* الحاوية المرفوعة للأعلى (-mt-6) مع التوهج الدائري الخرافي */}
+            {/* الحاوية المرفوعة للأعلى (-mt-6) مع التوهج الدائري */}
             <div className="relative mx-auto w-60 flex justify-center items-center mb-6 -mt-6">
               
               {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
@@ -323,6 +361,7 @@ export default function MatchCharacterPage() {
               <img
                 src={reward.image}
                 alt={reward.name}
+                crossOrigin="anonymous" // 👈 مهم هنا أيضاً
                 className="w-full h-auto object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500"
               />
             </div>
@@ -345,10 +384,13 @@ export default function MatchCharacterPage() {
 
             <div className="mt-6 space-y-3">
               <button
-                className="w-full bg-indigo-600 hover:bg-indigo-500 transition-colors text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2"
+                className={`w-full transition-colors text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 ${
+                  isSharing ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500'
+                }`}
                 onClick={saveResultImage}
+                disabled={isSharing}
               >
-                📸 مشاركة النتيجة
+                {isSharing ? 'جاري تجهيز الصورة... ⏳' : '📸 مشاركة النتيجة'}
               </button>
               <button
                 className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold"
