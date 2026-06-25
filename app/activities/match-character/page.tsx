@@ -37,11 +37,11 @@ export default function MatchCharacterPage() {
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
 
-  const [attempts, setAttempts] = useState(0);
+  // المتغير الآن يحسب الأخطاء فقط (المحاولات الفاشلة)
+  const [errors, setErrors] = useState(0); 
   const [seconds, setSeconds] = useState(0);
   const [gameFinished, setGameFinished] = useState(false);
   
-  // 🔥 حالة جديدة لحفظ نسبة اجتياز المرحلة الديناميكية
   const [dynamicCompletionRate, setDynamicCompletionRate] = useState(0);
 
   const MAX_LEVEL = 3;
@@ -105,11 +105,11 @@ export default function MatchCharacterPage() {
     setShuffledCards(newCards);
     setOpenedCards([]);
     setMatchedCards([]);
-    setAttempts(0);
+    setErrors(0); // تصفير الأخطاء عند بدء مستوى جديد
     setSeconds(0);
     setGameFinished(false);
     setReward(null);
-    setDynamicCompletionRate(0); // تصفير النسبة عند بدء مستوى جديد
+    setDynamicCompletionRate(0);
   };
 
   useEffect(() => {
@@ -124,30 +124,25 @@ export default function MatchCharacterPage() {
     return () => clearInterval(timer);
   }, [gameFinished, shuffledCards, isLoading]);
 
-  // 🔥 خوارزمية ذكية لحساب النسبة بناءً على الأداء الحقيقي للاعب
-  const calculatePerformancePercentile = (level: number, finalAttempts: number, finalSeconds: number) => {
-    const minAttempts = level === 1 ? 3 : level === 2 ? 6 : 8;
+  // 🔥 تم التعديل لتعتمد على أن الأداء المثالي هو (0 أخطاء)
+  const calculatePerformancePercentile = (level: number, mistakesCount: number, finalSeconds: number) => {
     const expectedTime = level === 1 ? 10 : level === 2 ? 22 : 35; // الوقت المثالي المتوقع
-
-    // النسبة الأساسية لكل مستوى
     let baseRate = level === 1 ? 85 : level === 2 ? 60 : 35;
 
-    // الخصم بسبب المحاولات الخاطئة (كل محاولة خاطئة تنقص النسبة)
-    const extraAttempts = Math.max(0, finalAttempts - minAttempts);
-    const attemptPenalty = extraAttempts * (level === 3 ? 2 : 4); 
+    // الخصم بسبب الأخطاء (كل خطأ ينقص النسبة)
+    const attemptPenalty = mistakesCount * (level === 3 ? 2 : 4); 
 
-    // الخصم/الزيادة بسبب الوقت (كل ثانية أسرع تزيد النسبة، وكل ثانية أبطأ تنقصها)
+    // الخصم/الزيادة بسبب الوقت
     const timeDiff = finalSeconds - expectedTime;
     const timePenalty = timeDiff * 1.5;
 
     let finalScore = Math.round(baseRate - attemptPenalty - timePenalty);
 
-    // مكافأة اللعب المثالي (بدون أي أخطاء)
-    if (extraAttempts === 0) {
+    // مكافأة اللعب المثالي (0 أخطاء)
+    if (mistakesCount === 0) {
       finalScore += 12; 
     }
 
-    // تحديد الحدود (لا يمكن أن تكون النسبة أقل من 5% أو أكثر من 99%)
     return Math.max(5, Math.min(99, finalScore));
   };
 
@@ -155,7 +150,7 @@ export default function MatchCharacterPage() {
     if (!reward) return;
     setIsSharing(true);
 
-    const shareText = `🏆 تحدي أصوات البرج 🏆\nطابقت الشخصيات بنجاح وحصلت على بطاقة (${reward.name})! 🎉\n\n✨ المستوى: ${currentLevel}\n⏱️ الزمن: ${seconds} ثانية\n🎯 المحاولات: ${attempts}\n📊 تفوقت على ${dynamicCompletionRate}% من اللاعبين!\n\nهل يمكنك تحطيم رقمي؟ جرب التحدي من هنا 👇\nhttps://towervoices.online/activities/match-character`;
+    const shareText = `🏆 تحدي أصوات البرج 🏆\nطابقت الشخصيات بنجاح وحصلت على بطاقة (${reward.name})! 🎉\n\n✨ المستوى: ${currentLevel}\n⏱️ الزمن: ${seconds} ثانية\n🎯 الأخطاء: ${errors}\n📊 تفوقت على ${dynamicCompletionRate}% من اللاعبين!\n\nهل يمكنك تحطيم رقمي؟ جرب التحدي من هنا 👇\nhttps://towervoices.online/activities/match-character`;
 
     try {
       if (navigator.share) {
@@ -194,23 +189,19 @@ export default function MatchCharacterPage() {
     setOpenedCards(newOpened);
 
     if (newOpened.length === 2) {
-      const currentAttempts = attempts + 1;
-      setAttempts(currentAttempts);
-
       const firstCard = shuffledCards.find((c) => c.id === newOpened[0]);
       const secondCard = shuffledCards.find((c) => c.id === newOpened[1]);
 
       if (firstCard && secondCard && firstCard.pairId === secondCard.pairId) {
+        // 🔥 نجاح: لا نزيد العداد هنا
         const newMatched = [...matchedCards, ...newOpened];
         setMatchedCards(newMatched);
         setOpenedCards([]); 
 
-        // إذا فاز اللاعب (تمت مطابقة جميع الكروت)
         if (newMatched.length === shuffledCards.length) {
           const wonReward = getRandomReward(); 
-          
-          // 🔥 حساب النسبة المئوية للأداء لحظة الفوز
-          const performanceRate = calculatePerformancePercentile(currentLevel, currentAttempts, seconds);
+          // حساب النسبة مع عدد الأخطاء الحالي
+          const performanceRate = calculatePerformancePercentile(currentLevel, errors, seconds);
           setDynamicCompletionRate(performanceRate);
 
           setReward(wonReward);
@@ -218,6 +209,8 @@ export default function MatchCharacterPage() {
           setTimeout(() => setShowRewardModal(true), 500);
         }
       } else {
+        // ❌ فشل: نزيد عداد الأخطاء هنا فقط!
+        setErrors((prev) => prev + 1);
         setTimeout(() => setOpenedCards([]), 1000);
       }
     }
@@ -258,8 +251,8 @@ export default function MatchCharacterPage() {
           <div className="border border-zinc-700 bg-zinc-800/50 rounded-lg px-4 py-2">
             ⏱️ {seconds} ثانية
           </div>
-          <div className="border border-zinc-700 bg-zinc-800/50 rounded-lg px-4 py-2">
-            🎯 {attempts} محاولة
+          <div className="border border-zinc-700 bg-zinc-800/50 rounded-lg px-4 py-2 flex items-center gap-1">
+            🎯 الأخطاء: {errors}
           </div>
         </div>
       </div>
@@ -317,6 +310,7 @@ export default function MatchCharacterPage() {
         </div>
       </div>
 
+      {/* نافذة المكافأة التي تظهر للمستخدم عند الفوز */}
       {showRewardModal && reward && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-2xl p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
@@ -346,9 +340,8 @@ export default function MatchCharacterPage() {
 
             <div className="mt-6 bg-black/30 p-4 rounded-xl space-y-3 text-sm text-zinc-300 text-right">
               <p className="flex justify-between"><span>الزمن:</span> <span>{seconds} ثانية ⏱️</span></p>
-              <p className="flex justify-between"><span>المحاولات:</span> <span>{attempts} 🎯</span></p>
+              <p className="flex justify-between"><span>الأخطاء:</span> <span>{errors} 🎯</span></p>
               <p className="flex justify-between text-indigo-300 font-medium">
-                {/* 🔥 النسبة تم تحديثها هنا بناءً على الأداء */}
                 <span>اجتاز هذه المرحلة:</span> <span>{dynamicCompletionRate}% 📊</span>
               </p>
             </div>
