@@ -1,16 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-// تأكد أن مسار client صحيح حسب مشروعك (غالباً في app/sanity.client.ts)
 import { client } from "@/app/sanity.client"; 
-import { rewards } from "@/app/data/activities/rewards";
 import html2canvas from "html2canvas";
 
-// تحديث واجهات البيانات لتتناسب مع Sanity
+// واجهة الشخصيات
 interface CharacterFromSanity {
   pairId: number;
   image: string;
   infoTexts: string[];
+}
+
+// واجهة المكافآت الجديدة
+interface RewardFromSanity {
+  name: string;
+  image: string;
+  rarity: string;
 }
 
 interface CardData {
@@ -22,8 +27,8 @@ interface CardData {
 }
 
 export default function MatchCharacterPage() {
-  // حالة جديدة لتخزين البيانات القادمة من Sanity
   const [dbCharacters, setDbCharacters] = useState<CharacterFromSanity[]>([]);
+  const [dbRewards, setDbRewards] = useState<RewardFromSanity[]>([]); // حالة المكافآت
   const [isLoading, setIsLoading] = useState(true);
 
   const [shuffledCards, setShuffledCards] = useState<CardData[]>([]);
@@ -41,34 +46,44 @@ export default function MatchCharacterPage() {
 
   const completionRate = currentLevel === 1 ? 87 : currentLevel === 2 ? 62 : 34;
 
-  // 1️⃣ جلب البيانات من Sanity عند فتح الصفحة لأول مرة
+  // 1️⃣ جلب الشخصيات والمكافآت من Sanity معاً
   useEffect(() => {
     const fetchSanityData = async () => {
       try {
-        // استعلام GROQ لجلب الشخصيات مع صورها ومعلوماتها
-        const query = `*[_type == "activityCharacter"]{
+        const charQuery = `*[_type == "activityCharacter"]{
           pairId,
           "image": image.asset->url,
           infoTexts
         }`;
-        const data = await client.fetch(query);
-        setDbCharacters(data);
+        
+        const rewardQuery = `*[_type == "activityReward"]{
+          name,
+          "image": image.asset->url,
+          rarity
+        }`;
+
+        // جلب البيانات في نفس الوقت لتسريع التحميل
+        const [charData, rewardData] = await Promise.all([
+          client.fetch(charQuery),
+          client.fetch(rewardQuery)
+        ]);
+
+        setDbCharacters(charData);
+        setDbRewards(rewardData);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching characters from Sanity:", error);
+        console.error("Error fetching data from Sanity:", error);
         setIsLoading(false);
       }
     };
     fetchSanityData();
   }, []);
 
-  // 2️⃣ تهيئة المستوى بناءً على بيانات Sanity
   const initializeLevel = (level: number, characters: CharacterFromSanity[]) => {
     if (characters.length === 0) return;
 
     const count = level === 1 ? 3 : level === 2 ? 5 : 7;
     
-    // اختيار شخصيات عشوائية من قاعدة البيانات
     const selected = [...characters]
       .sort(() => Math.random() - 0.5)
       .slice(0, count);
@@ -76,7 +91,6 @@ export default function MatchCharacterPage() {
     let idCounter = 1;
     const newCards: CardData[] = selected
       .flatMap((item) => {
-        // 🎲 اختيار معلومة واحدة عشوائياً من قائمة معلومات الشخصية
         const randomInfoIndex = Math.floor(Math.random() * (item.infoTexts?.length || 1));
         const randomText = item.infoTexts && item.infoTexts.length > 0 
           ? item.infoTexts[randomInfoIndex] 
@@ -98,14 +112,12 @@ export default function MatchCharacterPage() {
     setReward(null);
   };
 
-  // تشغيل تهيئة المستوى عند تغير المستوى أو عند وصول البيانات من Sanity
   useEffect(() => {
     if (dbCharacters.length > 0) {
       initializeLevel(currentLevel, dbCharacters);
     }
   }, [currentLevel, dbCharacters]);
 
-  // عداد الوقت
   useEffect(() => {
     if (gameFinished || shuffledCards.length === 0 || isLoading) return;
     const timer = setInterval(() => setSeconds((prev) => prev + 1), 1000);
@@ -126,6 +138,26 @@ export default function MatchCharacterPage() {
     }
   };
 
+  // نظام السحب حسب الندرة
+  const getRandomReward = () => {
+    if (dbRewards.length === 0) return null;
+    
+    const roll = Math.random() * 100; // رقم عشوائي من 0 إلى 100
+    let targetRarity = 'common';
+    
+    if (roll <= 10) targetRarity = 'legendary'; // 10% للأسطوري
+    else if (roll <= 40) targetRarity = 'rare'; // 30% للنادر
+    else targetRarity = 'common'; // 60% للعادي
+
+    // فلترة البطاقات حسب الندرة المطلوبة
+    const filteredRewards = dbRewards.filter(r => r.rarity === targetRarity);
+    
+    // إذا لم يجد بطاقة بهذه الندرة، يختار من كل البطاقات كاحتياط
+    const pool = filteredRewards.length > 0 ? filteredRewards : dbRewards;
+    
+    return pool[Math.floor(Math.random() * pool.length)];
+  };
+
   const handleCardClick = (cardId: number) => {
     if (openedCards.includes(cardId) || matchedCards.includes(cardId) || openedCards.length >= 2) return;
 
@@ -144,8 +176,8 @@ export default function MatchCharacterPage() {
         setOpenedCards([]); 
 
         if (newMatched.length === shuffledCards.length) {
-          const randomReward = rewards[Math.floor(Math.random() * rewards.length)];
-          setReward(randomReward);
+          const wonReward = getRandomReward(); // 🎁 سحب الجائزة
+          setReward(wonReward);
           setGameFinished(true);
           setTimeout(() => setShowRewardModal(true), 500);
         }
@@ -164,7 +196,6 @@ export default function MatchCharacterPage() {
     }
   };
 
-  // شاشة تحميل بسيطة أثناء جلب البيانات من Sanity
   if (isLoading) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white">
@@ -280,12 +311,28 @@ export default function MatchCharacterPage() {
             </h2>
             <p className="mb-6 text-zinc-400">حصلت على بطاقة جديدة</p>
 
-            <img
-              src={reward.image}
-              alt={reward.name}
-              className="w-48 mx-auto rounded-xl shadow-lg border border-zinc-700/50"
-            />
-            <p className="mt-4 text-2xl font-bold">{reward.name}</p>
+            <div className="relative inline-block">
+              {/* تأثير متوهج بسيط للبطاقات الأسطورية والنادرة */}
+              {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-xl opacity-20 rounded-full animate-pulse"></div>}
+              {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-xl opacity-20 rounded-full animate-pulse"></div>}
+              
+              <img
+                src={reward.image}
+                alt={reward.name}
+                className={`w-48 relative z-10 mx-auto rounded-xl shadow-lg border-2 ${
+                  reward.rarity === 'legendary' ? 'border-yellow-500' : 
+                  reward.rarity === 'rare' ? 'border-blue-500' : 'border-zinc-700/50'
+                }`}
+              />
+            </div>
+            
+            <p className={`mt-4 text-2xl font-bold ${
+              reward.rarity === 'legendary' ? 'text-yellow-400' : 
+              reward.rarity === 'rare' ? 'text-blue-400' : 'text-white'
+            }`}>
+              {reward.name}
+            </p>
+            <p className="text-xs mt-1 text-zinc-500 uppercase tracking-widest">{reward.rarity}</p>
 
             <div className="mt-6 bg-black/30 p-4 rounded-xl space-y-3 text-sm text-zinc-300 text-right">
               <p className="flex justify-between"><span>الزمن:</span> <span>{seconds} ثانية ⏱️</span></p>
