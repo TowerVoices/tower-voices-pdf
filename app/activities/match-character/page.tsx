@@ -37,12 +37,13 @@ export default function MatchCharacterPage() {
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
 
-  // المتغير الآن يحسب الأخطاء فقط (المحاولات الفاشلة)
   const [errors, setErrors] = useState(0); 
   const [seconds, setSeconds] = useState(0);
   const [gameFinished, setGameFinished] = useState(false);
-  
   const [dynamicCompletionRate, setDynamicCompletionRate] = useState(0);
+
+  // 🔥 حالة جديدة لتذكر "آخر بطاقة" ومنع تكرارها
+  const [lastWonReward, setLastWonReward] = useState<string | null>(null);
 
   const MAX_LEVEL = 3;
 
@@ -105,7 +106,7 @@ export default function MatchCharacterPage() {
     setShuffledCards(newCards);
     setOpenedCards([]);
     setMatchedCards([]);
-    setErrors(0); // تصفير الأخطاء عند بدء مستوى جديد
+    setErrors(0); 
     setSeconds(0);
     setGameFinished(false);
     setReward(null);
@@ -124,21 +125,16 @@ export default function MatchCharacterPage() {
     return () => clearInterval(timer);
   }, [gameFinished, shuffledCards, isLoading]);
 
-  // 🔥 تم التعديل لتعتمد على أن الأداء المثالي هو (0 أخطاء)
   const calculatePerformancePercentile = (level: number, mistakesCount: number, finalSeconds: number) => {
-    const expectedTime = level === 1 ? 10 : level === 2 ? 22 : 35; // الوقت المثالي المتوقع
+    const expectedTime = level === 1 ? 10 : level === 2 ? 22 : 35; 
     let baseRate = level === 1 ? 85 : level === 2 ? 60 : 35;
 
-    // الخصم بسبب الأخطاء (كل خطأ ينقص النسبة)
     const attemptPenalty = mistakesCount * (level === 3 ? 2 : 4); 
-
-    // الخصم/الزيادة بسبب الوقت
     const timeDiff = finalSeconds - expectedTime;
     const timePenalty = timeDiff * 1.5;
 
     let finalScore = Math.round(baseRate - attemptPenalty - timePenalty);
 
-    // مكافأة اللعب المثالي (0 أخطاء)
     if (mistakesCount === 0) {
       finalScore += 12; 
     }
@@ -166,20 +162,36 @@ export default function MatchCharacterPage() {
     }
   };
 
+  // 🔥 نظام السحب الذكي المحسن (Drop Rates + Anti-Dupe)
   const getRandomReward = () => {
     if (dbRewards.length === 0) return null;
     
     const roll = Math.random() * 100;
     let targetRarity = 'common';
     
-    if (roll <= 10) targetRarity = 'legendary'; 
-    else if (roll <= 40) targetRarity = 'rare'; 
-    else targetRarity = 'common'; 
+    // 1. تحسين النسب لتكون أكثر مكافأة للاعب
+    if (roll <= 15) targetRarity = 'legendary';      // 15% للأسطوري
+    else if (roll <= 50) targetRarity = 'rare';      // 35% للنادر
+    else targetRarity = 'common';                    // 50% للعادي
 
     const filteredRewards = dbRewards.filter(r => r.rarity === targetRarity);
-    const pool = filteredRewards.length > 0 ? filteredRewards : dbRewards;
+    let pool = filteredRewards.length > 0 ? filteredRewards : dbRewards;
     
-    return pool[Math.floor(Math.random() * pool.length)];
+    // 2. نظام منع التكرار: نحذف آخر بطاقة حصل عليها اللاعب من القائمة المحتملة
+    if (lastWonReward && pool.length > 1) {
+      const withoutLastReward = pool.filter(r => r.name !== lastWonReward);
+      if (withoutLastReward.length > 0) {
+        pool = withoutLastReward;
+      }
+    }
+
+    // سحب البطاقة
+    const pickedReward = pool[Math.floor(Math.random() * pool.length)];
+    
+    // حفظ اسم البطاقة كـ "آخر بطاقة مسحوبة" لكي لا تتكرر في المستوى القادم
+    setLastWonReward(pickedReward.name);
+
+    return pickedReward;
   };
 
   const handleCardClick = (cardId: number) => {
@@ -193,23 +205,20 @@ export default function MatchCharacterPage() {
       const secondCard = shuffledCards.find((c) => c.id === newOpened[1]);
 
       if (firstCard && secondCard && firstCard.pairId === secondCard.pairId) {
-        // 🔥 نجاح: لا نزيد العداد هنا
         const newMatched = [...matchedCards, ...newOpened];
         setMatchedCards(newMatched);
         setOpenedCards([]); 
 
         if (newMatched.length === shuffledCards.length) {
           const wonReward = getRandomReward(); 
-          // حساب النسبة مع عدد الأخطاء الحالي
           const performanceRate = calculatePerformancePercentile(currentLevel, errors, seconds);
+          
           setDynamicCompletionRate(performanceRate);
-
           setReward(wonReward);
           setGameFinished(true);
           setTimeout(() => setShowRewardModal(true), 500);
         }
       } else {
-        // ❌ فشل: نزيد عداد الأخطاء هنا فقط!
         setErrors((prev) => prev + 1);
         setTimeout(() => setOpenedCards([]), 1000);
       }
@@ -310,7 +319,6 @@ export default function MatchCharacterPage() {
         </div>
       </div>
 
-      {/* نافذة المكافأة التي تظهر للمستخدم عند الفوز */}
       {showRewardModal && reward && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-2xl p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
