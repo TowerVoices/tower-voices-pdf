@@ -40,9 +40,11 @@ export default function MatchCharacterPage() {
   const [attempts, setAttempts] = useState(0);
   const [seconds, setSeconds] = useState(0);
   const [gameFinished, setGameFinished] = useState(false);
-  const MAX_LEVEL = 3;
+  
+  // 🔥 حالة جديدة لحفظ نسبة اجتياز المرحلة الديناميكية
+  const [dynamicCompletionRate, setDynamicCompletionRate] = useState(0);
 
-  const completionRate = currentLevel === 1 ? 87 : currentLevel === 2 ? 62 : 34;
+  const MAX_LEVEL = 3;
 
   useEffect(() => {
     const fetchSanityData = async () => {
@@ -78,7 +80,6 @@ export default function MatchCharacterPage() {
   const initializeLevel = (level: number, characters: CharacterFromSanity[]) => {
     if (characters.length === 0) return;
 
-    // توزيع البطاقات المتناسق لحل مشكلة أبعاد الجوال
     const targetCount = level === 1 ? 3 : level === 2 ? 6 : 8;
     const count = Math.min(targetCount, characters.length);
     
@@ -108,6 +109,7 @@ export default function MatchCharacterPage() {
     setSeconds(0);
     setGameFinished(false);
     setReward(null);
+    setDynamicCompletionRate(0); // تصفير النسبة عند بدء مستوى جديد
   };
 
   useEffect(() => {
@@ -122,21 +124,43 @@ export default function MatchCharacterPage() {
     return () => clearInterval(timer);
   }, [gameFinished, shuffledCards, isLoading]);
 
-  // 🔥 نظام المشاركة النصية الاحترافي والمضمون 100%
+  // 🔥 خوارزمية ذكية لحساب النسبة بناءً على الأداء الحقيقي للاعب
+  const calculatePerformancePercentile = (level: number, finalAttempts: number, finalSeconds: number) => {
+    const minAttempts = level === 1 ? 3 : level === 2 ? 6 : 8;
+    const expectedTime = level === 1 ? 10 : level === 2 ? 22 : 35; // الوقت المثالي المتوقع
+
+    // النسبة الأساسية لكل مستوى
+    let baseRate = level === 1 ? 85 : level === 2 ? 60 : 35;
+
+    // الخصم بسبب المحاولات الخاطئة (كل محاولة خاطئة تنقص النسبة)
+    const extraAttempts = Math.max(0, finalAttempts - minAttempts);
+    const attemptPenalty = extraAttempts * (level === 3 ? 2 : 4); 
+
+    // الخصم/الزيادة بسبب الوقت (كل ثانية أسرع تزيد النسبة، وكل ثانية أبطأ تنقصها)
+    const timeDiff = finalSeconds - expectedTime;
+    const timePenalty = timeDiff * 1.5;
+
+    let finalScore = Math.round(baseRate - attemptPenalty - timePenalty);
+
+    // مكافأة اللعب المثالي (بدون أي أخطاء)
+    if (extraAttempts === 0) {
+      finalScore += 12; 
+    }
+
+    // تحديد الحدود (لا يمكن أن تكون النسبة أقل من 5% أو أكثر من 99%)
+    return Math.max(5, Math.min(99, finalScore));
+  };
+
   const handleShareClick = async () => {
     if (!reward) return;
     setIsSharing(true);
 
-    const shareText = `🏆 تحدي أصوات البرج 🏆\nطابقت الشخصيات بنجاح وحصلت على بطاقة (${reward.name})! 🎉\n\n✨ المستوى: ${currentLevel}\n⏱️ الزمن: ${seconds} ثانية\n🎯 المحاولات: ${attempts}\n📊 تفوقت على ${completionRate}% من اللاعبين!\n\nهل يمكنك تحطيم رقمي؟ جرب التحدي من هنا 👇\nhttps://towervoices.online/activities/match-character`;
+    const shareText = `🏆 تحدي أصوات البرج 🏆\nطابقت الشخصيات بنجاح وحصلت على بطاقة (${reward.name})! 🎉\n\n✨ المستوى: ${currentLevel}\n⏱️ الزمن: ${seconds} ثانية\n🎯 المحاولات: ${attempts}\n📊 تفوقت على ${dynamicCompletionRate}% من اللاعبين!\n\nهل يمكنك تحطيم رقمي؟ جرب التحدي من هنا 👇\nhttps://towervoices.online/activities/match-character`;
 
     try {
       if (navigator.share) {
-        // فتح نافذة المشاركة الأصلية في الجوال
-        await navigator.share({
-          text: shareText
-        });
+        await navigator.share({ text: shareText });
       } else {
-        // نسخ النص مباشرة إلى الحافظة في أجهزة الكمبيوتر
         await navigator.clipboard.writeText(shareText);
         alert("✅ تم نسخ النتيجة بنجاح! يمكنك الآن لصقها ومشاركتها مع أصدقائك.");
       }
@@ -170,7 +194,8 @@ export default function MatchCharacterPage() {
     setOpenedCards(newOpened);
 
     if (newOpened.length === 2) {
-      setAttempts((prev) => prev + 1);
+      const currentAttempts = attempts + 1;
+      setAttempts(currentAttempts);
 
       const firstCard = shuffledCards.find((c) => c.id === newOpened[0]);
       const secondCard = shuffledCards.find((c) => c.id === newOpened[1]);
@@ -180,8 +205,14 @@ export default function MatchCharacterPage() {
         setMatchedCards(newMatched);
         setOpenedCards([]); 
 
+        // إذا فاز اللاعب (تمت مطابقة جميع الكروت)
         if (newMatched.length === shuffledCards.length) {
           const wonReward = getRandomReward(); 
+          
+          // 🔥 حساب النسبة المئوية للأداء لحظة الفوز
+          const performanceRate = calculatePerformancePercentile(currentLevel, currentAttempts, seconds);
+          setDynamicCompletionRate(performanceRate);
+
           setReward(wonReward);
           setGameFinished(true);
           setTimeout(() => setShowRewardModal(true), 500);
@@ -286,7 +317,6 @@ export default function MatchCharacterPage() {
         </div>
       </div>
 
-      {/* نافذة المكافأة التي تظهر للمستخدم عند الفوز */}
       {showRewardModal && reward && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-2xl p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
@@ -318,7 +348,8 @@ export default function MatchCharacterPage() {
               <p className="flex justify-between"><span>الزمن:</span> <span>{seconds} ثانية ⏱️</span></p>
               <p className="flex justify-between"><span>المحاولات:</span> <span>{attempts} 🎯</span></p>
               <p className="flex justify-between text-indigo-300 font-medium">
-                <span>اجتاز هذه المرحلة:</span> <span>{completionRate}% 📊</span>
+                {/* 🔥 النسبة تم تحديثها هنا بناءً على الأداء */}
+                <span>اجتاز هذه المرحلة:</span> <span>{dynamicCompletionRate}% 📊</span>
               </p>
             </div>
 
