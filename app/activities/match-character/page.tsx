@@ -76,23 +76,31 @@ const uiTexts = {
 
 export default function MatchCharacterPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
+  const [isMounted, setIsMounted] = useState(false); // 🔥 مضاف لحماية الصفحة من الوميض العربي
 
-  // 🔥 التعديل هنا: قراءة اللغة من الرابط أو متصفح المستخدم
+  // 🔥 تحديد اللغة قبل السماح بعرض المحتويات
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const urlLang = params.get('lang');
+      const savedLang = localStorage.getItem('siteLang');
       
-      // 1. الأولوية للغة الموجودة في الرابط
+      let targetLang: 'ar' | 'en' = 'ar';
+
       if (urlLang === 'en' || urlLang === 'ar') {
-        setCurrentLanguage(urlLang);
+        targetLang = urlLang;
+        localStorage.setItem('siteLang', urlLang);
+      } else if (savedLang === 'en' || savedLang === 'ar') {
+        targetLang = savedLang;
       } else {
-        // 2. إذا لم يجد لغة في الرابط، يكتشف لغة الجهاز
-        const browserLang = navigator.language || navigator.languages[0];
+        const browserLang = navigator.language || (navigator.languages && navigator.languages[0]);
         if (browserLang && !browserLang.toLowerCase().startsWith('ar')) {
-          setCurrentLanguage('en');
+          targetLang = 'en';
         }
       }
+      
+      setCurrentLanguage(targetLang);
+      setIsMounted(true); 
     }
   }, []);
 
@@ -205,16 +213,16 @@ export default function MatchCharacterPage() {
   };
 
   useEffect(() => {
-    if (dbCharacters.length > 0) {
+    if (dbCharacters.length > 0 && isMounted) {
       initializeLevel(currentLevel, dbCharacters);
     }
-  }, [currentLevel, dbCharacters, currentLanguage]);
+  }, [currentLevel, dbCharacters, currentLanguage, isMounted]);
 
   useEffect(() => {
-    if (gameFinished || shuffledCards.length === 0 || isLoading || showIntroModal) return;
+    if (gameFinished || shuffledCards.length === 0 || isLoading || showIntroModal || !isMounted) return;
     const timer = setInterval(() => setSeconds((prev) => prev + 1), 1000);
     return () => clearInterval(timer);
-  }, [gameFinished, shuffledCards, isLoading, showIntroModal]);
+  }, [gameFinished, shuffledCards, isLoading, showIntroModal, isMounted]);
 
   const handleShareClick = async () => {
     if (!reward) return;
@@ -303,12 +311,12 @@ export default function MatchCharacterPage() {
     else setCurrentLevel(1);
   };
 
-  if (isLoading) {
+  // 🔥 حماية الصفحة من بناء واجهة عربية قبل الفحص
+  if (!isMounted || isLoading) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-xl font-bold animate-pulse">{t.preparing}</p>
         </div>
       </main>
     );
@@ -321,7 +329,11 @@ export default function MatchCharacterPage() {
     >
       <div className={`absolute top-6 ${currentLanguage === 'ar' ? 'left-6 md:left-12' : 'right-6 md:right-12'} z-50`}>
         <button 
-            onClick={() => setCurrentLanguage(currentLanguage === 'ar' ? 'en' : 'ar')}
+            onClick={() => {
+              const nextLang = currentLanguage === 'ar' ? 'en' : 'ar';
+              setCurrentLanguage(nextLang);
+              localStorage.setItem('siteLang', nextLang);
+            }}
             className="flex items-center gap-2 border border-indigo-500/30 bg-indigo-900/40 rounded-full px-4 py-2 hover:bg-indigo-900/60 transition-colors text-sm font-semibold backdrop-blur-md shadow-lg"
         >
             <span className="w-4 h-4 bg-transparent border border-white rounded-full flex items-center justify-center text-xs">🌐</span>

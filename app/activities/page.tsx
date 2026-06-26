@@ -26,44 +26,51 @@ const uiTexts = {
 
 export default function ActivitiesPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
-  const [isMounted, setIsMounted] = useState(false); // 🔥 لحل مشكلة ظهور لغة خاطئة لثانية
+  const [isMounted, setIsMounted] = useState(false); 
 
-  // 🔥 قراءة اللغة من الذاكرة أو الرابط أو المتصفح
+  // 🔥 خوارزمية ذكية تمنع الوميض وتحدد اللغة قبل العرض
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const urlLang = params.get('lang');
-      const savedLang = localStorage.getItem('siteLang'); // قراءة ذاكرة المتصفح
+      const savedLang = localStorage.getItem('siteLang');
       
+      let targetLang: 'ar' | 'en' = 'ar'; // الافتراضي عربي
+
+      // 1. التحقق من الرابط أولاً
       if (urlLang === 'en' || urlLang === 'ar') {
-        setCurrentLanguage(urlLang);
-        localStorage.setItem('siteLang', urlLang); // حفظ في الذاكرة
-      } else if (savedLang === 'en' || savedLang === 'ar') {
-        setCurrentLanguage(savedLang); // أولوية للغة التي اختارها المستخدم سابقاً
-      } else {
+        targetLang = urlLang;
+        localStorage.setItem('siteLang', urlLang);
+      } 
+      // 2. التحقق من الذاكرة المحلية ثانياً
+      else if (savedLang === 'en' || savedLang === 'ar') {
+        targetLang = savedLang;
+      } 
+      // 3. التحقق من لغة المتصفح/الجهاز تلقائياً
+      else {
         const browserLang = navigator.language || (navigator.languages && navigator.languages[0]);
         if (browserLang && !browserLang.toLowerCase().startsWith('ar')) {
-          setCurrentLanguage('en');
-        } else {
-          setCurrentLanguage('ar');
+          targetLang = 'en';
         }
       }
-      setIsMounted(true); // إخبار الموقع أننا جاهزون للعرض باللغة الصحيحة
+      
+      // تثبيت اللغة أولاً ثم السماح للموقع بالظهور
+      setCurrentLanguage(targetLang);
+      setIsMounted(true); 
     }
   }, []);
 
-  // 🔥 دالة تغيير اللغة وحفظها في الذاكرة
   const toggleLanguage = () => {
     const nextLang = currentLanguage === 'ar' ? 'en' : 'ar';
     setCurrentLanguage(nextLang);
-    localStorage.setItem('siteLang', nextLang); // حفظ الاختيار للأبد
+    localStorage.setItem('siteLang', nextLang); 
   };
 
   const t = uiTexts[currentLanguage];
 
-  // منع عرض الصفحة حتى نحدد اللغة الصحيحة (يمنع ظهور العربي ثم التحول للإنجليزي فجأة)
+  // يمنع خادم Next.js من عرض واجهة افتراضية خاطئة قبل فحص المتصفح
   if (!isMounted) {
-    return <main className="min-h-screen bg-[radial-gradient(circle_at_top,#18181b_0%,#000_100%)]"></main>;
+    return <main className="min-h-screen bg-[#000]"></main>;
   }
 
   const activities = [
@@ -99,12 +106,12 @@ export default function ActivitiesPage() {
   return (
     <main 
       dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}
-      className="min-h-screen p-8 bg-[radial-gradient(circle_at_top,#18181b_0%,#000_100%)] text-white flex flex-col items-center justify-center relative transition-all duration-300"
+      className="min-h-screen p-8 bg-[radial-gradient(circle_at_top,#18181b_0%,#000_100%)] text-white flex flex-col items-center justify-center relative"
     >
       
       <div className={`absolute top-6 ${currentLanguage === 'ar' ? 'left-6 md:left-12' : 'right-6 md:right-12'}`}>
         <button 
-            onClick={toggleLanguage} // استخدمنا الدالة الجديدة هنا
+            onClick={toggleLanguage}
             className="flex items-center gap-2 border border-zinc-700 bg-zinc-800/80 rounded-full px-4 py-2 hover:border-zinc-500 transition-colors text-sm font-semibold z-10"
         >
             <span className="w-4 h-4 bg-transparent border border-white rounded-full flex items-center justify-center text-xs">🌐</span>
@@ -112,14 +119,14 @@ export default function ActivitiesPage() {
         </button>
       </div>
 
-      <div className="text-center mb-12 mt-12 md:mt-0 animate-in fade-in duration-500">
+      <div className="text-center mb-12 mt-12 md:mt-0">
         <h1 className="text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 to-zinc-400">
           {t.pageTitle}
         </h1>
         <p className="text-zinc-400 text-lg">{t.subtitle}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl animate-in slide-in-from-bottom-4 duration-500">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
         {activities.map((activity) => {
           const CardContent = (
             <div className={`bg-zinc-900 border border-zinc-800 rounded-2xl p-6 transition-all duration-300 h-full flex flex-col relative overflow-hidden
