@@ -26,28 +26,45 @@ const uiTexts = {
 
 export default function ActivitiesPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
+  const [isMounted, setIsMounted] = useState(false); // 🔥 لحل مشكلة ظهور لغة خاطئة لثانية
 
-  // 🔥 قراءة اللغة من الرابط أو من لغة متصفح المستخدم
+  // 🔥 قراءة اللغة من الذاكرة أو الرابط أو المتصفح
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const urlLang = params.get('lang');
+      const savedLang = localStorage.getItem('siteLang'); // قراءة ذاكرة المتصفح
       
-      // 1. الأولوية للغة الموجودة في الرابط (إذا كانت موجودة)
       if (urlLang === 'en' || urlLang === 'ar') {
         setCurrentLanguage(urlLang);
+        localStorage.setItem('siteLang', urlLang); // حفظ في الذاكرة
+      } else if (savedLang === 'en' || savedLang === 'ar') {
+        setCurrentLanguage(savedLang); // أولوية للغة التي اختارها المستخدم سابقاً
       } else {
-        // 2. إذا لم يكن هناك لغة في الرابط، نكتشف لغة الجهاز التلقائية
-        const browserLang = navigator.language || navigator.languages[0];
-        // إذا كانت لغة الجهاز لا تبدأ بـ 'ar' (مثل ar-SA, ar-EG)، اجعل الموقع إنجليزي
+        const browserLang = navigator.language || (navigator.languages && navigator.languages[0]);
         if (browserLang && !browserLang.toLowerCase().startsWith('ar')) {
           setCurrentLanguage('en');
+        } else {
+          setCurrentLanguage('ar');
         }
       }
+      setIsMounted(true); // إخبار الموقع أننا جاهزون للعرض باللغة الصحيحة
     }
   }, []);
 
+  // 🔥 دالة تغيير اللغة وحفظها في الذاكرة
+  const toggleLanguage = () => {
+    const nextLang = currentLanguage === 'ar' ? 'en' : 'ar';
+    setCurrentLanguage(nextLang);
+    localStorage.setItem('siteLang', nextLang); // حفظ الاختيار للأبد
+  };
+
   const t = uiTexts[currentLanguage];
+
+  // منع عرض الصفحة حتى نحدد اللغة الصحيحة (يمنع ظهور العربي ثم التحول للإنجليزي فجأة)
+  if (!isMounted) {
+    return <main className="min-h-screen bg-[radial-gradient(circle_at_top,#18181b_0%,#000_100%)]"></main>;
+  }
 
   const activities = [
     {
@@ -82,12 +99,12 @@ export default function ActivitiesPage() {
   return (
     <main 
       dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}
-      className="min-h-screen p-8 bg-[radial-gradient(circle_at_top,#18181b_0%,#000_100%)] text-white flex flex-col items-center justify-center relative"
+      className="min-h-screen p-8 bg-[radial-gradient(circle_at_top,#18181b_0%,#000_100%)] text-white flex flex-col items-center justify-center relative transition-all duration-300"
     >
       
       <div className={`absolute top-6 ${currentLanguage === 'ar' ? 'left-6 md:left-12' : 'right-6 md:right-12'}`}>
         <button 
-            onClick={() => setCurrentLanguage(currentLanguage === 'ar' ? 'en' : 'ar')}
+            onClick={toggleLanguage} // استخدمنا الدالة الجديدة هنا
             className="flex items-center gap-2 border border-zinc-700 bg-zinc-800/80 rounded-full px-4 py-2 hover:border-zinc-500 transition-colors text-sm font-semibold z-10"
         >
             <span className="w-4 h-4 bg-transparent border border-white rounded-full flex items-center justify-center text-xs">🌐</span>
@@ -95,14 +112,14 @@ export default function ActivitiesPage() {
         </button>
       </div>
 
-      <div className="text-center mb-12 mt-12 md:mt-0">
+      <div className="text-center mb-12 mt-12 md:mt-0 animate-in fade-in duration-500">
         <h1 className="text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 to-zinc-400">
           {t.pageTitle}
         </h1>
         <p className="text-zinc-400 text-lg">{t.subtitle}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl animate-in slide-in-from-bottom-4 duration-500">
         {activities.map((activity) => {
           const CardContent = (
             <div className={`bg-zinc-900 border border-zinc-800 rounded-2xl p-6 transition-all duration-300 h-full flex flex-col relative overflow-hidden
@@ -137,7 +154,6 @@ export default function ActivitiesPage() {
           return activity.isComingSoon ? (
             <div key={activity.id}>{CardContent}</div>
           ) : (
-            // 🔥 هنا يتم إرسال اللغة في الرابط للعبة
             <Link href={`${activity.link}?lang=${currentLanguage}`} key={activity.id} className="block h-full">
               {CardContent}
             </Link>
