@@ -40,9 +40,7 @@ export default function MatchCharacterPage() {
   const [errors, setErrors] = useState(0); 
   const [seconds, setSeconds] = useState(0);
   const [gameFinished, setGameFinished] = useState(false);
-  const [dynamicCompletionRate, setDynamicCompletionRate] = useState(0);
-
-  // 🔥 حالة جديدة لتذكر "آخر بطاقة" ومنع تكرارها
+  
   const [lastWonReward, setLastWonReward] = useState<string | null>(null);
 
   const MAX_LEVEL = 3;
@@ -110,7 +108,6 @@ export default function MatchCharacterPage() {
     setSeconds(0);
     setGameFinished(false);
     setReward(null);
-    setDynamicCompletionRate(0);
   };
 
   useEffect(() => {
@@ -125,28 +122,11 @@ export default function MatchCharacterPage() {
     return () => clearInterval(timer);
   }, [gameFinished, shuffledCards, isLoading]);
 
-  const calculatePerformancePercentile = (level: number, mistakesCount: number, finalSeconds: number) => {
-    const expectedTime = level === 1 ? 10 : level === 2 ? 22 : 35; 
-    let baseRate = level === 1 ? 85 : level === 2 ? 60 : 35;
-
-    const attemptPenalty = mistakesCount * (level === 3 ? 2 : 4); 
-    const timeDiff = finalSeconds - expectedTime;
-    const timePenalty = timeDiff * 1.5;
-
-    let finalScore = Math.round(baseRate - attemptPenalty - timePenalty);
-
-    if (mistakesCount === 0) {
-      finalScore += 12; 
-    }
-
-    return Math.max(5, Math.min(99, finalScore));
-  };
-
   const handleShareClick = async () => {
     if (!reward) return;
     setIsSharing(true);
 
-    const shareText = `🏆 تحدي أصوات البرج 🏆\nطابقت الشخصيات بنجاح وحصلت على بطاقة (${reward.name})! 🎉\n\n✨ المستوى: ${currentLevel}\n⏱️ الزمن: ${seconds} ثانية\n🎯 الأخطاء: ${errors}\n📊 تفوقت على ${dynamicCompletionRate}% من اللاعبين!\n\nهل يمكنك تحطيم رقمي؟ جرب التحدي من هنا 👇\nhttps://towervoices.online/activities/match-character`;
+    const shareText = `🏆 تحدي أصوات البرج 🏆\nطابقت الشخصيات بنجاح وحصلت على بطاقة (${reward.name})! 🎉\n\n✨ المستوى: ${currentLevel}\n⏱️ الزمن: ${seconds} ثانية\n🎯 الأخطاء: ${errors}\n\nهل يمكنك تحطيم رقمي؟ جرب التحدي من هنا 👇\nhttps://towervoices.online/activities/match-character`;
 
     try {
       if (navigator.share) {
@@ -162,22 +142,46 @@ export default function MatchCharacterPage() {
     }
   };
 
-  // 🔥 نظام السحب الذكي المحسن (Drop Rates + Anti-Dupe)
-  const getRandomReward = () => {
+  // 🔥 نظام السحب المحدث بناءً على طلبك (نطاقات أوسع للمهارة وفرصة أكبر للأسطوري)
+  const getRandomReward = (mistakesCount: number) => {
     if (dbRewards.length === 0) return null;
     
+    let legendaryChance = 5; 
+    let rareChance = 25;     
+    
+    if (mistakesCount >= 0 && mistakesCount <= 5) {
+      // لعب مثالي (0 إلى 5 أخطاء)
+      legendaryChance = 35; 
+      rareChance = 45;
+    } else if (mistakesCount >= 6 && mistakesCount <= 10) {
+      // لعب جيد (6 إلى 10 أخطاء)
+      legendaryChance = 25; 
+      rareChance = 40;
+    } else if (mistakesCount >= 11 && mistakesCount <= 20) {
+      // لعب متوسط (11 إلى 20 خطأ) - تم رفع نسبة الأسطوري بشكل ملحوظ
+      legendaryChance = 18; 
+      rareChance = 35;
+    } else {
+      // أكثر من 20 خطأ (لعب ضعيف)
+      legendaryChance = 5; 
+      rareChance = 25;
+    }
+
     const roll = Math.random() * 100;
     let targetRarity = 'common';
     
-    // 1. تحسين النسب لتكون أكثر مكافأة للاعب
-    if (roll <= 15) targetRarity = 'legendary';      // 15% للأسطوري
-    else if (roll <= 50) targetRarity = 'rare';      // 35% للنادر
-    else targetRarity = 'common';                    // 50% للعادي
+    if (roll <= legendaryChance) {
+      targetRarity = 'legendary'; 
+    } else if (roll <= legendaryChance + rareChance) {
+      targetRarity = 'rare'; 
+    } else {
+      targetRarity = 'common'; 
+    }
 
     const filteredRewards = dbRewards.filter(r => r.rarity === targetRarity);
     let pool = filteredRewards.length > 0 ? filteredRewards : dbRewards;
     
-    // 2. نظام منع التكرار: نحذف آخر بطاقة حصل عليها اللاعب من القائمة المحتملة
+    // نظام منع تكرار البطاقة السابقة
     if (lastWonReward && pool.length > 1) {
       const withoutLastReward = pool.filter(r => r.name !== lastWonReward);
       if (withoutLastReward.length > 0) {
@@ -185,10 +189,7 @@ export default function MatchCharacterPage() {
       }
     }
 
-    // سحب البطاقة
     const pickedReward = pool[Math.floor(Math.random() * pool.length)];
-    
-    // حفظ اسم البطاقة كـ "آخر بطاقة مسحوبة" لكي لا تتكرر في المستوى القادم
     setLastWonReward(pickedReward.name);
 
     return pickedReward;
@@ -210,10 +211,8 @@ export default function MatchCharacterPage() {
         setOpenedCards([]); 
 
         if (newMatched.length === shuffledCards.length) {
-          const wonReward = getRandomReward(); 
-          const performanceRate = calculatePerformancePercentile(currentLevel, errors, seconds);
+          const wonReward = getRandomReward(errors); 
           
-          setDynamicCompletionRate(performanceRate);
           setReward(wonReward);
           setGameFinished(true);
           setTimeout(() => setShowRewardModal(true), 500);
@@ -349,9 +348,6 @@ export default function MatchCharacterPage() {
             <div className="mt-6 bg-black/30 p-4 rounded-xl space-y-3 text-sm text-zinc-300 text-right">
               <p className="flex justify-between"><span>الزمن:</span> <span>{seconds} ثانية ⏱️</span></p>
               <p className="flex justify-between"><span>الأخطاء:</span> <span>{errors} 🎯</span></p>
-              <p className="flex justify-between text-indigo-300 font-medium">
-                <span>اجتاز هذه المرحلة:</span> <span>{dynamicCompletionRate}% 📊</span>
-              </p>
             </div>
 
             <div className="mt-6 space-y-3">
