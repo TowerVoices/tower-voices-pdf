@@ -27,12 +27,23 @@ const uiTexts = {
 export default function ActivitiesPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
 
-  // قراءة اللغة من الرابط (إذا رجع المستخدم من اللعبة للمركز)
+  // 🔥 قراءة اللغة من الرابط أو من لغة متصفح المستخدم
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      const lang = params.get('lang');
-      if (lang === 'en' || lang === 'ar') setCurrentLanguage(lang);
+      const urlLang = params.get('lang');
+      
+      // 1. الأولوية للغة الموجودة في الرابط (إذا كانت موجودة)
+      if (urlLang === 'en' || urlLang === 'ar') {
+        setCurrentLanguage(urlLang);
+      } else {
+        // 2. إذا لم يكن هناك لغة في الرابط، نكتشف لغة الجهاز التلقائية
+        const browserLang = navigator.language || navigator.languages[0];
+        // إذا كانت لغة الجهاز لا تبدأ بـ 'ar' (مثل ar-SA, ar-EG)، اجعل الموقع إنجليزي
+        if (browserLang && !browserLang.toLowerCase().startsWith('ar')) {
+          setCurrentLanguage('en');
+        }
+      }
     }
   }, []);
 

@@ -77,12 +77,22 @@ const uiTexts = {
 export default function MatchCharacterPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
 
-  // 🔥 قراءة اللغة من الرابط فور فتح الصفحة
+  // 🔥 التعديل هنا: قراءة اللغة من الرابط أو متصفح المستخدم
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      const lang = params.get('lang');
-      if (lang === 'en' || lang === 'ar') setCurrentLanguage(lang);
+      const urlLang = params.get('lang');
+      
+      // 1. الأولوية للغة الموجودة في الرابط
+      if (urlLang === 'en' || urlLang === 'ar') {
+        setCurrentLanguage(urlLang);
+      } else {
+        // 2. إذا لم يجد لغة في الرابط، يكتشف لغة الجهاز
+        const browserLang = navigator.language || navigator.languages[0];
+        if (browserLang && !browserLang.toLowerCase().startsWith('ar')) {
+          setCurrentLanguage('en');
+        }
+      }
     }
   }, []);
 
@@ -309,7 +319,6 @@ export default function MatchCharacterPage() {
       dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} 
       className="min-h-screen flex flex-col p-4 md:p-8 bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white relative z-0"
     >
-      {/* 🔥 تم نقل زر تغيير اللغة ليكون ثابتاً في أعلى الصفحة (خارج نافذة التعليمات) */}
       <div className={`absolute top-6 ${currentLanguage === 'ar' ? 'left-6 md:left-12' : 'right-6 md:right-12'} z-50`}>
         <button 
             onClick={() => setCurrentLanguage(currentLanguage === 'ar' ? 'en' : 'ar')}
