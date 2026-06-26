@@ -3,19 +3,18 @@
 import { useState, useEffect, useRef } from "react";
 import { client } from "@/app/sanity.client"; 
 
-// 1. تعريف واجهة البيانات من Sanity (دعم حقول الإنجليزية الجديدة)
 interface CharacterFromSanity {
   pairId: number;
   image: string;
-  name: string;      // عربي
-  nameEn: string;    // الإنجليزي
-  infoTexts: string[];   // مصفوفة المعلومات عربي
-  infoTextsEn: string[]; // مصفوفة المعلومات إنجليزي
+  name: string;      
+  nameEn: string;    
+  infoTexts: string[];   
+  infoTextsEn: string[]; 
 }
 
 interface RewardFromSanity {
-  name: string;      // عربي
-  nameEn: string;    // الإنجليزي
+  name: string;      
+  nameEn: string;    
   image: string;
   rarity: string;
 }
@@ -28,7 +27,6 @@ interface CardData {
   text?: string;
 }
 
-// 🔥 2. قاموس النصوص الثابتة للواجهة (UI Dictionary)
 const uiTexts = {
   ar: {
     gameTitle: "طابق الشخصية مع المعلومة",
@@ -46,7 +44,11 @@ const uiTexts = {
     rewardRarity: "الندرة",
     share: "📤 مشاركة النتيجة",
     nextLevel: "المستوى التالي ←",
-    replay: "إعادة اللعب 🔄"
+    replay: "إعادة اللعب 🔄",
+    langName: "English",
+    getCardsTitle: "كيف تحصل على البطاقات؟ 🃏",
+    perfectTitle: "لعب مثالي (0 - 5 أخطاء)",
+    goodTitle: "لعب جيد (6 - 10 أخطاء)"
   },
   en: {
     gameTitle: "Match Character to Info",
@@ -64,18 +66,31 @@ const uiTexts = {
     rewardRarity: "Rarity",
     share: "📤 Share Result",
     nextLevel: "Next Level ←",
-    replay: "Replay 🔄"
+    replay: "Replay 🔄",
+    langName: "العربية",
+    getCardsTitle: "Get Cards! 🃏",
+    perfectTitle: "Perfect (0 - 5 Errors)",
+    goodTitle: "Good (6 - 10 Errors)"
   }
 };
 
 export default function MatchCharacterPage() {
+  const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
+
+  // 🔥 قراءة اللغة من الرابط فور فتح الصفحة
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get('lang');
+      if (lang === 'en' || lang === 'ar') setCurrentLanguage(lang);
+    }
+  }, []);
+
+  const t = uiTexts[currentLanguage]; 
+
   const [dbCharacters, setDbCharacters] = useState<CharacterFromSanity[]>([]);
   const [dbRewards, setDbRewards] = useState<RewardFromSanity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // 🔥 3. حالة اللغة الحالية (AR هي الافتراضية)
-  const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
-  const t = uiTexts[currentLanguage]; // متغير مساعد لجلب النصوص بسهولة
 
   const [shuffledCards, setShuffledCards] = useState<CardData[]>([]);
   const [openedCards, setOpenedCards] = useState<number[]>([]);
@@ -94,24 +109,22 @@ export default function MatchCharacterPage() {
   
   const [lastWonReward, setLastWonReward] = useState<string | null>(null);
 
-  // ذاكرة اللعبة لحفظ الأسئلة المستخدمة
   const usedInfoTextsRef = useRef<Record<number, number[]>>({});
 
   const MAX_LEVEL = 3;
 
-  // 🔥 4. تحديث الاستعلام (Fetch) لجلب حقول الإنجليزية الجديدة
   useEffect(() => {
     const fetchSanityData = async () => {
       try {
         const charQuery = `*[_type == "activityCharacter"]{
           pairId,
           "image": image.asset->url,
-          name, nameEn,      // سحب الأسماء
-          infoTexts, infoTextsEn // سحب المعلومات
+          name, nameEn,      
+          infoTexts, infoTextsEn 
         }`;
         
         const rewardQuery = `*[_type == "activityReward"]{
-          name, nameEn,      // سحب الأسماء
+          name, nameEn,      
           "image": image.asset->url,
           rarity
         }`;
@@ -135,9 +148,7 @@ export default function MatchCharacterPage() {
   const initializeLevel = (level: number, characters: CharacterFromSanity[]) => {
     if (characters.length === 0) return;
 
-    if (level === 1) {
-      usedInfoTextsRef.current = {};
-    }
+    if (level === 1) usedInfoTextsRef.current = {};
 
     const targetCount = level === 1 ? 3 : level === 2 ? 6 : 8;
     const count = Math.min(targetCount, characters.length);
@@ -149,28 +160,21 @@ export default function MatchCharacterPage() {
     let idCounter = 1;
     const newCards: CardData[] = selected
       .flatMap((item) => {
-        // 🔥 5. خوارزمية اختيار معلومة غير مكررة (معدلة لتدعم الإنجليزية)
         const texts = currentLanguage === 'en' ? item.infoTextsEn : item.infoTexts;
-        if (!texts || texts.length === 0) {
-            return []; // تجنب تعطل اللعبة إذا كانت مصفوفة المعلومات فارغة
-        }
+        if (!texts || texts.length === 0) return []; 
         
         let availableIndices = texts.map((_, index) => index); 
         const usedIndices = usedInfoTextsRef.current[item.pairId] || []; 
 
         const unusedIndices = availableIndices.filter(index => !usedIndices.includes(index));
         
-        if (unusedIndices.length > 0) {
-          availableIndices = unusedIndices;
-        }
+        if (unusedIndices.length > 0) availableIndices = unusedIndices;
 
         const pickedIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
         const randomText = texts[pickedIndex];
 
         if (texts.length > 0) {
-          if (!usedInfoTextsRef.current[item.pairId]) {
-            usedInfoTextsRef.current[item.pairId] = [];
-          }
+          if (!usedInfoTextsRef.current[item.pairId]) usedInfoTextsRef.current[item.pairId] = [];
           usedInfoTextsRef.current[item.pairId].push(pickedIndex);
         }
 
@@ -190,7 +194,6 @@ export default function MatchCharacterPage() {
     setReward(null);
   };
 
-  // 🔥 6. إعادة تهيئة المستوى عند تغيير اللغة لخلط الكروت مرة أخرى بالنصوص الجديدة
   useEffect(() => {
     if (dbCharacters.length > 0) {
       initializeLevel(currentLevel, dbCharacters);
@@ -211,12 +214,10 @@ export default function MatchCharacterPage() {
     const attemptsTitle = currentLanguage === 'en' ? "Errors" : "🎯 الأخطاء";
     const levelTitle = currentLanguage === 'en' ? "Level" : "✨ المستوى";
     const secondsTitle = currentLanguage === 'en' ? "sec" : "ثانية";
-    const cardTitle = currentLanguage === 'en' ? "Gained card" : "بطاقة";
-    const winMsg = currentLanguage === 'en' ? "I finished the challenge! 🔥" : "طابقت الشخصيات بنجاح وحصلت على بطاقة";
+    const winMsg = currentLanguage === 'en' ? "I finished the challenge and got card" : "طابقت الشخصيات بنجاح وحصلت على بطاقة";
     const challengeMsg = currentLanguage === 'en' ? "Can you beat my record? Play from here 👇" : "هل يمكنك تحطيم رقمي؟ جرب التحدي من هنا 👇";
 
-    // 🔥 7. ترجمة نص المشاركة تلقائياً
-    const shareText = `${shareTitle}\n${winMsg} (${currentLanguage === 'en' ? reward.nameEn : reward.name})! 🎉\n\n${levelTitle}: ${currentLevel}\n⏱️ Time: ${seconds} ${secondsTitle}\n${attemptsTitle}: ${errors}\n\n${challengeMsg}\nhttps://towervoices.online/activities/match-character`;
+    const shareText = `${shareTitle}\n${winMsg} (${currentLanguage === 'en' ? reward.nameEn : reward.name})! 🎉\n\n${levelTitle}: ${currentLevel}\n⏱️ Time: ${seconds} ${secondsTitle}\n${attemptsTitle}: ${errors}\n\n${challengeMsg}\nhttps://towervoices.online/activities/match-character?lang=${currentLanguage}`;
 
     try {
       if (navigator.share) {
@@ -234,54 +235,33 @@ export default function MatchCharacterPage() {
 
   const getRandomReward = (mistakesCount: number) => {
     if (dbRewards.length === 0) return null;
-    
-    let legendaryChance = 5; 
-    let rareChance = 25;     
-    
-    if (mistakesCount >= 0 && mistakesCount <= 5) {
-      legendaryChance = 35; 
-      rareChance = 45;
-    } else if (mistakesCount >= 6 && mistakesCount <= 10) {
-      legendaryChance = 25; 
-      rareChance = 40;
-    } else if (mistakesCount >= 11 && mistakesCount <= 20) {
-      legendaryChance = 18; 
-      rareChance = 35;
-    } else {
-      legendaryChance = 5; 
-      rareChance = 25;
-    }
+    let legendaryChance = 5; let rareChance = 25;     
+    if (mistakesCount >= 0 && mistakesCount <= 5) { legendaryChance = 35; rareChance = 45; } 
+    else if (mistakesCount >= 6 && mistakesCount <= 10) { legendaryChance = 25; rareChance = 40; } 
+    else if (mistakesCount >= 11 && mistakesCount <= 20) { legendaryChance = 18; rareChance = 35; } 
+    else { legendaryChance = 5; rareChance = 25; }
 
     const roll = Math.random() * 100;
     let targetRarity = 'common';
-    
-    if (roll <= legendaryChance) {
-      targetRarity = 'legendary'; 
-    } else if (roll <= legendaryChance + rareChance) {
-      targetRarity = 'rare'; 
-    } else {
-      targetRarity = 'common'; 
-    }
+    if (roll <= legendaryChance) targetRarity = 'legendary'; 
+    else if (roll <= legendaryChance + rareChance) targetRarity = 'rare'; 
+    else targetRarity = 'common'; 
 
     const filteredRewards = dbRewards.filter(r => r.rarity === targetRarity);
     let pool = filteredRewards.length > 0 ? filteredRewards : dbRewards;
     
     if (lastWonReward && pool.length > 1) {
       const withoutLastReward = pool.filter(r => r.name !== lastWonReward);
-      if (withoutLastReward.length > 0) {
-        pool = withoutLastReward;
-      }
+      if (withoutLastReward.length > 0) pool = withoutLastReward;
     }
 
     const pickedReward = pool[Math.floor(Math.random() * pool.length)];
     setLastWonReward(pickedReward.name);
-
     return pickedReward;
   };
 
   const handleCardClick = (cardId: number) => {
     if (openedCards.includes(cardId) || matchedCards.includes(cardId) || openedCards.length >= 2) return;
-
     const newOpened = [...openedCards, cardId];
     setOpenedCards(newOpened);
 
@@ -296,7 +276,6 @@ export default function MatchCharacterPage() {
 
         if (newMatched.length === shuffledCards.length) {
           const wonReward = getRandomReward(errors); 
-          
           setReward(wonReward);
           setGameFinished(true);
           setTimeout(() => setShowRewardModal(true), 500);
@@ -310,11 +289,8 @@ export default function MatchCharacterPage() {
 
   const handleNextLevel = () => {
     setShowRewardModal(false);
-    if (currentLevel < MAX_LEVEL) {
-      setCurrentLevel((prev) => prev + 1);
-    } else {
-      setCurrentLevel(1);
-    }
+    if (currentLevel < MAX_LEVEL) setCurrentLevel((prev) => prev + 1);
+    else setCurrentLevel(1);
   };
 
   if (isLoading) {
@@ -328,48 +304,40 @@ export default function MatchCharacterPage() {
     );
   }
 
-  // 🔥 8. استخدام t.<الحقل> لعرض النصوص تلقائياً و dir لعكس الاتجاه
   return (
     <main 
       dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} 
       className="min-h-screen flex flex-col p-4 md:p-8 bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white relative z-0"
     >
-      
+      {/* 🔥 تم نقل زر تغيير اللغة ليكون ثابتاً في أعلى الصفحة (خارج نافذة التعليمات) */}
+      <div className={`absolute top-6 ${currentLanguage === 'ar' ? 'left-6 md:left-12' : 'right-6 md:right-12'} z-50`}>
+        <button 
+            onClick={() => setCurrentLanguage(currentLanguage === 'ar' ? 'en' : 'ar')}
+            className="flex items-center gap-2 border border-indigo-500/30 bg-indigo-900/40 rounded-full px-4 py-2 hover:bg-indigo-900/60 transition-colors text-sm font-semibold backdrop-blur-md shadow-lg"
+        >
+            <span className="w-4 h-4 bg-transparent border border-white rounded-full flex items-center justify-center text-xs">🌐</span>
+            {t.langName}
+        </button>
+      </div>
+
       {showIntroModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 text-center w-full max-w-lg shadow-[0_0_50px_rgba(79,70,229,0.15)] animate-in zoom-in-95 duration-300">
-            {/* 🔥 9. زر تغيير اللغة الذكي */}
-            <div className={`absolute top-5 ${currentLanguage === 'ar' ? 'right-5' : 'left-5'}`}>
-                <button 
-                    onClick={() => setCurrentLanguage(currentLanguage === 'ar' ? 'en' : 'ar')}
-                    className="flex items-center gap-2 border border-zinc-700 bg-zinc-800/80 rounded-full px-4 py-2 hover:border-zinc-500 transition-colors text-sm font-semibold"
-                >
-                    <span className="w-4 h-4 bg-transparent border border-white rounded-full flex items-center justify-center text-xs">🌐</span>
-                    {currentLanguage === 'ar' ? 'English' : 'العربية'}
-                </button>
-            </div>
-            
-            <div className="w-16 h-16 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl">
-              🎮
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-white">
-              {t.preparing}
-            </h2>
-            <p className="text-zinc-400 mb-8 leading-relaxed text-sm md:text-base">
-              {t.subTitle}
-            </p>
+            <div className="w-16 h-16 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl">🎮</div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-white">{t.gameTitle}</h2>
+            <p className="text-zinc-400 mb-8 leading-relaxed text-sm md:text-base">{t.subTitle}</p>
 
-            <div className="bg-black/40 rounded-2xl p-5 mb-8 text-right space-y-4 text-sm md:text-base border border-zinc-800">
-              <h3 className="font-bold text-indigo-400 text-center mb-5">{currentLanguage === 'en' ? 'Get Cards!' : 'كيف تحصل على البطاقات؟ 🃏'}</h3>
+            <div className="bg-black/40 rounded-2xl p-5 mb-8 text-start space-y-4 text-sm md:text-base border border-zinc-800">
+              <h3 className="font-bold text-indigo-400 text-center mb-5">{t.getCardsTitle}</h3>
               
               <p className="flex items-center gap-3">
                 <span className="w-3.5 h-3.5 rounded-full bg-yellow-500 flex-shrink-0 shadow-[0_0_10px_rgba(234,179,8,0.5)]"></span>
-                <span className="text-zinc-300"><b className="text-white">{currentLanguage === 'en' ? 'Perfect (0 - 5 Errors)' : 'لعب مثالي (0 - 5 أخطاء)'}</b> {t.perfect}</span>
+                <span className="text-zinc-300"><b className="text-white">{t.perfectTitle}</b> {t.perfect}</span>
               </p>
               
               <p className="flex items-center gap-3">
                 <span className="w-3.5 h-3.5 rounded-full bg-blue-500 flex-shrink-0 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></span>
-                <span className="text-zinc-300"><b className="text-white">{currentLanguage === 'en' ? 'Good (6 - 10 Errors)' : 'لعب جيد (6 - 10 أخطاء)'}</b> {t.good}</span>
+                <span className="text-zinc-300"><b className="text-white">{t.goodTitle}</b> {t.good}</span>
               </p>
               
               <p className="flex items-center gap-3">
@@ -388,8 +356,8 @@ export default function MatchCharacterPage() {
         </div>
       )}
 
-      <div className="w-full max-w-6xl mx-auto flex-shrink-0">
-        <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-center md:text-right">
+      <div className="w-full max-w-6xl mx-auto flex-shrink-0 mt-14 md:mt-0">
+        <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-center md:text-start">
           {t.gameTitle}
         </h1>
 
@@ -439,11 +407,7 @@ export default function MatchCharacterPage() {
                 >
                   {isFlipped ? (
                     card.type === "character" ? (
-                      <img
-                        src={card.image}
-                        alt="character"
-                        className="w-full h-full object-contain pointer-events-none animate-in fade-in zoom-in duration-300"
-                      />
+                      <img src={card.image} alt="character" className="w-full h-full object-contain pointer-events-none animate-in fade-in zoom-in duration-300" />
                     ) : (
                       <div className="text-center font-bold text-zinc-100 text-[10px] sm:text-xs md:text-sm leading-snug animate-in fade-in duration-300">
                         {card.text}
@@ -462,47 +426,31 @@ export default function MatchCharacterPage() {
       {showRewardModal && reward && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-2xl p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
-            <h2 className="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
-              {t.winTitle}
-            </h2>
+            <h2 className="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{t.winTitle}</h2>
             <p className="mb-6 text-zinc-400">{t.gotCard}</p>
 
             <div className="relative mx-auto w-60 flex justify-center items-center mb-6 -mt-6">
               {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
               {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
               
-              <img
-                src={reward.image}
-                alt={currentLanguage === 'en' ? reward.nameEn : reward.name}
-                className="w-full h-auto object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500"
-              />
+              <img src={reward.image} alt={currentLanguage === 'en' ? reward.nameEn : reward.name} className="w-full h-auto object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500" />
             </div>
             
-            <p className={`text-2xl font-bold ${
-              reward.rarity === 'legendary' ? 'text-yellow-400' : 
-              reward.rarity === 'rare' ? 'text-blue-400' : 'text-white'
-            }`}>
+            <p className={`text-2xl font-bold ${reward.rarity === 'legendary' ? 'text-yellow-400' : reward.rarity === 'rare' ? 'text-blue-400' : 'text-white'}`}>
               {currentLanguage === 'en' ? reward.nameEn : reward.name}
             </p>
             <p className="text-xs mt-1 text-zinc-500 uppercase tracking-widest">{t.rewardRarity}: {currentLanguage === 'en' ? reward.rarity.toUpperCase() : (reward.rarity === 'common' ? 'عادي' : reward.rarity === 'rare' ? 'نادر' : 'أسطوري')}</p>
 
-            <div className="mt-6 bg-black/30 p-4 rounded-xl space-y-3 text-sm text-zinc-300 text-right">
+            <div className="mt-6 bg-black/30 p-4 rounded-xl space-y-3 text-sm text-zinc-300 text-start">
               <p className="flex justify-between"><span>⏱️ {currentLanguage === 'en' ? 'Time' : 'الزمن'}:</span> <span>{seconds} {t.seconds}</span></p>
               <p className="flex justify-between"><span>🎯 {t.errors}:</span> <span>{errors}</span></p>
             </div>
 
             <div className="mt-6 space-y-3">
-              <button
-                className="w-full bg-indigo-600 hover:bg-indigo-500 transition-colors text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2"
-                onClick={handleShareClick}
-                disabled={isSharing}
-              >
+              <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-indigo-600 hover:bg-indigo-500 transition-colors text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2">
                 {t.share}
               </button>
-              <button
-                className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold"
-                onClick={handleNextLevel}
-              >
+              <button onClick={handleNextLevel} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold">
                 {currentLevel < MAX_LEVEL ? t.nextLevel : t.replay}
               </button>
             </div>

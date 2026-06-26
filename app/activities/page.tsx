@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
-// 🔥 قاموس النصوص لصفحة مركز الفعاليات
 const uiTexts = {
   ar: {
     pageTitle: "مركز الفعاليات",
@@ -26,11 +25,19 @@ const uiTexts = {
 };
 
 export default function ActivitiesPage() {
-  // حالة اللغة الحالية (الافتراضي عربي)
   const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
+
+  // قراءة اللغة من الرابط (إذا رجع المستخدم من اللعبة للمركز)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get('lang');
+      if (lang === 'en' || lang === 'ar') setCurrentLanguage(lang);
+    }
+  }, []);
+
   const t = uiTexts[currentLanguage];
 
-  // تعريف البطاقات بربط مباشر مع اللغة المختارة
   const activities = [
     {
       id: "match-character",
@@ -67,7 +74,6 @@ export default function ActivitiesPage() {
       className="min-h-screen p-8 bg-[radial-gradient(circle_at_top,#18181b_0%,#000_100%)] text-white flex flex-col items-center justify-center relative"
     >
       
-      {/* 🔥 زر تغيير اللغة */}
       <div className={`absolute top-6 ${currentLanguage === 'ar' ? 'left-6 md:left-12' : 'right-6 md:right-12'}`}>
         <button 
             onClick={() => setCurrentLanguage(currentLanguage === 'ar' ? 'en' : 'ar')}
@@ -87,7 +93,6 @@ export default function ActivitiesPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
         {activities.map((activity) => {
-          // تصميم البطاقة المشترك
           const CardContent = (
             <div className={`bg-zinc-900 border border-zinc-800 rounded-2xl p-6 transition-all duration-300 h-full flex flex-col relative overflow-hidden
               ${activity.isComingSoon 
@@ -95,8 +100,6 @@ export default function ActivitiesPage() {
                 : 'hover:border-zinc-500 hover:-translate-y-2 hover:shadow-2xl cursor-pointer group' 
               }`}
             >
-              
-              {/* شارة "قريباً" الزاوية العلوية */}
               {activity.isComingSoon && (
                 <div className={`absolute top-4 ${currentLanguage === 'ar' ? 'left-4' : 'right-4'} bg-zinc-800 text-xs font-bold px-3 py-1.5 rounded-full border border-zinc-700 text-zinc-300`}>
                   {t.soon}
@@ -113,29 +116,23 @@ export default function ActivitiesPage() {
               <div className={`mt-6 flex items-center text-sm font-semibold 
                 ${activity.isComingSoon ? 'text-zinc-500' : 'text-indigo-400 group-hover:text-indigo-300'}`}
               >
-                {activity.isComingSoon ? (
-                  t.preparing
-                ) : (
-                  <>
-                    {t.startChallenge} <span className="mx-2">{t.arrow}</span>
-                  </>
+                {activity.isComingSoon ? t.preparing : (
+                  <>{t.startChallenge} <span className="mx-2">{t.arrow}</span></>
                 )}
               </div>
-
             </div>
           );
 
-          // إذا كانت اللعبة "قريباً" نضعها في div عادي بدون رابط، وإلا نضعها داخل Link
           return activity.isComingSoon ? (
             <div key={activity.id}>{CardContent}</div>
           ) : (
-            <Link href={activity.link} key={activity.id} className="block h-full">
+            // 🔥 هنا يتم إرسال اللغة في الرابط للعبة
+            <Link href={`${activity.link}?lang=${currentLanguage}`} key={activity.id} className="block h-full">
               {CardContent}
             </Link>
           );
         })}
       </div>
-
     </main>
   );
 }
