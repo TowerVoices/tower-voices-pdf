@@ -1,6 +1,5 @@
 "use client";
 
-// 🔥 أضفنا useRef هنا لتعمل كذاكرة للأسئلة
 import { useState, useEffect, useRef } from "react";
 import { client } from "@/app/sanity.client"; 
 
@@ -35,8 +34,12 @@ export default function MatchCharacterPage() {
   
   const [currentLevel, setCurrentLevel] = useState(1);
   const [reward, setReward] = useState<any>(null);
+  
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+
+  // 🔥 حالة جديدة لشاشة البداية (تظهر أول مرة فقط)
+  const [showIntroModal, setShowIntroModal] = useState(true);
 
   const [errors, setErrors] = useState(0); 
   const [seconds, setSeconds] = useState(0);
@@ -44,7 +47,6 @@ export default function MatchCharacterPage() {
   
   const [lastWonReward, setLastWonReward] = useState<string | null>(null);
 
-  // 🔥 ذاكرة اللعبة: تحفظ أرقام المعلومات (Indices) التي تم استخدامها لكل شخصية (pairId)
   const usedInfoTextsRef = useRef<Record<number, number[]>>({});
 
   const MAX_LEVEL = 3;
@@ -83,7 +85,6 @@ export default function MatchCharacterPage() {
   const initializeLevel = (level: number, characters: CharacterFromSanity[]) => {
     if (characters.length === 0) return;
 
-    // تفريغ ذاكرة الأسئلة عند بدء الجولة من المستوى الأول
     if (level === 1) {
       usedInfoTextsRef.current = {};
     }
@@ -100,23 +101,18 @@ export default function MatchCharacterPage() {
       .flatMap((item) => {
         const texts = item.infoTexts || [];
         
-        // 🔥 خوارزمية اختيار معلومة غير مكررة
-        let availableIndices = texts.map((_, index) => index); // قائمة بكل أرقام معلومات هذه الشخصية
-        const usedIndices = usedInfoTextsRef.current[item.pairId] || []; // المعلومات التي ظهرت سابقاً
+        let availableIndices = texts.map((_, index) => index); 
+        const usedIndices = usedInfoTextsRef.current[item.pairId] || []; 
 
-        // تصفية المعلومات المتاحة لحذف ما تم استخدامه
         const unusedIndices = availableIndices.filter(index => !usedIndices.includes(index));
         
-        // إذا كان هناك معلومات جديدة لم تستخدم، نختار منها، وإلا نختار من الكل (لتجنب تعطل اللعبة)
         if (unusedIndices.length > 0) {
           availableIndices = unusedIndices;
         }
 
-        // اختيار رقم عشوائي للمعلومة
         const pickedIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
         const randomText = texts.length > 0 ? texts[pickedIndex] : "معلومة غير متوفرة";
 
-        // حفظ المعلومة المختارة في ذاكرة اللعبة حتى لا تظهر في المستوى القادم
         if (texts.length > 0) {
           if (!usedInfoTextsRef.current[item.pairId]) {
             usedInfoTextsRef.current[item.pairId] = [];
@@ -146,11 +142,12 @@ export default function MatchCharacterPage() {
     }
   }, [currentLevel, dbCharacters]);
 
+  // 🔥 العداد لن يبدأ إذا كانت شاشة البداية مفتوحة (!showIntroModal)
   useEffect(() => {
-    if (gameFinished || shuffledCards.length === 0 || isLoading) return;
+    if (gameFinished || shuffledCards.length === 0 || isLoading || showIntroModal) return;
     const timer = setInterval(() => setSeconds((prev) => prev + 1), 1000);
     return () => clearInterval(timer);
-  }, [gameFinished, shuffledCards, isLoading]);
+  }, [gameFinished, shuffledCards, isLoading, showIntroModal]);
 
   const handleShareClick = async () => {
     if (!reward) return;
@@ -271,6 +268,46 @@ export default function MatchCharacterPage() {
   return (
     <main className="min-h-screen flex flex-col p-4 md:p-8 bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white relative z-0">
       
+      {/* 🔥 نافذة التعليمات (تظهر قبل بدء اللعب) */}
+      {showIntroModal && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 text-center w-full max-w-lg shadow-[0_0_50px_rgba(79,70,229,0.15)] animate-in zoom-in-95 duration-300">
+            <div className="w-16 h-16 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl">
+              🎮
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-white">
+              مرحباً بك في تحدي المطابقة!
+            </h2>
+            <p className="text-zinc-400 mb-8 leading-relaxed text-sm md:text-base">
+              اختبر ذاكرتك ومعرفتك بشخصيات "أصوات البرج". طابق كل شخصية مع المعلومة الصحيحة الخاصة بها في أسرع وقت.
+            </p>
+
+            <div className="bg-black/40 rounded-2xl p-5 mb-8 text-right space-y-4 text-sm md:text-base border border-zinc-800">
+              <h3 className="font-bold text-indigo-400 text-center mb-2">كيف تحصل على البطاقات؟ 🃏</h3>
+              <p className="flex items-start gap-3">
+                <span className="text-yellow-400 text-lg">🟡</span>
+                <span className="text-zinc-300">لعب مثالي <b className="text-white">(0 - 5 أخطاء)</b> يمنحك فرصة عالية جداً لبطاقة أسطورية!</span>
+              </p>
+              <p className="flex items-start gap-3">
+                <span className="text-blue-400 text-lg">🔵</span>
+                <span className="text-zinc-300">لعب جيد <b className="text-white">(6 - 10 أخطاء)</b> يمنحك فرصة لبطاقة نادرة.</span>
+              </p>
+              <p className="flex items-start gap-3">
+                <span className="text-green-400 text-lg">🟢</span>
+                <span className="text-zinc-300">أكثر من ذلك يمنحك بطاقات عادية، فركز جيداً!</span>
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowIntroModal(false)}
+              className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 transition-all text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-indigo-500/25 active:scale-[0.98]"
+            >
+              🚀 ابدأ التحدي الآن
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="w-full max-w-6xl mx-auto flex-shrink-0">
         <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-center md:text-right">
           طابق الشخصية مع المعلومة
