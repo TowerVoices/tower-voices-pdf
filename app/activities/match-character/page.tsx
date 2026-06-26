@@ -279,7 +279,7 @@ export default function MatchCharacterPage() {
               مرحباً بك في تحدي المطابقة!
             </h2>
             <p className="text-zinc-400 mb-8 leading-relaxed text-sm md:text-base">
-              اختبر ذاكرتك ومعرفتك بشخصيات "أصوات البرج". طابق كل شخصية مع المعلومة الصحيحة الخاصة بها في أسرع وقت.
+              اختبر ذاكرتك ومعرفتك بشخصيات "ري زيرو" طابق كل شخصية مع المعلومة الصحيحة الخاصة بها في أسرع وقت
             </p>
 
             <div className="bg-black/40 rounded-2xl p-5 mb-8 text-right space-y-4 text-sm md:text-base border border-zinc-800">
@@ -290,7 +290,7 @@ export default function MatchCharacterPage() {
               </p>
               <p className="flex items-start gap-3">
                 <span className="text-blue-400 text-lg">🔵</span>
-                <span className="text-zinc-300">لعب جيد <b className="text-white">(6 - 10 أخطاء)</b> يمنحك فرصة لبطاقة نادرة.</span>
+                <span className="text-zinc-300">لعب جيد <b className="text-white">(6 - 10 أخطاء)</b> يمنحك فرصة لبطاقة نادرة</span>
               </p>
               <p className="flex items-start gap-3">
                 <span className="text-green-400 text-lg">🟢</span>
