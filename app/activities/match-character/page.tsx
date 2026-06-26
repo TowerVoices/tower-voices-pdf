@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+// 🔥 أضفنا useRef هنا لتعمل كذاكرة للأسئلة
+import { useState, useEffect, useRef } from "react";
 import { client } from "@/app/sanity.client"; 
 
 interface CharacterFromSanity {
@@ -43,6 +44,9 @@ export default function MatchCharacterPage() {
   
   const [lastWonReward, setLastWonReward] = useState<string | null>(null);
 
+  // 🔥 ذاكرة اللعبة: تحفظ أرقام المعلومات (Indices) التي تم استخدامها لكل شخصية (pairId)
+  const usedInfoTextsRef = useRef<Record<number, number[]>>({});
+
   const MAX_LEVEL = 3;
 
   useEffect(() => {
@@ -79,6 +83,11 @@ export default function MatchCharacterPage() {
   const initializeLevel = (level: number, characters: CharacterFromSanity[]) => {
     if (characters.length === 0) return;
 
+    // تفريغ ذاكرة الأسئلة عند بدء الجولة من المستوى الأول
+    if (level === 1) {
+      usedInfoTextsRef.current = {};
+    }
+
     const targetCount = level === 1 ? 3 : level === 2 ? 6 : 8;
     const count = Math.min(targetCount, characters.length);
     
@@ -89,10 +98,31 @@ export default function MatchCharacterPage() {
     let idCounter = 1;
     const newCards: CardData[] = selected
       .flatMap((item) => {
-        const randomInfoIndex = Math.floor(Math.random() * (item.infoTexts?.length || 1));
-        const randomText = item.infoTexts && item.infoTexts.length > 0 
-          ? item.infoTexts[randomInfoIndex] 
-          : "معلومة غير متوفرة";
+        const texts = item.infoTexts || [];
+        
+        // 🔥 خوارزمية اختيار معلومة غير مكررة
+        let availableIndices = texts.map((_, index) => index); // قائمة بكل أرقام معلومات هذه الشخصية
+        const usedIndices = usedInfoTextsRef.current[item.pairId] || []; // المعلومات التي ظهرت سابقاً
+
+        // تصفية المعلومات المتاحة لحذف ما تم استخدامه
+        const unusedIndices = availableIndices.filter(index => !usedIndices.includes(index));
+        
+        // إذا كان هناك معلومات جديدة لم تستخدم، نختار منها، وإلا نختار من الكل (لتجنب تعطل اللعبة)
+        if (unusedIndices.length > 0) {
+          availableIndices = unusedIndices;
+        }
+
+        // اختيار رقم عشوائي للمعلومة
+        const pickedIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+        const randomText = texts.length > 0 ? texts[pickedIndex] : "معلومة غير متوفرة";
+
+        // حفظ المعلومة المختارة في ذاكرة اللعبة حتى لا تظهر في المستوى القادم
+        if (texts.length > 0) {
+          if (!usedInfoTextsRef.current[item.pairId]) {
+            usedInfoTextsRef.current[item.pairId] = [];
+          }
+          usedInfoTextsRef.current[item.pairId].push(pickedIndex);
+        }
 
         return [
           { id: idCounter++, pairId: item.pairId, type: "character" as const, image: item.image },
@@ -142,7 +172,6 @@ export default function MatchCharacterPage() {
     }
   };
 
-  // 🔥 نظام السحب المحدث بناءً على طلبك (نطاقات أوسع للمهارة وفرصة أكبر للأسطوري)
   const getRandomReward = (mistakesCount: number) => {
     if (dbRewards.length === 0) return null;
     
@@ -150,19 +179,15 @@ export default function MatchCharacterPage() {
     let rareChance = 25;     
     
     if (mistakesCount >= 0 && mistakesCount <= 5) {
-      // لعب مثالي (0 إلى 5 أخطاء)
       legendaryChance = 35; 
       rareChance = 45;
     } else if (mistakesCount >= 6 && mistakesCount <= 10) {
-      // لعب جيد (6 إلى 10 أخطاء)
       legendaryChance = 25; 
       rareChance = 40;
     } else if (mistakesCount >= 11 && mistakesCount <= 20) {
-      // لعب متوسط (11 إلى 20 خطأ) - تم رفع نسبة الأسطوري بشكل ملحوظ
       legendaryChance = 18; 
       rareChance = 35;
     } else {
-      // أكثر من 20 خطأ (لعب ضعيف)
       legendaryChance = 5; 
       rareChance = 25;
     }
@@ -181,7 +206,6 @@ export default function MatchCharacterPage() {
     const filteredRewards = dbRewards.filter(r => r.rarity === targetRarity);
     let pool = filteredRewards.length > 0 ? filteredRewards : dbRewards;
     
-    // نظام منع تكرار البطاقة السابقة
     if (lastWonReward && pool.length > 1) {
       const withoutLastReward = pool.filter(r => r.name !== lastWonReward);
       if (withoutLastReward.length > 0) {
