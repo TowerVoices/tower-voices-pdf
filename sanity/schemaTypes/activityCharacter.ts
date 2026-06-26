@@ -7,7 +7,13 @@ export default defineType({
   fields: [
     defineField({
       name: 'name',
-      title: 'اسم الشخصية',
+      title: 'اسم الشخصية (عربي)',
+      type: 'string',
+    }),
+    // 🔥 الحقل الجديد: الاسم بالإنجليزية
+    defineField({
+      name: 'nameEn',
+      title: 'اسم الشخصية (English)',
       type: 'string',
     }),
     defineField({
@@ -24,20 +30,35 @@ export default defineType({
       type: 'number',
       description: 'رقم مميز لربط الشخصية بالمعلومة (مثلاً: 1, 2, 3)',
     }),
-    // التعديل هنا: تحويل المعلومة إلى قائمة (Array)
     defineField({
       name: 'infoTexts',
-      title: 'معلومات الشخصية (لعبة المطابقة)',
+      title: 'معلومات الشخصية (عربي)',
       type: 'array',
       of: [{ type: 'string' }],
       description: 'أضف عدة معلومات هنا بالضغط على (Add item). اللعبة ستختار واحدة منها عشوائياً في كل جولة لكي لا تتكرر.',
     }),
+    // 🔥 الحقل الجديد: المعلومات بالإنجليزية
+    defineField({
+      name: 'infoTextsEn',
+      title: 'معلومات الشخصية (English)',
+      type: 'array',
+      of: [{ type: 'string' }],
+      description: 'Add multiple info texts here. The game will pick one randomly. (أضف المعلومات باللغة الإنجليزية هنا)',
+    }),
     defineField({
       name: 'hints',
-      title: 'تلميحات (لعبة خمن الشخصية)',
+      title: 'تلميحات (عربي) - للعبة خمن الشخصية',
       type: 'array',
       of: [{ type: 'string' }],
       description: 'أضف التلميحات بالترتيب (من الأصعب للأسهل)',
+    }),
+    // 🔥 الحقل الجديد: التلميحات بالإنجليزية
+    defineField({
+      name: 'hintsEn',
+      title: 'تلميحات (English) - للعبة خمن الشخصية',
+      type: 'array',
+      of: [{ type: 'string' }],
+      description: 'Add hints in order from hardest to easiest. (أضف التلميحات الإنجليزية بالترتيب)',
     })
   ],
 })

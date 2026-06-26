@@ -7,7 +7,13 @@ export default defineType({
   fields: [
     defineField({
       name: 'name',
-      title: 'اسم البطاقة',
+      title: 'اسم البطاقة (عربي)',
+      type: 'string',
+    }),
+    // 🔥 الحقل الجديد: اسم البطاقة بالإنجليزية
+    defineField({
+      name: 'nameEn',
+      title: 'اسم البطاقة (English)',
       type: 'string',
     }),
     defineField({
@@ -30,7 +36,7 @@ export default defineType({
         ],
         layout: 'radio', // لتظهر كخيارات أزرار
       },
-      description: 'حدد ندرة هذه البطاقة',
+      description: 'حدد ندرة هذه البطاقة / Select the rarity of this card',
     })
   ],
 })
