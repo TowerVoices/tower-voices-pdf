@@ -10,6 +10,8 @@ interface CharacterFromSanity {
   image: string;
   hints: string[];
   hintsEn: string[];
+  echidnaHints?: string[];   
+  echidnaHintsEn?: string[]; 
 }
 
 interface RewardFromSanity {
@@ -23,7 +25,7 @@ const uiTexts = {
   ar: {
     gameTitle: "خمن الشخصية",
     subTitle: "هل يمكنك معرفة الشخصية من خلال التلميحات؟",
-    hintNumber: "تلميح رقم",
+    hintNumber: "تلميح",
     showNextHint: "👀 أظهر تلميحاً آخر",
     noMoreHints: "لا يوجد تلميحات أخرى!",
     selectAnswer: "من تكون هذه الشخصية؟",
@@ -50,18 +52,23 @@ const uiTexts = {
     levelSubaru: "سوبارو (Subaru)",
     levelSubaruDesc: "10 ثواني للتخمين",
     levelEchidna: "إيكيدنا (Echidna)",
-    levelEchidnaDesc: "5 ثواني، بدون أي تلميحات إضافية!",
+    levelEchidnaDesc: "5 ثواني، تلميح صعب جداً وبدون إضافات!",
     echidnaConstraint: "وضع إيكيدنا: التلميحات الإضافية معطلة!",
     timeUp: "انتهى الوقت!",
     correctAnswerWas: "الإجابة الصحيحة كانت:",
     tryAgain: "حاول مرة أخرى 🔄",
     changeLevel: "تغيير المستوى",
-    seconds: "ثانية"
+    seconds: "ثانية",
+    round: "الجولة",
+    of: "من",
+    levelCompleteTitle: "🏆 اكتمل المستوى!",
+    levelCompleteDesc: "لقد أتممت 5 جولات في هذا التحدي بنجاح.",
+    backToMenu: "العودة للقائمة الرئيسية 🏠"
   },
   en: {
     gameTitle: "Guess the Character",
     subTitle: "Can you figure out the character from the hints?",
-    hintNumber: "Hint #",
+    hintNumber: "Hint",
     showNextHint: "👀 Show another hint",
     noMoreHints: "No more hints available!",
     selectAnswer: "Who is this character?",
@@ -88,17 +95,23 @@ const uiTexts = {
     levelSubaru: "Subaru",
     levelSubaruDesc: "10 seconds to guess",
     levelEchidna: "Echidna",
-    levelEchidnaDesc: "5 seconds, NO extra hints!",
+    levelEchidnaDesc: "5 seconds, very hard hint, no extras!",
     echidnaConstraint: "Echidna Mode: Extra hints disabled!",
     timeUp: "Time's Up!",
     correctAnswerWas: "The correct answer was:",
     tryAgain: "Try Again 🔄",
     changeLevel: "Change Level",
-    seconds: "sec"
+    seconds: "sec",
+    round: "Round",
+    of: "of",
+    levelCompleteTitle: "🏆 Level Completed!",
+    levelCompleteDesc: "You have successfully completed 5 rounds.",
+    backToMenu: "Back to Main Menu 🏠"
   }
 };
 
 type Difficulty = 'larp' | 'subaru' | 'echidna' | null;
+const MAX_ROUNDS = 5;
 
 export default function GuessCharacterPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
@@ -138,6 +151,10 @@ export default function GuessCharacterPage() {
   const [isTimeUp, setIsTimeUp] = useState(false);
   const [gameFinished, setGameFinished] = useState(false);
 
+  const [currentRound, setCurrentRound] = useState(1);
+  const [usedChars, setUsedChars] = useState<string[]>([]);
+  const [shuffledHintIndices, setShuffledHintIndices] = useState<number[]>([]); // 🔥 مصفوفة لخلط التلميحات عشوائياً
+
   const [targetChar, setTargetChar] = useState<CharacterFromSanity | null>(null);
   const [options, setOptions] = useState<CharacterFromSanity[]>([]);
   const [revealedHintsCount, setRevealedHintsCount] = useState(1);
@@ -147,7 +164,8 @@ export default function GuessCharacterPage() {
   const [reward, setReward] = useState<any>(null);
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [showIntroModal, setShowIntroModal] = useState(true);
-  const [introStep, setIntroStep] = useState<1 | 2>(1); // 🔥 خطوة النافذة الافتتاحية (1 للقواعد، 2 للمستويات)
+  const [showLevelCompleteModal, setShowLevelCompleteModal] = useState(false);
+  const [introStep, setIntroStep] = useState<1 | 2>(1); 
   const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
@@ -156,7 +174,8 @@ export default function GuessCharacterPage() {
         const charQuery = `*[_type == "activityCharacter"]{
           name, nameEn,      
           "image": image.asset->url,
-          hints, hintsEn 
+          hints, hintsEn,
+          echidnaHints, echidnaHintsEn
         }`;
         
         const rewardQuery = `*[_type == "activityReward"]{
@@ -182,13 +201,35 @@ export default function GuessCharacterPage() {
     fetchSanityData();
   }, []);
 
-  const initializeRound = (chars: CharacterFromSanity[]) => {
+  const initializeRound = (chars: CharacterFromSanity[], used: string[], currentDiff: Difficulty) => {
     if (chars.length < 4) return;
-    const shuffled = [...chars].sort(() => Math.random() - 0.5);
-    const target = shuffled[0];
-    const distractors = shuffled.slice(1, 4);
+    
+    let availableChars = chars.filter(c => !used.includes(c.name));
+    
+    if (availableChars.length === 0) {
+        availableChars = [...chars];
+        setUsedChars([]);
+    }
+
+    // 🔥 اختيار عشوائي 100% للشخصية الهدف
+    const shuffledAvailable = [...availableChars].sort(() => Math.random() - 0.5);
+    const target = shuffledAvailable[0];
+
+    setUsedChars(prev => [...prev, target.name]);
+
+    const distractors = chars.filter(c => c.name !== target.name).sort(() => Math.random() - 0.5).slice(0, 3);
     const finalOptions = [target, ...distractors].sort(() => Math.random() - 0.5);
 
+    // 🔥 تحديد وتكوين مصفوفة عشوائية لترتيب التلميحات
+    let hintsLen = 0;
+    if (currentDiff === 'echidna') {
+       hintsLen = target.echidnaHints?.length || target.hints?.length || 0;
+    } else {
+       hintsLen = target.hints?.length || 0;
+    }
+    const randomizedIndices = Array.from({length: hintsLen}, (_, i) => i).sort(() => Math.random() - 0.5);
+
+    setShuffledHintIndices(randomizedIndices);
     setTargetChar(target);
     setOptions(finalOptions);
     setRevealedHintsCount(1);
@@ -201,16 +242,20 @@ export default function GuessCharacterPage() {
 
   const startGame = (selectedLevel: Difficulty) => {
     setDifficulty(selectedLevel);
+    setCurrentRound(1); 
+    setUsedChars([]);   
+    
     if (selectedLevel === 'larp') setTimeLeft(15);
     else if (selectedLevel === 'subaru') setTimeLeft(10);
     else if (selectedLevel === 'echidna') setTimeLeft(5);
     
     setShowIntroModal(false);
-    initializeRound(dbCharacters);
+    setShowLevelCompleteModal(false);
+    initializeRound(dbCharacters, [], selectedLevel);
   };
 
   useEffect(() => {
-    if (showIntroModal || showRewardModal || isTimeUp || gameFinished || !difficulty || isLoading) return;
+    if (showIntroModal || showRewardModal || showLevelCompleteModal || isTimeUp || gameFinished || !difficulty || isLoading) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -224,13 +269,40 @@ export default function GuessCharacterPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [showIntroModal, showRewardModal, isTimeUp, gameFinished, difficulty, isLoading]);
+  }, [showIntroModal, showRewardModal, showLevelCompleteModal, isTimeUp, gameFinished, difficulty, isLoading]);
 
+
+  const getCurrentHints = () => {
+    if (!targetChar) return [];
+    
+    let baseHints: string[] = [];
+    if (difficulty === 'echidna') {
+        baseHints = currentLanguage === 'en' && targetChar.echidnaHintsEn && targetChar.echidnaHintsEn.length > 0 
+            ? targetChar.echidnaHintsEn 
+            : (targetChar.echidnaHints && targetChar.echidnaHints.length > 0 ? targetChar.echidnaHints : []);
+        
+        if (!baseHints || baseHints.length === 0) {
+            baseHints = currentLanguage === 'en' && targetChar.hintsEn && targetChar.hintsEn.length > 0 
+                ? targetChar.hintsEn 
+                : targetChar.hints;
+        }
+    } else {
+        baseHints = currentLanguage === 'en' && targetChar.hintsEn && targetChar.hintsEn.length > 0 
+            ? targetChar.hintsEn 
+            : targetChar.hints;
+    }
+
+    if (!baseHints) return [];
+
+    // 🔥 تطبيق الخلط العشوائي المحفوظ على التلميحات
+    return shuffledHintIndices.map(i => baseHints[i]).filter(h => h !== undefined);
+  };
+
+  const currentHintsList = getCurrentHints();
 
   const handleRevealHint = () => {
     if (!targetChar || difficulty === 'echidna') return; 
-    const hintsList = currentLanguage === 'en' && targetChar.hintsEn ? targetChar.hintsEn : targetChar.hints;
-    if (revealedHintsCount < hintsList.length) {
+    if (revealedHintsCount < currentHintsList.length) {
       setRevealedHintsCount(prev => prev + 1);
     }
   };
@@ -275,10 +347,19 @@ export default function GuessCharacterPage() {
   const handleNextRound = () => {
     setShowRewardModal(false);
     setIsTimeUp(false);
+
+    if (currentRound >= MAX_ROUNDS) {
+        setShowLevelCompleteModal(true);
+        return;
+    }
+
+    setCurrentRound(prev => prev + 1);
+
     if (difficulty === 'larp') setTimeLeft(15);
     else if (difficulty === 'subaru') setTimeLeft(10);
     else if (difficulty === 'echidna') setTimeLeft(5);
-    initializeRound(dbCharacters);
+    
+    initializeRound(dbCharacters, usedChars, difficulty);
   };
 
   const handleShareClick = async () => {
@@ -320,8 +401,6 @@ export default function GuessCharacterPage() {
     );
   }
 
-  const currentHintsList = targetChar ? (currentLanguage === 'en' && targetChar.hintsEn && targetChar.hintsEn.length > 0 ? targetChar.hintsEn : targetChar.hints) : [];
-
   return (
     <main dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen flex flex-col p-4 md:p-8 bg-[#0a0a0a] text-white relative">
       
@@ -350,7 +429,6 @@ export default function GuessCharacterPage() {
             </div>
 
             {introStep === 1 ? (
-              /* الخطوة 1: شرح القواعد */
               <div className="animate-in fade-in duration-300">
                 <div className="bg-black/40 rounded-2xl p-5 mb-8 text-start space-y-4 text-sm md:text-base border border-zinc-800">
                   <h3 className="font-bold text-emerald-400 text-center mb-5">{t.getCardsTitle}</h3>
@@ -376,7 +454,6 @@ export default function GuessCharacterPage() {
                 </button>
               </div>
             ) : (
-              /* الخطوة 2: اختيار المستويات */
               <div className="animate-in slide-in-from-right-4 duration-300">
                 <h3 className="font-bold text-emerald-400 text-center mb-4">{t.selectLevel}</h3>
                 <div className="flex flex-col gap-3">
@@ -410,7 +487,6 @@ export default function GuessCharacterPage() {
         </div>
       )}
 
-      {/* نافذة الخسارة (انتهاء الوقت) */}
       {isTimeUp && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-red-500/50 rounded-3xl p-8 text-center w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.15)] animate-in zoom-in-95 duration-300">
@@ -420,10 +496,15 @@ export default function GuessCharacterPage() {
             <p className="text-2xl font-bold text-white mb-8">{currentLanguage === 'en' ? targetChar?.nameEn : targetChar?.name}</p>
             
             <div className="flex flex-col gap-3">
-               <button onClick={handleNextRound} className="w-full bg-red-600 hover:bg-red-500 transition-colors text-white py-3.5 rounded-xl font-semibold">
+               <button onClick={() => {
+                 if (difficulty === 'larp') setTimeLeft(15);
+                 else if (difficulty === 'subaru') setTimeLeft(10);
+                 else if (difficulty === 'echidna') setTimeLeft(5);
+                 initializeRound(dbCharacters, usedChars, difficulty);
+               }} className="w-full bg-red-600 hover:bg-red-500 transition-colors text-white py-3.5 rounded-xl font-semibold">
                  {t.tryAgain}
                </button>
-               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold text-zinc-300">
+               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setIsTimeUp(false); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold text-zinc-300">
                  {t.changeLevel}
                </button>
             </div>
@@ -431,12 +512,33 @@ export default function GuessCharacterPage() {
         </div>
       )}
 
-      {/* واجهة اللعب */}
+      {showLevelCompleteModal && (
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-zinc-900 border border-emerald-500/50 rounded-3xl p-8 text-center w-full max-w-md shadow-[0_0_50px_rgba(16,185,129,0.2)] animate-in zoom-in-95 duration-300">
+            <div className="text-6xl mb-6 animate-bounce">🏆</div>
+            <h2 className="text-3xl font-bold mb-3 text-emerald-400">{t.levelCompleteTitle}</h2>
+            <p className="text-zinc-300 mb-8">{t.levelCompleteDesc}</p>
+            
+            <div className="flex flex-col gap-3">
+               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowLevelCompleteModal(false); }} className="w-full bg-emerald-600 hover:bg-emerald-500 transition-colors text-white py-4 rounded-xl font-bold text-lg">
+                 {t.changeLevel}
+               </button>
+               <Link href="/activities" className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold text-zinc-300 block">
+                 {t.backToMenu}
+               </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="w-full max-w-4xl mx-auto mt-16 flex flex-col flex-1">
         
         <div className="flex flex-wrap justify-between items-center mb-6 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800 gap-4">
            <div className="flex items-center gap-3">
               <h1 className="text-xl font-bold text-emerald-400 hidden sm:block">{t.gameTitle}</h1>
+              <span className="bg-emerald-950/40 text-emerald-400 font-bold px-3 py-1.5 rounded-lg border border-emerald-900/50 text-sm">
+                {t.round} {currentRound} {t.of} {MAX_ROUNDS}
+              </span>
               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); }} className="bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-xs hover:bg-zinc-700 transition-colors">
                 ⚙️ {t.changeLevel}
               </button>
@@ -505,7 +607,6 @@ export default function GuessCharacterPage() {
 
       </div>
 
-      {/* نافذة الفوز */}
       {showRewardModal && reward && targetChar && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300">
@@ -537,7 +638,7 @@ export default function GuessCharacterPage() {
                 {t.share}
               </button>
               <button onClick={handleNextRound} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold">
-                {t.nextRound}
+                {currentRound < MAX_ROUNDS ? t.nextRound : (currentLanguage === 'ar' ? 'إكمال المستوى 🏁' : 'Finish Level 🏁')}
               </button>
             </div>
           </div>

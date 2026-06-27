@@ -45,12 +45,17 @@ export default defineType({
       of: [{ type: 'string' }],
       description: 'Add multiple info texts here. The game will pick one randomly. (أضف المعلومات باللغة الإنجليزية هنا)',
     }),
+
+    // ----------------------------------------------------
+    // 🔥 حقول لعبة: خمن الشخصية
+    // ----------------------------------------------------
+
     defineField({
       name: 'hints',
       title: 'تلميحات (عربي) - للعبة خمن الشخصية',
       type: 'array',
       of: [{ type: 'string' }],
-      description: 'أضف التلميحات بالترتيب (من الأصعب للأسهل)',
+      description: 'أضف التلميحات هنا. (ملاحظة: اللعبة ستقوم بخلطها وعرضها بشكل عشوائي للاعب)',
     }),
     // 🔥 الحقل الجديد: التلميحات بالإنجليزية
     defineField({
@@ -58,7 +63,23 @@ export default defineType({
       title: 'تلميحات (English) - للعبة خمن الشخصية',
       type: 'array',
       of: [{ type: 'string' }],
-      description: 'Add hints in order from hardest to easiest. (أضف التلميحات الإنجليزية بالترتيب)',
-    })
+      description: 'Add hints here. (Note: The game will shuffle and display them randomly to the player)',
+    }),
+    
+    // 🔥 حقول مستوى إيكيدنا (الصعب جداً)
+    defineField({
+      name: 'echidnaHints',
+      title: 'تلميحات مستوى إيكيدنا الصعب (عربي)',
+      type: 'array',
+      of: [{ type: 'string' }],
+      description: 'أضف تلميحاً صعباً جداً هنا. سيظهر فقط لمن يختار مستوى إيكيدنا (بدون تلميحات إضافية).',
+    }),
+    defineField({
+      name: 'echidnaHintsEn',
+      title: 'تلميحات مستوى إيكيدنا الصعب (English)',
+      type: 'array',
+      of: [{ type: 'string' }],
+      description: 'Add a very hard hint here for the Echidna difficulty level (no extra hints).',
+    }),
   ],
 })
