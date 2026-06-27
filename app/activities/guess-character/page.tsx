@@ -34,8 +34,6 @@ const uiTexts = {
     rewardRarity: "الندرة",
     share: "📤 مشاركة النتيجة",
     langName: "English",
-    
-    // النصوص الجديدة لشرح القواعد بدقة
     getCardsTitle: "قواعد الحصول على البطاقات 🃏",
     rule1Title: "مستوى الصعوبة:",
     rule1Desc: "كلما اخترت مستوى أصعب (مثل إيكيدنا)، زادت فرصتك بشكل كبير للحصول على بطاقات أسطورية ونادرة.",
@@ -43,9 +41,10 @@ const uiTexts = {
     rule2Desc: "كل تخمين خاطئ أو استخدام لتلميح إضافي يقلل من هذه النسبة تدريجياً.",
     rule3Title: "البطاقات العادية:",
     rule3Desc: "إذا كانت أخطاؤك كثيرة أو اعتمدت كلياً على المستوى السهل، فستحصل غالباً على بطاقات عادية.",
-    
     usedHints: "التلميحات",
     wrongGuesses: "الأخطاء",
+    totalHints: "إجمالي التلميحات", // 🔥 تم الإضافة
+    totalErrors: "إجمالي الأخطاء",    // 🔥 تم الإضافة
     notEnoughData: "عذراً، لم نجد شخصيات تحتوي على تلميحات في قاعدة البيانات.",
     startGameBtn: "فهمت، لنبدأ 🚀",
     selectLevel: "اختر مستوى الصعوبة:",
@@ -79,8 +78,6 @@ const uiTexts = {
     rewardRarity: "Rarity",
     share: "📤 Share Result",
     langName: "العربية",
-    
-    // New rules text
     getCardsTitle: "How to get Cards? 🃏",
     rule1Title: "Difficulty Level:",
     rule1Desc: "Choosing harder levels (like Echidna) massively increases your chance for Legendary and Rare cards.",
@@ -88,9 +85,10 @@ const uiTexts = {
     rule2Desc: "Every wrong guess or extra hint used drops your chance for high-rarity cards.",
     rule3Title: "Common Cards:",
     rule3Desc: "Playing on easy or making many mistakes will likely result in Common cards.",
-    
     usedHints: "Hints",
     wrongGuesses: "Errors",
+    totalHints: "Total Hints",     // 🔥 تم الإضافة
+    totalErrors: "Total Errors",    // 🔥 تم الإضافة
     notEnoughData: "Sorry, no characters with hints found in the database.",
     startGameBtn: "Got it, Let's go! 🚀",
     selectLevel: "Select Difficulty:",
@@ -312,32 +310,26 @@ export default function GuessCharacterPage() {
     }
   };
 
-  // 🔥 تحديث خوارزمية السحب بناءً على (مستوى الصعوبة + العقوبات)
   const calculateFinalReward = (hintsUsed: number, mistakes: number, currentDifficulty: Difficulty) => {
     if (dbRewards.length === 0) return null;
     
-    // 1. تحديد النسبة الأساسية بناءً على مستوى الصعوبة
     let legendaryChance = 0;
     let rareChance = 0;
 
     if (currentDifficulty === 'echidna') {
-      legendaryChance = 60; rareChance = 30; // نسبة ضخمة للأسطوري
+      legendaryChance = 60; rareChance = 30; 
     } else if (currentDifficulty === 'subaru') {
-      legendaryChance = 35; rareChance = 40; // نسبة جيدة
-    } else { // larp
-      legendaryChance = 15; rareChance = 35; // فرصة أسطورية منخفضة
+      legendaryChance = 35; rareChance = 40; 
+    } else { 
+      legendaryChance = 15; rareChance = 35; 
     }
 
-    // 2. حساب العقوبة (5 تلميحات هو اللعب المثالي لـ 5 جولات)
     const extraHints = Math.max(0, hintsUsed - 5);
     const penaltyScore = extraHints + (mistakes * 2);
 
-    // 3. خصم العقوبة من النسبة الأساسية 
-    // (كل خطأ أو تلميح إضافي ينقص 5% من فرصة الأسطوري و 4% من النادر)
     legendaryChance = Math.max(2, legendaryChance - (penaltyScore * 5));
     rareChance = Math.max(10, rareChance - (penaltyScore * 4));
 
-    // 4. عجلة الحظ
     const roll = Math.random() * 100;
     let targetRarity = 'common';
     if (roll <= legendaryChance) targetRarity = 'legendary'; 
@@ -439,6 +431,7 @@ export default function GuessCharacterPage() {
         </button>
       </div>
 
+      {/* نافذة القواعد واختيار المستوى - تم إضافة overflow-y-auto */}
       {showIntroModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 w-full max-w-lg shadow-[0_0_50px_rgba(16,185,129,0.15)] animate-in zoom-in-95 duration-300 my-8">
@@ -450,8 +443,8 @@ export default function GuessCharacterPage() {
 
             {introStep === 1 ? (
               <div className="animate-in fade-in duration-300">
-                <div className="bg-black/40 rounded-2xl p-5 mb-8 text-start space-y-5 text-sm md:text-base border border-zinc-800">
-                  <h3 className="font-bold text-emerald-400 text-center mb-5">{t.getCardsTitle}</h3>
+                <div className="bg-black/40 rounded-2xl p-4 md:p-5 mb-6 md:mb-8 text-start space-y-4 md:space-y-5 text-sm md:text-base border border-zinc-800">
+                  <h3 className="font-bold text-emerald-400 text-center mb-4 md:mb-5">{t.getCardsTitle}</h3>
                   <p className="flex items-start gap-3">
                     <span className="text-xl mt-0.5">📈</span>
                     <span className="text-zinc-300 leading-relaxed"><b className="text-white">{t.rule1Title}</b> {t.rule1Desc}</span>
@@ -468,7 +461,7 @@ export default function GuessCharacterPage() {
 
                 <button
                   onClick={() => setIntroStep(2)}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 transition-all text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-emerald-500/25 active:scale-[0.98]"
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 transition-all text-white py-3.5 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-emerald-500/25 active:scale-[0.98]"
                 >
                   {t.startGameBtn}
                 </button>
@@ -507,24 +500,25 @@ export default function GuessCharacterPage() {
         </div>
       )}
 
+      {/* نافذة الخسارة (انتهاء الوقت) - تم تحسينها للجوال */}
       {isTimeUp && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-red-500/50 rounded-3xl p-8 text-center w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.15)] animate-in zoom-in-95 duration-300">
-            <div className="text-5xl mb-4 animate-bounce">⌛</div>
-            <h2 className="text-3xl font-bold mb-3 text-red-500">{t.timeUp}</h2>
-            <p className="text-zinc-300 mb-2">{t.correctAnswerWas}</p>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-zinc-900 border border-red-500/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.15)] animate-in zoom-in-95 duration-300 my-8">
+            <div className="text-4xl md:text-5xl mb-4 animate-bounce">⌛</div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-3 text-red-500">{t.timeUp}</h2>
+            <p className="text-sm md:text-base text-zinc-300 mb-2">{t.correctAnswerWas}</p>
             
-            <div className="w-28 h-28 mx-auto my-4 rounded-full overflow-hidden border-4 border-zinc-800 shadow-lg bg-zinc-800/50 flex items-center justify-center">
+            <div className="w-24 h-24 md:w-28 md:h-28 mx-auto my-3 md:my-4 rounded-full overflow-hidden border-4 border-zinc-800 shadow-lg bg-zinc-800/50 flex items-center justify-center">
                 <img src={targetChar?.image} alt="character" className="w-full h-full object-contain p-2" />
             </div>
             
-            <p className="text-2xl font-bold text-white mb-8">{currentLanguage === 'en' ? targetChar?.nameEn : targetChar?.name}</p>
+            <p className="text-xl md:text-2xl font-bold text-white mb-6 md:mb-8">{currentLanguage === 'en' ? targetChar?.nameEn : targetChar?.name}</p>
             
-            <div className="flex flex-col gap-3">
-               <button onClick={() => startGame(difficulty)} className="w-full bg-red-600 hover:bg-red-500 transition-colors text-white py-3.5 rounded-xl font-semibold">
+            <div className="flex flex-col gap-2 md:gap-3">
+               <button onClick={() => startGame(difficulty)} className="w-full bg-red-600 hover:bg-red-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-semibold text-sm md:text-base">
                  {t.tryAgain}
                </button>
-               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setIsTimeUp(false); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold text-zinc-300">
+               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setIsTimeUp(false); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-zinc-300 text-sm md:text-base">
                  {t.changeLevel}
                </button>
             </div>
@@ -532,34 +526,36 @@ export default function GuessCharacterPage() {
         </div>
       )}
 
+      {/* نافذة إكمال التحدي (النهائية الكبرى) - تم إصلاح الترجمة ودعم الجوال */}
       {showLevelCompleteModal && reward && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-emerald-500/50 rounded-3xl p-8 text-center w-full max-w-md shadow-[0_0_60px_rgba(16,185,129,0.25)] animate-in zoom-in-95 duration-500">
-            <div className="text-6xl mb-4 animate-bounce">🏆</div>
-            <h2 className="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{t.levelCompleteTitle}</h2>
-            <p className="text-zinc-300 mb-6">{t.levelCompleteDesc}</p>
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-zinc-900 border border-emerald-500/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_60px_rgba(16,185,129,0.25)] animate-in zoom-in-95 duration-500 my-8">
+            <div className="text-5xl md:text-6xl mb-3 md:mb-4 animate-bounce">🏆</div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{t.levelCompleteTitle}</h2>
+            <p className="text-sm md:text-base text-zinc-300 mb-4 md:mb-6">{t.levelCompleteDesc}</p>
             
-            <div className="relative mx-auto w-48 flex justify-center items-center mb-6">
+            <div className="relative mx-auto w-36 md:w-48 flex justify-center items-center mb-4 md:mb-6">
               {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[50px] opacity-40 rounded-full animate-pulse scale-110"></div>}
               {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-[50px] opacity-40 rounded-full animate-pulse scale-110"></div>}
               <img src={reward.image} alt="card" className="w-full h-auto relative z-10 drop-shadow-2xl hover:scale-105 transition-transform duration-500" />
             </div>
             
-            <p className={`text-2xl font-bold ${reward.rarity === 'legendary' ? 'text-yellow-400' : reward.rarity === 'rare' ? 'text-blue-400' : 'text-white'}`}>
+            <p className={`text-xl md:text-2xl font-bold ${reward.rarity === 'legendary' ? 'text-yellow-400' : reward.rarity === 'rare' ? 'text-blue-400' : 'text-white'}`}>
               {currentLanguage === 'en' ? reward.nameEn : reward.name}
             </p>
-            <p className="text-xs mt-1 text-zinc-500 uppercase tracking-widest mb-6">{t.rewardRarity}: {currentLanguage === 'en' ? reward.rarity.toUpperCase() : (reward.rarity === 'common' ? 'عادي' : reward.rarity === 'rare' ? 'نادر' : 'أسطوري')}</p>
+            <p className="text-[10px] md:text-xs mt-1 text-zinc-500 uppercase tracking-widest mb-4 md:mb-6">{t.rewardRarity}: {currentLanguage === 'en' ? reward.rarity.toUpperCase() : (reward.rarity === 'common' ? 'عادي' : reward.rarity === 'rare' ? 'نادر' : 'أسطوري')}</p>
 
-            <div className="bg-black/40 p-4 rounded-xl space-y-3 text-sm text-zinc-300 text-start border border-zinc-800 mb-6">
-              <p className="flex justify-between"><span>💡 إجمالي {t.usedHints}:</span> <span className="font-bold text-white">{totalHintsUsed}</span></p>
-              <p className="flex justify-between"><span>🎯 إجمالي {t.wrongGuesses}:</span> <span className="font-bold text-white">{totalWrongGuesses}</span></p>
+            {/* 🔥 هنا تم تطبيق إصلاح الترجمة (totalHints و totalErrors) */}
+            <div className="bg-black/40 p-3 md:p-4 rounded-xl space-y-2 md:space-y-3 text-sm text-zinc-300 text-start border border-zinc-800 mb-4 md:mb-6">
+              <p className="flex justify-between"><span>💡 {t.totalHints}:</span> <span className="font-bold text-white">{totalHintsUsed}</span></p>
+              <p className="flex justify-between"><span>🎯 {t.totalErrors}:</span> <span className="font-bold text-white">{totalWrongGuesses}</span></p>
             </div>
 
-            <div className="flex flex-col gap-3">
-               <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-emerald-600 hover:bg-emerald-500 transition-colors text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2">
+            <div className="flex flex-col gap-2 md:gap-3">
+               <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-emerald-600 hover:bg-emerald-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm md:text-base">
                  {t.share}
                </button>
-               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowLevelCompleteModal(false); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold text-zinc-300 block">
+               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowLevelCompleteModal(false); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-zinc-300 block text-sm md:text-base">
                  {t.changeLevel}
                </button>
             </div>
@@ -567,6 +563,7 @@ export default function GuessCharacterPage() {
         </div>
       )}
 
+      {/* واجهة اللعب الأساسية */}
       <div className="w-full max-w-4xl mx-auto mt-16 flex flex-col flex-1">
         
         <div className="flex flex-wrap justify-between items-center mb-6 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800 gap-4">
