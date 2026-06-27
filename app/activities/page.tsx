@@ -81,6 +81,7 @@ export default function ActivitiesPage() {
       icon: "🎴",
       link: "/activities/match-character",
       color: "from-indigo-600 to-purple-600",
+      btnColor: "text-indigo-400 group-hover:text-indigo-300",
       isComingSoon: false
     },
     {
@@ -88,9 +89,10 @@ export default function ActivitiesPage() {
       title: currentLanguage === 'ar' ? "خمن الشخصية" : "Guess the Character",
       description: currentLanguage === 'ar' ? "هل يمكنك معرفة الشخصية من خلال التلميحات؟" : "Can you figure out the character from the hints?",
       icon: "🤔",
-      link: "#",
+      link: "/activities/guess-character", // 🔥 تم تفعيل الرابط
       color: "from-emerald-600 to-teal-600",
-      isComingSoon: true
+      btnColor: "text-emerald-400 group-hover:text-emerald-300",
+      isComingSoon: false // 🔥 تم إزالة علامة "قريباً"
     },
     {
       id: "quiz",
@@ -99,6 +101,7 @@ export default function ActivitiesPage() {
       icon: "📜",
       link: "#",
       color: "from-orange-600 to-red-600",
+      btnColor: "text-orange-400 group-hover:text-orange-300",
       isComingSoon: true
     }
   ];
@@ -149,7 +152,7 @@ export default function ActivitiesPage() {
               <p className="text-zinc-400 flex-1">{activity.description}</p>
               
               <div className={`mt-6 flex items-center text-sm font-semibold 
-                ${activity.isComingSoon ? 'text-zinc-500' : 'text-indigo-400 group-hover:text-indigo-300'}`}
+                ${activity.isComingSoon ? 'text-zinc-500' : activity.btnColor}`}
               >
                 {activity.isComingSoon ? t.preparing : (
                   <>{t.startChallenge} <span className="mx-2">{t.arrow}</span></>
