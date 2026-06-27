@@ -30,21 +30,19 @@ const uiTexts = {
     noMoreHints: "لا يوجد تلميحات أخرى!",
     selectAnswer: "من تكون هذه الشخصية؟",
     preparing: "جاري تجهيز التحدي...",
-    winTitle: "🎉 إجابة صحيحة!",
     gotCard: "حصلت على بطاقة جديدة",
     perfect: "يمنحك فرصة عالية جداً لبطاقة أسطورية!",
     good: "يمنحك فرصة لبطاقة نادرة.",
     average: "يمنحك بطاقات عادية، حاول تقليل التلميحات!",
     rewardRarity: "الندرة",
     share: "📤 مشاركة النتيجة",
-    nextRound: "الجولة التالية ←",
     langName: "English",
     getCardsTitle: "كيف تحصل على البطاقات؟ 🃏",
     usedHints: "التلميحات",
     wrongGuesses: "الأخطاء",
     notEnoughData: "عذراً، لم نجد شخصيات تحتوي على تلميحات في قاعدة البيانات.",
-    perfectTitle: "تخمين سريع (تلميح 1 - 0 أخطاء)",
-    goodTitle: "تخمين جيد (استخدام التلميحات)",
+    perfectTitle: "لعب مثالي (تخمين سريع من أول تلميح)",
+    goodTitle: "لعب جيد (استخدام بعض التلميحات)",
     startGameBtn: "خمن الشخصية 🚀",
     selectLevel: "اختر مستوى الصعوبة:",
     levelLarp: "لارب (Larp)",
@@ -56,14 +54,14 @@ const uiTexts = {
     echidnaConstraint: "وضع إيكيدنا: التلميحات الإضافية معطلة!",
     timeUp: "انتهى الوقت!",
     correctAnswerWas: "الإجابة الصحيحة كانت:",
-    tryAgain: "حاول مرة أخرى 🔄",
+    tryAgain: "إعادة المحاولة 🔄",
     changeLevel: "تغيير المستوى",
     seconds: "ثانية",
     round: "الجولة",
     of: "من",
-    levelCompleteTitle: "🏆 اكتمل المستوى!",
-    levelCompleteDesc: "لقد أتممت 5 جولات في هذا التحدي بنجاح.",
-    backToMenu: "العودة للقائمة الرئيسية 🏠"
+    levelCompleteTitle: "🎉 اكتمل التحدي!",
+    levelCompleteDesc: "لقد أتممت 5 جولات بنجاح وحصلت على مكافأتك.",
+    backToMenu: "العودة للمركز 🏠"
   },
   en: {
     gameTitle: "Guess the Character",
@@ -73,21 +71,19 @@ const uiTexts = {
     noMoreHints: "No more hints available!",
     selectAnswer: "Who is this character?",
     preparing: "Preparing Challenge...",
-    winTitle: "🎉 Correct Answer!",
     gotCard: "You obtained a new card",
     perfect: "High chance for Legendary card!",
     good: "Chance for a Rare card.",
     average: "Grants Common cards, try using fewer hints!",
     rewardRarity: "Rarity",
     share: "📤 Share Result",
-    nextRound: "Next Round ←",
     langName: "العربية",
     getCardsTitle: "Get Cards! 🃏",
     usedHints: "Hints",
     wrongGuesses: "Errors",
     notEnoughData: "Sorry, no characters with hints found in the database.",
-    perfectTitle: "Fast Guess (1 Hint - 0 Errors)",
-    goodTitle: "Good Guess (Used more hints)",
+    perfectTitle: "Perfect (Fast guess on 1st hint)",
+    goodTitle: "Good (Used some extra hints)",
     startGameBtn: "Guess Character 🚀",
     selectLevel: "Select Difficulty:",
     levelLarp: "Larp",
@@ -104,9 +100,9 @@ const uiTexts = {
     seconds: "sec",
     round: "Round",
     of: "of",
-    levelCompleteTitle: "🏆 Level Completed!",
-    levelCompleteDesc: "You have successfully completed 5 rounds.",
-    backToMenu: "Back to Main Menu 🏠"
+    levelCompleteTitle: "🎉 Challenge Completed!",
+    levelCompleteDesc: "You completed 5 rounds and claimed your reward.",
+    backToMenu: "Back to Center 🏠"
   }
 };
 
@@ -149,20 +145,25 @@ export default function GuessCharacterPage() {
   const [difficulty, setDifficulty] = useState<Difficulty>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isTimeUp, setIsTimeUp] = useState(false);
-  const [gameFinished, setGameFinished] = useState(false);
+  const [gameFinished, setGameFinished] = useState(false); // Indicates timer should pause
 
   const [currentRound, setCurrentRound] = useState(1);
   const [usedChars, setUsedChars] = useState<string[]>([]);
-  const [shuffledHintIndices, setShuffledHintIndices] = useState<number[]>([]); // 🔥 مصفوفة لخلط التلميحات عشوائياً
+  const [shuffledHintIndices, setShuffledHintIndices] = useState<number[]>([]); 
 
   const [targetChar, setTargetChar] = useState<CharacterFromSanity | null>(null);
   const [options, setOptions] = useState<CharacterFromSanity[]>([]);
   const [revealedHintsCount, setRevealedHintsCount] = useState(1);
+  
+  // 🔥 إحصائيات الجولة الحالية وإحصائيات المستوى كامل (لـ 5 جولات)
   const [wrongAttempts, setWrongAttempts] = useState(0);
   const [guessedWrongOptions, setGuessedWrongOptions] = useState<string[]>([]);
+  const [totalHintsUsed, setTotalHintsUsed] = useState(0);
+  const [totalWrongGuesses, setTotalWrongGuesses] = useState(0);
   
+  const [correctGuess, setCorrectGuess] = useState<string | null>(null); // للون الأخضر السريع
+
   const [reward, setReward] = useState<any>(null);
-  const [showRewardModal, setShowRewardModal] = useState(false);
   const [showIntroModal, setShowIntroModal] = useState(true);
   const [showLevelCompleteModal, setShowLevelCompleteModal] = useState(false);
   const [introStep, setIntroStep] = useState<1 | 2>(1); 
@@ -205,13 +206,11 @@ export default function GuessCharacterPage() {
     if (chars.length < 4) return;
     
     let availableChars = chars.filter(c => !used.includes(c.name));
-    
     if (availableChars.length === 0) {
         availableChars = [...chars];
         setUsedChars([]);
     }
 
-    // 🔥 اختيار عشوائي 100% للشخصية الهدف
     const shuffledAvailable = [...availableChars].sort(() => Math.random() - 0.5);
     const target = shuffledAvailable[0];
 
@@ -220,7 +219,6 @@ export default function GuessCharacterPage() {
     const distractors = chars.filter(c => c.name !== target.name).sort(() => Math.random() - 0.5).slice(0, 3);
     const finalOptions = [target, ...distractors].sort(() => Math.random() - 0.5);
 
-    // 🔥 تحديد وتكوين مصفوفة عشوائية لترتيب التلميحات
     let hintsLen = 0;
     if (currentDiff === 'echidna') {
        hintsLen = target.echidnaHints?.length || target.hints?.length || 0;
@@ -235,7 +233,7 @@ export default function GuessCharacterPage() {
     setRevealedHintsCount(1);
     setWrongAttempts(0);
     setGuessedWrongOptions([]);
-    setReward(null);
+    setCorrectGuess(null);
     setIsTimeUp(false);
     setGameFinished(false);
   };
@@ -244,6 +242,8 @@ export default function GuessCharacterPage() {
     setDifficulty(selectedLevel);
     setCurrentRound(1); 
     setUsedChars([]);   
+    setTotalHintsUsed(0);
+    setTotalWrongGuesses(0);
     
     if (selectedLevel === 'larp') setTimeLeft(15);
     else if (selectedLevel === 'subaru') setTimeLeft(10);
@@ -255,7 +255,7 @@ export default function GuessCharacterPage() {
   };
 
   useEffect(() => {
-    if (showIntroModal || showRewardModal || showLevelCompleteModal || isTimeUp || gameFinished || !difficulty || isLoading) return;
+    if (showIntroModal || showLevelCompleteModal || isTimeUp || gameFinished || !difficulty || isLoading) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -269,7 +269,7 @@ export default function GuessCharacterPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [showIntroModal, showRewardModal, showLevelCompleteModal, isTimeUp, gameFinished, difficulty, isLoading]);
+  }, [showIntroModal, showLevelCompleteModal, isTimeUp, gameFinished, difficulty, isLoading]);
 
 
   const getCurrentHints = () => {
@@ -293,8 +293,6 @@ export default function GuessCharacterPage() {
     }
 
     if (!baseHints) return [];
-
-    // 🔥 تطبيق الخلط العشوائي المحفوظ على التلميحات
     return shuffledHintIndices.map(i => baseHints[i]).filter(h => h !== undefined);
   };
 
@@ -307,14 +305,17 @@ export default function GuessCharacterPage() {
     }
   };
 
-  const calculateReward = (hintsUsed: number, mistakes: number) => {
+  // 🔥 حساب المكافأة النهائية بناءً على 5 جولات!
+  const calculateFinalReward = (hintsUsed: number, mistakes: number) => {
     if (dbRewards.length === 0) return null;
-    const penaltyScore = (hintsUsed - 1) + (mistakes * 2);
+    
+    // اللاعب المثالي يستخدم 5 تلميحات فقط (1 لكل جولة)
+    const penaltyScore = (hintsUsed - 5) + (mistakes * 2);
 
     let legendaryChance = 5; let rareChance = 25;     
-    if (penaltyScore === 0) { legendaryChance = 35; rareChance = 45; } 
-    else if (penaltyScore <= 2) { legendaryChance = 20; rareChance = 40; } 
-    else if (penaltyScore <= 4) { legendaryChance = 10; rareChance = 30; } 
+    if (penaltyScore <= 2) { legendaryChance = 35; rareChance = 45; } 
+    else if (penaltyScore <= 6) { legendaryChance = 20; rareChance = 40; } 
+    else if (penaltyScore <= 12) { legendaryChance = 10; rareChance = 30; } 
     else { legendaryChance = 2; rareChance = 15; } 
 
     const roll = Math.random() * 100;
@@ -329,13 +330,36 @@ export default function GuessCharacterPage() {
   };
 
   const handleGuess = (charName: string) => {
-    if (!targetChar || isTimeUp || gameFinished) return;
+    if (!targetChar || isTimeUp || gameFinished || correctGuess) return;
 
     if (charName === targetChar.name) {
+      // 1. إجابة صحيحة: إضاءة الزر وتوقف العداد
+      setCorrectGuess(charName);
       setGameFinished(true);
-      const wonReward = calculateReward(revealedHintsCount, wrongAttempts);
-      setReward(wonReward);
-      setTimeout(() => setShowRewardModal(true), 400);
+
+      // 2. تحديث المجاميع
+      const newTotalHints = totalHintsUsed + revealedHintsCount;
+      const newTotalMistakes = totalWrongGuesses + wrongAttempts;
+      setTotalHintsUsed(newTotalHints);
+      setTotalWrongGuesses(newTotalMistakes);
+
+      // 3. تأخير بسيط جداً ثم الانتقال أو إنهاء المستوى
+      setTimeout(() => {
+        if (currentRound >= MAX_ROUNDS) {
+           // نهاية المستوى! نسحب البطاقة ونعرض الشاشة الكبرى
+           const wonReward = calculateFinalReward(newTotalHints, newTotalMistakes);
+           setReward(wonReward);
+           setShowLevelCompleteModal(true);
+        } else {
+           // انتقال فوري للجولة التالية
+           setCurrentRound(prev => prev + 1);
+           if (difficulty === 'larp') setTimeLeft(15);
+           else if (difficulty === 'subaru') setTimeLeft(10);
+           else if (difficulty === 'echidna') setTimeLeft(5);
+           initializeRound(dbCharacters, usedChars, difficulty);
+        }
+      }, 700); // 700 جزء من الثانية كافية لرؤية اللون الأخضر
+
     } else {
       if (!guessedWrongOptions.includes(charName)) {
         setGuessedWrongOptions(prev => [...prev, charName]);
@@ -344,33 +368,15 @@ export default function GuessCharacterPage() {
     }
   };
 
-  const handleNextRound = () => {
-    setShowRewardModal(false);
-    setIsTimeUp(false);
-
-    if (currentRound >= MAX_ROUNDS) {
-        setShowLevelCompleteModal(true);
-        return;
-    }
-
-    setCurrentRound(prev => prev + 1);
-
-    if (difficulty === 'larp') setTimeLeft(15);
-    else if (difficulty === 'subaru') setTimeLeft(10);
-    else if (difficulty === 'echidna') setTimeLeft(5);
-    
-    initializeRound(dbCharacters, usedChars, difficulty);
-  };
-
   const handleShareClick = async () => {
     if (!reward) return;
     setIsSharing(true);
     const levelName = difficulty === 'larp' ? t.levelLarp : difficulty === 'subaru' ? t.levelSubaru : t.levelEchidna;
     const shareTitle = currentLanguage === 'en' ? "Tower Voices Guess Challenge" : "🏆 تحدي أصوات البرج 🏆";
-    const winMsg = currentLanguage === 'en' ? "I guessed the character and got card" : "خمنت الشخصية بنجاح وحصلت على بطاقة";
+    const winMsg = currentLanguage === 'en' ? "I beat the challenge and got card" : "أنهيت التحدي بنجاح وحصلت على بطاقة";
     const challengeMsg = currentLanguage === 'en' ? "Can you beat my record? Play here 👇" : "هل يمكنك تحطيم رقمي؟ جرب التحدي من هنا 👇";
 
-    const shareText = `${shareTitle}\n${winMsg} (${currentLanguage === 'en' ? reward.nameEn : reward.name})! 🎉\n\n🛡️ ${levelName}\n💡 ${t.usedHints}: ${revealedHintsCount}\n🎯 ${t.wrongGuesses}: ${wrongAttempts}\n\n${challengeMsg}\nhttps://towervoices.online/activities/guess-character?lang=${currentLanguage}`;
+    const shareText = `${shareTitle}\n${winMsg} (${currentLanguage === 'en' ? reward.nameEn : reward.name})! 🎉\n\n🛡️ ${levelName}\n💡 ${t.usedHints}: ${totalHintsUsed}\n🎯 ${t.wrongGuesses}: ${totalWrongGuesses}\n\n${challengeMsg}\nhttps://towervoices.online/activities/guess-character?lang=${currentLanguage}`;
 
     try {
       if (navigator.share) await navigator.share({ text: shareText });
@@ -434,11 +440,11 @@ export default function GuessCharacterPage() {
                   <h3 className="font-bold text-emerald-400 text-center mb-5">{t.getCardsTitle}</h3>
                   <p className="flex items-center gap-3">
                     <span className="w-3.5 h-3.5 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)] flex-shrink-0"></span>
-                    <span className="text-zinc-300"><b className="text-white">{t.perfectTitle}</b> {t.perfect}</span>
+                    <span className="text-zinc-300"><b className="text-white">{t.perfectTitle}</b></span>
                   </p>
                   <p className="flex items-center gap-3">
                     <span className="w-3.5 h-3.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] flex-shrink-0"></span>
-                    <span className="text-zinc-300"><b className="text-white">{t.goodTitle}</b> {t.good}</span>
+                    <span className="text-zinc-300"><b className="text-white">{t.goodTitle}</b></span>
                   </p>
                   <p className="flex items-center gap-3">
                     <span className="w-3.5 h-3.5 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)] flex-shrink-0"></span>
@@ -487,21 +493,23 @@ export default function GuessCharacterPage() {
         </div>
       )}
 
+      {/* نافذة الخسارة (انتهاء الوقت) */}
       {isTimeUp && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-red-500/50 rounded-3xl p-8 text-center w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.15)] animate-in zoom-in-95 duration-300">
             <div className="text-5xl mb-4 animate-bounce">⌛</div>
             <h2 className="text-3xl font-bold mb-3 text-red-500">{t.timeUp}</h2>
             <p className="text-zinc-300 mb-2">{t.correctAnswerWas}</p>
+            
+            {/* 🔥 إصلاح قص الصورة هنا أيضاً */}
+            <div className="w-28 h-28 mx-auto my-4 rounded-full overflow-hidden border-4 border-zinc-800 shadow-lg bg-zinc-800/50 flex items-center justify-center">
+                <img src={targetChar?.image} alt="character" className="w-full h-full object-contain p-2" />
+            </div>
+            
             <p className="text-2xl font-bold text-white mb-8">{currentLanguage === 'en' ? targetChar?.nameEn : targetChar?.name}</p>
             
             <div className="flex flex-col gap-3">
-               <button onClick={() => {
-                 if (difficulty === 'larp') setTimeLeft(15);
-                 else if (difficulty === 'subaru') setTimeLeft(10);
-                 else if (difficulty === 'echidna') setTimeLeft(5);
-                 initializeRound(dbCharacters, usedChars, difficulty);
-               }} className="w-full bg-red-600 hover:bg-red-500 transition-colors text-white py-3.5 rounded-xl font-semibold">
+               <button onClick={() => startGame(difficulty)} className="w-full bg-red-600 hover:bg-red-500 transition-colors text-white py-3.5 rounded-xl font-semibold">
                  {t.tryAgain}
                </button>
                <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setIsTimeUp(false); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold text-zinc-300">
@@ -512,25 +520,44 @@ export default function GuessCharacterPage() {
         </div>
       )}
 
-      {showLevelCompleteModal && (
+      {/* نافذة إكمال التحدي (النهائية) */}
+      {showLevelCompleteModal && reward && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-emerald-500/50 rounded-3xl p-8 text-center w-full max-w-md shadow-[0_0_50px_rgba(16,185,129,0.2)] animate-in zoom-in-95 duration-300">
-            <div className="text-6xl mb-6 animate-bounce">🏆</div>
-            <h2 className="text-3xl font-bold mb-3 text-emerald-400">{t.levelCompleteTitle}</h2>
-            <p className="text-zinc-300 mb-8">{t.levelCompleteDesc}</p>
+          <div className="bg-zinc-900 border border-emerald-500/50 rounded-3xl p-8 text-center w-full max-w-md shadow-[0_0_60px_rgba(16,185,129,0.25)] animate-in zoom-in-95 duration-500">
+            <div className="text-6xl mb-4 animate-bounce">🏆</div>
+            <h2 className="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{t.levelCompleteTitle}</h2>
+            <p className="text-zinc-300 mb-6">{t.levelCompleteDesc}</p>
             
+            {/* عرض بطاقة الجائزة */}
+            <div className="relative mx-auto w-48 flex justify-center items-center mb-6">
+              {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[50px] opacity-40 rounded-full animate-pulse scale-110"></div>}
+              {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-[50px] opacity-40 rounded-full animate-pulse scale-110"></div>}
+              <img src={reward.image} alt="card" className="w-full h-auto relative z-10 drop-shadow-2xl hover:scale-105 transition-transform duration-500" />
+            </div>
+            
+            <p className={`text-2xl font-bold ${reward.rarity === 'legendary' ? 'text-yellow-400' : reward.rarity === 'rare' ? 'text-blue-400' : 'text-white'}`}>
+              {currentLanguage === 'en' ? reward.nameEn : reward.name}
+            </p>
+            <p className="text-xs mt-1 text-zinc-500 uppercase tracking-widest mb-6">{t.rewardRarity}: {currentLanguage === 'en' ? reward.rarity.toUpperCase() : (reward.rarity === 'common' ? 'عادي' : reward.rarity === 'rare' ? 'نادر' : 'أسطوري')}</p>
+
+            <div className="bg-black/40 p-4 rounded-xl space-y-3 text-sm text-zinc-300 text-start border border-zinc-800 mb-6">
+              <p className="flex justify-between"><span>💡 إجمالي {t.usedHints}:</span> <span className="font-bold text-white">{totalHintsUsed}</span></p>
+              <p className="flex justify-between"><span>🎯 إجمالي {t.wrongGuesses}:</span> <span className="font-bold text-white">{totalWrongGuesses}</span></p>
+            </div>
+
             <div className="flex flex-col gap-3">
-               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowLevelCompleteModal(false); }} className="w-full bg-emerald-600 hover:bg-emerald-500 transition-colors text-white py-4 rounded-xl font-bold text-lg">
+               <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-emerald-600 hover:bg-emerald-500 transition-colors text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2">
+                 {t.share}
+               </button>
+               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowLevelCompleteModal(false); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold text-zinc-300 block">
                  {t.changeLevel}
                </button>
-               <Link href="/activities" className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold text-zinc-300 block">
-                 {t.backToMenu}
-               </Link>
             </div>
           </div>
         </div>
       )}
 
+      {/* واجهة اللعب الأساسية */}
       <div className="w-full max-w-4xl mx-auto mt-16 flex flex-col flex-1">
         
         <div className="flex flex-wrap justify-between items-center mb-6 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800 gap-4">
@@ -584,20 +611,23 @@ export default function GuessCharacterPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {options.map((option) => {
               const isWrong = guessedWrongOptions.includes(option.name);
+              const isCorrect = correctGuess === option.name;
               const charDisplayName = currentLanguage === 'en' && option.nameEn ? option.nameEn : option.name;
 
               return (
                 <button
                   key={option.name}
                   onClick={() => handleGuess(option.name)}
-                  disabled={isWrong || isTimeUp || gameFinished}
+                  disabled={isWrong || isTimeUp || gameFinished || correctGuess !== null}
                   className={`
                     p-4 rounded-xl border-2 transition-all font-bold text-lg flex items-center justify-between
-                    ${isWrong ? 'bg-red-950/20 border-red-900/50 text-red-500/50 cursor-not-allowed line-through' 
-                              : 'bg-zinc-800 border-zinc-700 hover:border-emerald-500 hover:bg-emerald-950/30 text-white active:scale-95'}
+                    ${isCorrect ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)] scale-105' 
+                     : isWrong ? 'bg-red-950/20 border-red-900/50 text-red-500/50 cursor-not-allowed line-through' 
+                     : 'bg-zinc-800 border-zinc-700 hover:border-emerald-500 hover:bg-emerald-950/30 text-white active:scale-95'}
                   `}
                 >
                   {charDisplayName}
+                  {isCorrect && <span>✅</span>}
                   {isWrong && <span>❌</span>}
                 </button>
               );
@@ -606,44 +636,6 @@ export default function GuessCharacterPage() {
         </div>
 
       </div>
-
-      {showRewardModal && reward && targetChar && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300">
-            <h2 className="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{t.winTitle}</h2>
-            
-            <div className="w-24 h-24 mx-auto my-4 rounded-full overflow-hidden border-4 border-zinc-800 shadow-lg">
-                <img src={targetChar.image} alt="character" className="w-full h-full object-cover" />
-            </div>
-            <p className="text-xl font-bold text-white mb-6">{currentLanguage === 'en' ? targetChar.nameEn : targetChar.name}</p>
-
-            <div className="relative mx-auto w-48 flex justify-center items-center mb-6">
-              {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
-              {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
-              <img src={reward.image} alt="card" className="w-full h-auto relative z-10 drop-shadow-2xl hover:scale-105 transition-transform" />
-            </div>
-            
-            <p className={`text-2xl font-bold ${reward.rarity === 'legendary' ? 'text-yellow-400' : reward.rarity === 'rare' ? 'text-blue-400' : 'text-white'}`}>
-              {currentLanguage === 'en' ? reward.nameEn : reward.name}
-            </p>
-            <p className="text-xs mt-1 text-zinc-500 uppercase tracking-widest">{t.rewardRarity}: {currentLanguage === 'en' ? reward.rarity.toUpperCase() : (reward.rarity === 'common' ? 'عادي' : reward.rarity === 'rare' ? 'نادر' : 'أسطوري')}</p>
-
-            <div className="mt-6 bg-black/40 p-4 rounded-xl space-y-3 text-sm text-zinc-300 text-start border border-zinc-800">
-              <p className="flex justify-between"><span>⏱️ {t.seconds}:</span> <span>{difficulty === 'larp' ? 15 - timeLeft : difficulty === 'subaru' ? 10 - timeLeft : 5 - timeLeft}</span></p>
-              <p className="flex justify-between"><span>💡 {t.usedHints}:</span> <span>{revealedHintsCount}</span></p>
-            </div>
-
-            <div className="mt-6 space-y-3">
-              <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-emerald-600 hover:bg-emerald-500 transition-colors text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2">
-                {t.share}
-              </button>
-              <button onClick={handleNextRound} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold">
-                {currentRound < MAX_ROUNDS ? t.nextRound : (currentLanguage === 'ar' ? 'إكمال المستوى 🏁' : 'Finish Level 🏁')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
