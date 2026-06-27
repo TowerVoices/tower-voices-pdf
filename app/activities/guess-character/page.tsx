@@ -30,9 +30,9 @@ const uiTexts = {
     preparing: "جاري تجهيز التحدي...",
     winTitle: "🎉 إجابة صحيحة!",
     gotCard: "حصلت على بطاقة جديدة",
-    perfect: "يمنحك فرصة عالية لبطاقة أسطورية!",
+    perfect: "يمنحك فرصة عالية جداً لبطاقة أسطورية!",
     good: "يمنحك فرصة لبطاقة نادرة.",
-    average: "يمنحك بطاقات عادية.",
+    average: "يمنحك بطاقات عادية، حاول تقليل التلميحات!",
     rewardRarity: "الندرة",
     share: "📤 مشاركة النتيجة",
     nextRound: "الجولة التالية ←",
@@ -41,9 +41,11 @@ const uiTexts = {
     usedHints: "التلميحات",
     wrongGuesses: "الأخطاء",
     notEnoughData: "عذراً، لم نجد شخصيات تحتوي على تلميحات في قاعدة البيانات.",
-    // نصوص المستويات الجديدة
+    perfectTitle: "تخمين سريع (تلميح 1 - 0 أخطاء)",
+    goodTitle: "تخمين جيد (استخدام التلميحات)",
+    startGameBtn: "خمن الشخصية 🚀",
     selectLevel: "اختر مستوى الصعوبة:",
-    levelLarp: "لارب (Larp)", // 🔥 تم التعديل هنا
+    levelLarp: "لارب (Larp)",
     levelLarpDesc: "15 ثانية للتخمين",
     levelSubaru: "سوبارو (Subaru)",
     levelSubaruDesc: "10 ثواني للتخمين",
@@ -68,7 +70,7 @@ const uiTexts = {
     gotCard: "You obtained a new card",
     perfect: "High chance for Legendary card!",
     good: "Chance for a Rare card.",
-    average: "Grants Common cards.",
+    average: "Grants Common cards, try using fewer hints!",
     rewardRarity: "Rarity",
     share: "📤 Share Result",
     nextRound: "Next Round ←",
@@ -77,6 +79,9 @@ const uiTexts = {
     usedHints: "Hints",
     wrongGuesses: "Errors",
     notEnoughData: "Sorry, no characters with hints found in the database.",
+    perfectTitle: "Fast Guess (1 Hint - 0 Errors)",
+    goodTitle: "Good Guess (Used more hints)",
+    startGameBtn: "Guess Character 🚀",
     selectLevel: "Select Difficulty:",
     levelLarp: "Larp",
     levelLarpDesc: "15 seconds to guess",
@@ -142,6 +147,7 @@ export default function GuessCharacterPage() {
   const [reward, setReward] = useState<any>(null);
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [showIntroModal, setShowIntroModal] = useState(true);
+  const [introStep, setIntroStep] = useState<1 | 2>(1); // 🔥 خطوة النافذة الافتتاحية (1 للقواعد، 2 للمستويات)
   const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
@@ -333,44 +339,78 @@ export default function GuessCharacterPage() {
         </button>
       </div>
 
+      {/* نافذة القواعد واختيار المستوى */}
       {showIntroModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 text-center w-full max-w-md shadow-[0_0_50px_rgba(16,185,129,0.15)] animate-in zoom-in-95 duration-300 my-8">
-            <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">🤔</div>
-            <h2 className="text-2xl font-bold mb-2 text-white">{t.gameTitle}</h2>
-            <p className="text-zinc-400 mb-6 text-sm">{t.subTitle}</p>
-
-            <h3 className="font-bold text-emerald-400 text-center mb-4">{t.selectLevel}</h3>
-            
-            <div className="flex flex-col gap-3">
-                <button onClick={() => startGame('larp')} className="bg-zinc-800/80 hover:bg-emerald-950/40 border border-zinc-700 hover:border-emerald-500 p-4 rounded-xl transition-all flex justify-between items-center group">
-                    <div className="text-start">
-                        <div className="font-bold text-white group-hover:text-emerald-400">{t.levelLarp}</div>
-                        <div className="text-zinc-400 text-xs mt-1">{t.levelLarpDesc}</div>
-                    </div>
-                    <div className="text-2xl">🟢</div>
-                </button>
-                
-                <button onClick={() => startGame('subaru')} className="bg-zinc-800/80 hover:bg-yellow-950/40 border border-zinc-700 hover:border-yellow-500 p-4 rounded-xl transition-all flex justify-between items-center group">
-                    <div className="text-start">
-                        <div className="font-bold text-white group-hover:text-yellow-400">{t.levelSubaru}</div>
-                        <div className="text-zinc-400 text-xs mt-1">{t.levelSubaruDesc}</div>
-                    </div>
-                    <div className="text-2xl">🟡</div>
-                </button>
-
-                <button onClick={() => startGame('echidna')} className="bg-zinc-800/80 hover:bg-red-950/40 border border-zinc-700 hover:border-red-500 p-4 rounded-xl transition-all flex justify-between items-center group">
-                    <div className="text-start">
-                        <div className="font-bold text-white group-hover:text-red-400">{t.levelEchidna}</div>
-                        <div className="text-zinc-400 text-xs mt-1">{t.levelEchidnaDesc}</div>
-                    </div>
-                    <div className="text-2xl">🔴</div>
-                </button>
+          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 w-full max-w-md shadow-[0_0_50px_rgba(16,185,129,0.15)] animate-in zoom-in-95 duration-300 my-8">
+            <div className="text-center">
+               <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">🤔</div>
+               <h2 className="text-2xl font-bold mb-2 text-white">{t.gameTitle}</h2>
+               <p className="text-zinc-400 mb-6 text-sm">{t.subTitle}</p>
             </div>
+
+            {introStep === 1 ? (
+              /* الخطوة 1: شرح القواعد */
+              <div className="animate-in fade-in duration-300">
+                <div className="bg-black/40 rounded-2xl p-5 mb-8 text-start space-y-4 text-sm md:text-base border border-zinc-800">
+                  <h3 className="font-bold text-emerald-400 text-center mb-5">{t.getCardsTitle}</h3>
+                  <p className="flex items-center gap-3">
+                    <span className="w-3.5 h-3.5 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)] flex-shrink-0"></span>
+                    <span className="text-zinc-300"><b className="text-white">{t.perfectTitle}</b> {t.perfect}</span>
+                  </p>
+                  <p className="flex items-center gap-3">
+                    <span className="w-3.5 h-3.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] flex-shrink-0"></span>
+                    <span className="text-zinc-300"><b className="text-white">{t.goodTitle}</b> {t.good}</span>
+                  </p>
+                  <p className="flex items-center gap-3">
+                    <span className="w-3.5 h-3.5 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)] flex-shrink-0"></span>
+                    <span className="text-zinc-300">{t.average}</span>
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setIntroStep(2)}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 transition-all text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-emerald-500/25 active:scale-[0.98]"
+                >
+                  {t.startGameBtn}
+                </button>
+              </div>
+            ) : (
+              /* الخطوة 2: اختيار المستويات */
+              <div className="animate-in slide-in-from-right-4 duration-300">
+                <h3 className="font-bold text-emerald-400 text-center mb-4">{t.selectLevel}</h3>
+                <div className="flex flex-col gap-3">
+                    <button onClick={() => startGame('larp')} className="bg-zinc-800/80 hover:bg-emerald-950/40 border border-zinc-700 hover:border-emerald-500 p-4 rounded-xl transition-all flex justify-between items-center group">
+                        <div className="text-start">
+                            <div className="font-bold text-white group-hover:text-emerald-400">{t.levelLarp}</div>
+                            <div className="text-zinc-400 text-xs mt-1">{t.levelLarpDesc}</div>
+                        </div>
+                        <div className="text-2xl">🟢</div>
+                    </button>
+                    
+                    <button onClick={() => startGame('subaru')} className="bg-zinc-800/80 hover:bg-yellow-950/40 border border-zinc-700 hover:border-yellow-500 p-4 rounded-xl transition-all flex justify-between items-center group">
+                        <div className="text-start">
+                            <div className="font-bold text-white group-hover:text-yellow-400">{t.levelSubaru}</div>
+                            <div className="text-zinc-400 text-xs mt-1">{t.levelSubaruDesc}</div>
+                        </div>
+                        <div className="text-2xl">🟡</div>
+                    </button>
+
+                    <button onClick={() => startGame('echidna')} className="bg-zinc-800/80 hover:bg-red-950/40 border border-zinc-700 hover:border-red-500 p-4 rounded-xl transition-all flex justify-between items-center group">
+                        <div className="text-start">
+                            <div className="font-bold text-white group-hover:text-red-400">{t.levelEchidna}</div>
+                            <div className="text-zinc-400 text-xs mt-1">{t.levelEchidnaDesc}</div>
+                        </div>
+                        <div className="text-2xl">🔴</div>
+                    </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
+      {/* نافذة الخسارة (انتهاء الوقت) */}
       {isTimeUp && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-red-500/50 rounded-3xl p-8 text-center w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.15)] animate-in zoom-in-95 duration-300">
@@ -383,7 +423,7 @@ export default function GuessCharacterPage() {
                <button onClick={handleNextRound} className="w-full bg-red-600 hover:bg-red-500 transition-colors text-white py-3.5 rounded-xl font-semibold">
                  {t.tryAgain}
                </button>
-               <button onClick={() => setShowIntroModal(true)} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold text-zinc-300">
+               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold text-zinc-300">
                  {t.changeLevel}
                </button>
             </div>
@@ -391,12 +431,13 @@ export default function GuessCharacterPage() {
         </div>
       )}
 
+      {/* واجهة اللعب */}
       <div className="w-full max-w-4xl mx-auto mt-16 flex flex-col flex-1">
         
         <div className="flex flex-wrap justify-between items-center mb-6 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800 gap-4">
            <div className="flex items-center gap-3">
               <h1 className="text-xl font-bold text-emerald-400 hidden sm:block">{t.gameTitle}</h1>
-              <button onClick={() => setShowIntroModal(true)} className="bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-xs hover:bg-zinc-700 transition-colors">
+              <button onClick={() => { setIntroStep(2); setShowIntroModal(true); }} className="bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-xs hover:bg-zinc-700 transition-colors">
                 ⚙️ {t.changeLevel}
               </button>
            </div>
@@ -464,6 +505,7 @@ export default function GuessCharacterPage() {
 
       </div>
 
+      {/* نافذة الفوز */}
       {showRewardModal && reward && targetChar && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300">
