@@ -31,19 +31,23 @@ const uiTexts = {
     selectAnswer: "من تكون هذه الشخصية؟",
     preparing: "جاري تجهيز التحدي...",
     gotCard: "حصلت على بطاقة جديدة",
-    perfect: "يمنحك فرصة عالية جداً لبطاقة أسطورية!",
-    good: "يمنحك فرصة لبطاقة نادرة.",
-    average: "يمنحك بطاقات عادية، حاول تقليل التلميحات!",
     rewardRarity: "الندرة",
     share: "📤 مشاركة النتيجة",
     langName: "English",
-    getCardsTitle: "كيف تحصل على البطاقات؟ 🃏",
+    
+    // النصوص الجديدة لشرح القواعد بدقة
+    getCardsTitle: "قواعد الحصول على البطاقات 🃏",
+    rule1Title: "مستوى الصعوبة:",
+    rule1Desc: "كلما اخترت مستوى أصعب (مثل إيكيدنا)، زادت فرصتك بشكل كبير للحصول على بطاقات أسطورية ونادرة.",
+    rule2Title: "الأخطاء والتلميحات:",
+    rule2Desc: "كل تخمين خاطئ أو استخدام لتلميح إضافي يقلل من هذه النسبة تدريجياً.",
+    rule3Title: "البطاقات العادية:",
+    rule3Desc: "إذا كانت أخطاؤك كثيرة أو اعتمدت كلياً على المستوى السهل، فستحصل غالباً على بطاقات عادية.",
+    
     usedHints: "التلميحات",
     wrongGuesses: "الأخطاء",
     notEnoughData: "عذراً، لم نجد شخصيات تحتوي على تلميحات في قاعدة البيانات.",
-    perfectTitle: "لعب مثالي (تخمين سريع من أول تلميح)",
-    goodTitle: "لعب جيد (استخدام بعض التلميحات)",
-    startGameBtn: "خمن الشخصية 🚀",
+    startGameBtn: "فهمت، لنبدأ 🚀",
     selectLevel: "اختر مستوى الصعوبة:",
     levelLarp: "لارب (Larp)",
     levelLarpDesc: "15 ثانية للتخمين",
@@ -72,19 +76,23 @@ const uiTexts = {
     selectAnswer: "Who is this character?",
     preparing: "Preparing Challenge...",
     gotCard: "You obtained a new card",
-    perfect: "High chance for Legendary card!",
-    good: "Chance for a Rare card.",
-    average: "Grants Common cards, try using fewer hints!",
     rewardRarity: "Rarity",
     share: "📤 Share Result",
     langName: "العربية",
-    getCardsTitle: "Get Cards! 🃏",
+    
+    // New rules text
+    getCardsTitle: "How to get Cards? 🃏",
+    rule1Title: "Difficulty Level:",
+    rule1Desc: "Choosing harder levels (like Echidna) massively increases your chance for Legendary and Rare cards.",
+    rule2Title: "Hints & Mistakes:",
+    rule2Desc: "Every wrong guess or extra hint used drops your chance for high-rarity cards.",
+    rule3Title: "Common Cards:",
+    rule3Desc: "Playing on easy or making many mistakes will likely result in Common cards.",
+    
     usedHints: "Hints",
     wrongGuesses: "Errors",
     notEnoughData: "Sorry, no characters with hints found in the database.",
-    perfectTitle: "Perfect (Fast guess on 1st hint)",
-    goodTitle: "Good (Used some extra hints)",
-    startGameBtn: "Guess Character 🚀",
+    startGameBtn: "Got it, Let's go! 🚀",
     selectLevel: "Select Difficulty:",
     levelLarp: "Larp",
     levelLarpDesc: "15 seconds to guess",
@@ -145,7 +153,7 @@ export default function GuessCharacterPage() {
   const [difficulty, setDifficulty] = useState<Difficulty>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isTimeUp, setIsTimeUp] = useState(false);
-  const [gameFinished, setGameFinished] = useState(false); // Indicates timer should pause
+  const [gameFinished, setGameFinished] = useState(false); 
 
   const [currentRound, setCurrentRound] = useState(1);
   const [usedChars, setUsedChars] = useState<string[]>([]);
@@ -155,13 +163,12 @@ export default function GuessCharacterPage() {
   const [options, setOptions] = useState<CharacterFromSanity[]>([]);
   const [revealedHintsCount, setRevealedHintsCount] = useState(1);
   
-  // 🔥 إحصائيات الجولة الحالية وإحصائيات المستوى كامل (لـ 5 جولات)
   const [wrongAttempts, setWrongAttempts] = useState(0);
   const [guessedWrongOptions, setGuessedWrongOptions] = useState<string[]>([]);
   const [totalHintsUsed, setTotalHintsUsed] = useState(0);
   const [totalWrongGuesses, setTotalWrongGuesses] = useState(0);
   
-  const [correctGuess, setCorrectGuess] = useState<string | null>(null); // للون الأخضر السريع
+  const [correctGuess, setCorrectGuess] = useState<string | null>(null);
 
   const [reward, setReward] = useState<any>(null);
   const [showIntroModal, setShowIntroModal] = useState(true);
@@ -305,19 +312,32 @@ export default function GuessCharacterPage() {
     }
   };
 
-  // 🔥 حساب المكافأة النهائية بناءً على 5 جولات!
-  const calculateFinalReward = (hintsUsed: number, mistakes: number) => {
+  // 🔥 تحديث خوارزمية السحب بناءً على (مستوى الصعوبة + العقوبات)
+  const calculateFinalReward = (hintsUsed: number, mistakes: number, currentDifficulty: Difficulty) => {
     if (dbRewards.length === 0) return null;
     
-    // اللاعب المثالي يستخدم 5 تلميحات فقط (1 لكل جولة)
-    const penaltyScore = (hintsUsed - 5) + (mistakes * 2);
+    // 1. تحديد النسبة الأساسية بناءً على مستوى الصعوبة
+    let legendaryChance = 0;
+    let rareChance = 0;
 
-    let legendaryChance = 5; let rareChance = 25;     
-    if (penaltyScore <= 2) { legendaryChance = 35; rareChance = 45; } 
-    else if (penaltyScore <= 6) { legendaryChance = 20; rareChance = 40; } 
-    else if (penaltyScore <= 12) { legendaryChance = 10; rareChance = 30; } 
-    else { legendaryChance = 2; rareChance = 15; } 
+    if (currentDifficulty === 'echidna') {
+      legendaryChance = 60; rareChance = 30; // نسبة ضخمة للأسطوري
+    } else if (currentDifficulty === 'subaru') {
+      legendaryChance = 35; rareChance = 40; // نسبة جيدة
+    } else { // larp
+      legendaryChance = 15; rareChance = 35; // فرصة أسطورية منخفضة
+    }
 
+    // 2. حساب العقوبة (5 تلميحات هو اللعب المثالي لـ 5 جولات)
+    const extraHints = Math.max(0, hintsUsed - 5);
+    const penaltyScore = extraHints + (mistakes * 2);
+
+    // 3. خصم العقوبة من النسبة الأساسية 
+    // (كل خطأ أو تلميح إضافي ينقص 5% من فرصة الأسطوري و 4% من النادر)
+    legendaryChance = Math.max(2, legendaryChance - (penaltyScore * 5));
+    rareChance = Math.max(10, rareChance - (penaltyScore * 4));
+
+    // 4. عجلة الحظ
     const roll = Math.random() * 100;
     let targetRarity = 'common';
     if (roll <= legendaryChance) targetRarity = 'legendary'; 
@@ -333,32 +353,27 @@ export default function GuessCharacterPage() {
     if (!targetChar || isTimeUp || gameFinished || correctGuess) return;
 
     if (charName === targetChar.name) {
-      // 1. إجابة صحيحة: إضاءة الزر وتوقف العداد
       setCorrectGuess(charName);
       setGameFinished(true);
 
-      // 2. تحديث المجاميع
       const newTotalHints = totalHintsUsed + revealedHintsCount;
       const newTotalMistakes = totalWrongGuesses + wrongAttempts;
       setTotalHintsUsed(newTotalHints);
       setTotalWrongGuesses(newTotalMistakes);
 
-      // 3. تأخير بسيط جداً ثم الانتقال أو إنهاء المستوى
       setTimeout(() => {
         if (currentRound >= MAX_ROUNDS) {
-           // نهاية المستوى! نسحب البطاقة ونعرض الشاشة الكبرى
-           const wonReward = calculateFinalReward(newTotalHints, newTotalMistakes);
+           const wonReward = calculateFinalReward(newTotalHints, newTotalMistakes, difficulty);
            setReward(wonReward);
            setShowLevelCompleteModal(true);
         } else {
-           // انتقال فوري للجولة التالية
            setCurrentRound(prev => prev + 1);
            if (difficulty === 'larp') setTimeLeft(15);
            else if (difficulty === 'subaru') setTimeLeft(10);
            else if (difficulty === 'echidna') setTimeLeft(5);
            initializeRound(dbCharacters, usedChars, difficulty);
         }
-      }, 700); // 700 جزء من الثانية كافية لرؤية اللون الأخضر
+      }, 700);
 
     } else {
       if (!guessedWrongOptions.includes(charName)) {
@@ -424,10 +439,9 @@ export default function GuessCharacterPage() {
         </button>
       </div>
 
-      {/* نافذة القواعد واختيار المستوى */}
       {showIntroModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 w-full max-w-md shadow-[0_0_50px_rgba(16,185,129,0.15)] animate-in zoom-in-95 duration-300 my-8">
+          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 w-full max-w-lg shadow-[0_0_50px_rgba(16,185,129,0.15)] animate-in zoom-in-95 duration-300 my-8">
             <div className="text-center">
                <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">🤔</div>
                <h2 className="text-2xl font-bold mb-2 text-white">{t.gameTitle}</h2>
@@ -436,19 +450,19 @@ export default function GuessCharacterPage() {
 
             {introStep === 1 ? (
               <div className="animate-in fade-in duration-300">
-                <div className="bg-black/40 rounded-2xl p-5 mb-8 text-start space-y-4 text-sm md:text-base border border-zinc-800">
+                <div className="bg-black/40 rounded-2xl p-5 mb-8 text-start space-y-5 text-sm md:text-base border border-zinc-800">
                   <h3 className="font-bold text-emerald-400 text-center mb-5">{t.getCardsTitle}</h3>
-                  <p className="flex items-center gap-3">
-                    <span className="w-3.5 h-3.5 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)] flex-shrink-0"></span>
-                    <span className="text-zinc-300"><b className="text-white">{t.perfectTitle}</b></span>
+                  <p className="flex items-start gap-3">
+                    <span className="text-xl mt-0.5">📈</span>
+                    <span className="text-zinc-300 leading-relaxed"><b className="text-white">{t.rule1Title}</b> {t.rule1Desc}</span>
                   </p>
-                  <p className="flex items-center gap-3">
-                    <span className="w-3.5 h-3.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] flex-shrink-0"></span>
-                    <span className="text-zinc-300"><b className="text-white">{t.goodTitle}</b></span>
+                  <p className="flex items-start gap-3">
+                    <span className="text-xl mt-0.5">📉</span>
+                    <span className="text-zinc-300 leading-relaxed"><b className="text-white">{t.rule2Title}</b> {t.rule2Desc}</span>
                   </p>
-                  <p className="flex items-center gap-3">
-                    <span className="w-3.5 h-3.5 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)] flex-shrink-0"></span>
-                    <span className="text-zinc-300">{t.average}</span>
+                  <p className="flex items-start gap-3">
+                    <span className="text-xl mt-0.5">🟢</span>
+                    <span className="text-zinc-300 leading-relaxed"><b className="text-white">{t.rule3Title}</b> {t.rule3Desc}</span>
                   </p>
                 </div>
 
@@ -463,28 +477,28 @@ export default function GuessCharacterPage() {
               <div className="animate-in slide-in-from-right-4 duration-300">
                 <h3 className="font-bold text-emerald-400 text-center mb-4">{t.selectLevel}</h3>
                 <div className="flex flex-col gap-3">
-                    <button onClick={() => startGame('larp')} className="bg-zinc-800/80 hover:bg-emerald-950/40 border border-zinc-700 hover:border-emerald-500 p-4 rounded-xl transition-all flex justify-between items-center group">
-                        <div className="text-start">
+                    <button onClick={() => startGame('larp')} className="bg-zinc-800/80 hover:bg-emerald-950/40 border border-zinc-700 hover:border-emerald-500 p-4 rounded-xl transition-all flex justify-between items-center group text-start">
+                        <div>
                             <div className="font-bold text-white group-hover:text-emerald-400">{t.levelLarp}</div>
                             <div className="text-zinc-400 text-xs mt-1">{t.levelLarpDesc}</div>
                         </div>
-                        <div className="text-2xl">🟢</div>
+                        <div className="text-2xl flex-shrink-0 ml-2">🟢</div>
                     </button>
                     
-                    <button onClick={() => startGame('subaru')} className="bg-zinc-800/80 hover:bg-yellow-950/40 border border-zinc-700 hover:border-yellow-500 p-4 rounded-xl transition-all flex justify-between items-center group">
-                        <div className="text-start">
+                    <button onClick={() => startGame('subaru')} className="bg-zinc-800/80 hover:bg-yellow-950/40 border border-zinc-700 hover:border-yellow-500 p-4 rounded-xl transition-all flex justify-between items-center group text-start">
+                        <div>
                             <div className="font-bold text-white group-hover:text-yellow-400">{t.levelSubaru}</div>
                             <div className="text-zinc-400 text-xs mt-1">{t.levelSubaruDesc}</div>
                         </div>
-                        <div className="text-2xl">🟡</div>
+                        <div className="text-2xl flex-shrink-0 ml-2">🟡</div>
                     </button>
 
-                    <button onClick={() => startGame('echidna')} className="bg-zinc-800/80 hover:bg-red-950/40 border border-zinc-700 hover:border-red-500 p-4 rounded-xl transition-all flex justify-between items-center group">
-                        <div className="text-start">
+                    <button onClick={() => startGame('echidna')} className="bg-zinc-800/80 hover:bg-red-950/40 border border-zinc-700 hover:border-red-500 p-4 rounded-xl transition-all flex justify-between items-center group text-start">
+                        <div>
                             <div className="font-bold text-white group-hover:text-red-400">{t.levelEchidna}</div>
                             <div className="text-zinc-400 text-xs mt-1">{t.levelEchidnaDesc}</div>
                         </div>
-                        <div className="text-2xl">🔴</div>
+                        <div className="text-2xl flex-shrink-0 ml-2">🔴</div>
                     </button>
                 </div>
               </div>
@@ -493,7 +507,6 @@ export default function GuessCharacterPage() {
         </div>
       )}
 
-      {/* نافذة الخسارة (انتهاء الوقت) */}
       {isTimeUp && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-red-500/50 rounded-3xl p-8 text-center w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.15)] animate-in zoom-in-95 duration-300">
@@ -501,7 +514,6 @@ export default function GuessCharacterPage() {
             <h2 className="text-3xl font-bold mb-3 text-red-500">{t.timeUp}</h2>
             <p className="text-zinc-300 mb-2">{t.correctAnswerWas}</p>
             
-            {/* 🔥 إصلاح قص الصورة هنا أيضاً */}
             <div className="w-28 h-28 mx-auto my-4 rounded-full overflow-hidden border-4 border-zinc-800 shadow-lg bg-zinc-800/50 flex items-center justify-center">
                 <img src={targetChar?.image} alt="character" className="w-full h-full object-contain p-2" />
             </div>
@@ -520,7 +532,6 @@ export default function GuessCharacterPage() {
         </div>
       )}
 
-      {/* نافذة إكمال التحدي (النهائية) */}
       {showLevelCompleteModal && reward && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-emerald-500/50 rounded-3xl p-8 text-center w-full max-w-md shadow-[0_0_60px_rgba(16,185,129,0.25)] animate-in zoom-in-95 duration-500">
@@ -528,7 +539,6 @@ export default function GuessCharacterPage() {
             <h2 className="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{t.levelCompleteTitle}</h2>
             <p className="text-zinc-300 mb-6">{t.levelCompleteDesc}</p>
             
-            {/* عرض بطاقة الجائزة */}
             <div className="relative mx-auto w-48 flex justify-center items-center mb-6">
               {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[50px] opacity-40 rounded-full animate-pulse scale-110"></div>}
               {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-[50px] opacity-40 rounded-full animate-pulse scale-110"></div>}
@@ -557,7 +567,6 @@ export default function GuessCharacterPage() {
         </div>
       )}
 
-      {/* واجهة اللعب الأساسية */}
       <div className="w-full max-w-4xl mx-auto mt-16 flex flex-col flex-1">
         
         <div className="flex flex-wrap justify-between items-center mb-6 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800 gap-4">
