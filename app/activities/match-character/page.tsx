@@ -76,9 +76,8 @@ const uiTexts = {
 
 export default function MatchCharacterPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
-  const [isMounted, setIsMounted] = useState(false); // 🔥 مضاف لحماية الصفحة من الوميض العربي
+  const [isMounted, setIsMounted] = useState(false);
 
-  // 🔥 تحديد اللغة قبل السماح بعرض المحتويات
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -311,7 +310,6 @@ export default function MatchCharacterPage() {
     else setCurrentLevel(1);
   };
 
-  // 🔥 حماية الصفحة من بناء واجهة عربية قبل الفحص
   if (!isMounted || isLoading) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white">
@@ -341,15 +339,16 @@ export default function MatchCharacterPage() {
         </button>
       </div>
 
+      {/* 🔥 نافذة التعليمات تم إضافة overflow-y-auto وتصغيرها للجوال */}
       {showIntroModal && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 text-center w-full max-w-lg shadow-[0_0_50px_rgba(79,70,229,0.15)] animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 text-center w-full max-w-lg shadow-[0_0_50px_rgba(79,70,229,0.15)] animate-in zoom-in-95 duration-300 my-8">
             <div className="w-16 h-16 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl">🎮</div>
             <h2 className="text-2xl md:text-3xl font-bold mb-4 text-white">{t.gameTitle}</h2>
-            <p className="text-zinc-400 mb-8 leading-relaxed text-sm md:text-base">{t.subTitle}</p>
+            <p className="text-zinc-400 mb-6 md:mb-8 leading-relaxed text-sm md:text-base">{t.subTitle}</p>
 
-            <div className="bg-black/40 rounded-2xl p-5 mb-8 text-start space-y-4 text-sm md:text-base border border-zinc-800">
-              <h3 className="font-bold text-indigo-400 text-center mb-5">{t.getCardsTitle}</h3>
+            <div className="bg-black/40 rounded-2xl p-4 md:p-5 mb-6 md:mb-8 text-start space-y-4 text-sm md:text-base border border-zinc-800">
+              <h3 className="font-bold text-indigo-400 text-center mb-4 md:mb-5">{t.getCardsTitle}</h3>
               
               <p className="flex items-center gap-3">
                 <span className="w-3.5 h-3.5 rounded-full bg-yellow-500 flex-shrink-0 shadow-[0_0_10px_rgba(234,179,8,0.5)]"></span>
@@ -369,7 +368,7 @@ export default function MatchCharacterPage() {
 
             <button
               onClick={() => setShowIntroModal(false)}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 transition-all text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-indigo-500/25 active:scale-[0.98]"
+              className="w-full bg-indigo-600 hover:bg-indigo-500 transition-all text-white py-3.5 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-indigo-500/25 active:scale-[0.98]"
             >
               {t.startChallenge}
             </button>
@@ -444,34 +443,35 @@ export default function MatchCharacterPage() {
         </div>
       </div>
 
+      {/* 🔥 نافذة الفوز تم إضافة overflow-y-auto وتصغير الصورة للجوال */}
       {showRewardModal && reward && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-700/50 rounded-2xl p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
-            <h2 className="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{t.winTitle}</h2>
-            <p className="mb-6 text-zinc-400">{t.gotCard}</p>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300 my-8">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{t.winTitle}</h2>
+            <p className="mb-4 md:mb-6 text-sm md:text-base text-zinc-400">{t.gotCard}</p>
 
-            <div className="relative mx-auto w-60 flex justify-center items-center mb-6 -mt-6">
+            <div className="relative mx-auto w-40 md:w-60 flex justify-center items-center mb-4 md:mb-6 mt-2 md:-mt-4">
               {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
               {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
               
               <img src={reward.image} alt={currentLanguage === 'en' ? reward.nameEn : reward.name} className="w-full h-auto object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500" />
             </div>
             
-            <p className={`text-2xl font-bold ${reward.rarity === 'legendary' ? 'text-yellow-400' : reward.rarity === 'rare' ? 'text-blue-400' : 'text-white'}`}>
+            <p className={`text-xl md:text-2xl font-bold ${reward.rarity === 'legendary' ? 'text-yellow-400' : reward.rarity === 'rare' ? 'text-blue-400' : 'text-white'}`}>
               {currentLanguage === 'en' ? reward.nameEn : reward.name}
             </p>
-            <p className="text-xs mt-1 text-zinc-500 uppercase tracking-widest">{t.rewardRarity}: {currentLanguage === 'en' ? reward.rarity.toUpperCase() : (reward.rarity === 'common' ? 'عادي' : reward.rarity === 'rare' ? 'نادر' : 'أسطوري')}</p>
+            <p className="text-[10px] md:text-xs mt-1 text-zinc-500 uppercase tracking-widest">{t.rewardRarity}: {currentLanguage === 'en' ? reward.rarity.toUpperCase() : (reward.rarity === 'common' ? 'عادي' : reward.rarity === 'rare' ? 'نادر' : 'أسطوري')}</p>
 
-            <div className="mt-6 bg-black/30 p-4 rounded-xl space-y-3 text-sm text-zinc-300 text-start">
-              <p className="flex justify-between"><span>⏱️ {currentLanguage === 'en' ? 'Time' : 'الزمن'}:</span> <span>{seconds} {t.seconds}</span></p>
-              <p className="flex justify-between"><span>🎯 {t.errors}:</span> <span>{errors}</span></p>
+            <div className="mt-4 md:mt-6 bg-black/30 p-3 md:p-4 rounded-xl space-y-2 md:space-y-3 text-sm text-zinc-300 text-start border border-zinc-800">
+              <p className="flex justify-between"><span>⏱️ {currentLanguage === 'en' ? 'Time' : 'الزمن'}:</span> <span className="font-bold text-white">{seconds} {t.seconds}</span></p>
+              <p className="flex justify-between"><span>🎯 {t.errors}:</span> <span className="font-bold text-white">{errors}</span></p>
             </div>
 
-            <div className="mt-6 space-y-3">
-              <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-indigo-600 hover:bg-indigo-500 transition-colors text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2">
+            <div className="mt-4 md:mt-6 flex flex-col gap-2 md:gap-3">
+              <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-indigo-600 hover:bg-indigo-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm md:text-base">
                 {t.share}
               </button>
-              <button onClick={handleNextLevel} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3.5 rounded-xl font-semibold">
+              <button onClick={handleNextLevel} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-sm md:text-base text-zinc-300 block">
                 {currentLevel < MAX_LEVEL ? t.nextLevel : t.replay}
               </button>
             </div>
