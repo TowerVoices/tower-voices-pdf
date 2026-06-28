@@ -64,7 +64,10 @@ const uiTexts = {
     of: "من",
     levelCompleteTitle: "🎉 اكتمل التحدي!",
     levelCompleteDesc: "لقد أتممت 10 جولات بنجاح وحصلت على مكافأتك.",
-    backToMenu: "العودة للمركز 🏠"
+    backToMenu: "العودة للمركز 🏠",
+    gameOverTitle: "💀 لقد خسرت!",
+    gameOverDesc: "لقد تجاوزت الحد الأقصى من الأخطاء (15 خطأ)... استيقظ وحش اللارب ليقضي عليك!",
+    restartGame: "العب من جديد"
   },
   en: {
     gameTitle: "Guess the Character",
@@ -108,14 +111,17 @@ const uiTexts = {
     of: "of",
     levelCompleteTitle: "🎉 Challenge Completed!",
     levelCompleteDesc: "You completed 10 rounds and claimed your reward.",
-    backToMenu: "Back to Center 🏠"
+    backToMenu: "Back to Center 🏠",
+    gameOverTitle: "💀 Game Over!",
+    gameOverDesc: "You exceeded 15 mistakes... The Larp Monster has awakened to consume you!",
+    restartGame: "Play Again"
   }
 };
 
 type Difficulty = 'larp' | 'subaru' | 'echidna' | null;
 
-// تعديل عدد المراحل إلى 10
 const MAX_ROUNDS = 10;
+const MAX_MISTAKES = 15; // الحد الأقصى المسموح به للأخطاء
 
 // دالة خلط المصفوفات الاحترافية (Fisher-Yates) لمنع أي تكرار
 function shuffleArray<T>(array: T[]): T[] {
@@ -157,6 +163,7 @@ export default function GuessCharacterPage() {
 
   const [dbCharacters, setDbCharacters] = useState<CharacterFromSanity[]>([]);
   const [dbRewards, setDbRewards] = useState<RewardFromSanity[]>([]);
+  const [larpMonsterImage, setLarpMonsterImage] = useState<string | null>(null); // صورة الوحش
   const [isLoading, setIsLoading] = useState(true);
 
   // Game & Timer State
@@ -183,6 +190,7 @@ export default function GuessCharacterPage() {
   const [reward, setReward] = useState<any>(null);
   const [showIntroModal, setShowIntroModal] = useState(true);
   const [showLevelCompleteModal, setShowLevelCompleteModal] = useState(false);
+  const [showGameOverModal, setShowGameOverModal] = useState(false); // نافذة النهاية لوحش اللارب
   const [introStep, setIntroStep] = useState<1 | 2>(1); 
   const [isSharing, setIsSharing] = useState(false);
 
@@ -202,14 +210,23 @@ export default function GuessCharacterPage() {
           rarity
         }`;
 
-        const [charData, rewardData] = await Promise.all([
+        // استعلام جلب صورة وحش اللارب
+        const settingsQuery = `*[_type == "gameSettings"][0]{
+          "larpMonsterImage": larpMonsterImage.asset->url
+        }`;
+
+        const [charData, rewardData, settingsData] = await Promise.all([
           client.fetch(charQuery),
-          client.fetch(rewardQuery)
+          client.fetch(rewardQuery),
+          client.fetch(settingsQuery)
         ]);
 
         const validChars = charData.filter((c: any) => c.hints && c.hints.length > 0);
         setDbCharacters(validChars);
         setDbRewards(rewardData);
+        if (settingsData?.larpMonsterImage) {
+          setLarpMonsterImage(settingsData.larpMonsterImage);
+        }
         setIsLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -243,7 +260,6 @@ export default function GuessCharacterPage() {
        hintsLen = target.hints?.length || 0;
     }
     
-    // تطبيق التعديل السحري هنا لمنع التكرار باستخدام دالة الخلط المخصصة
     const baseIndices = Array.from({length: hintsLen}, (_, i) => i);
     const randomizedIndices = shuffleArray(baseIndices);
 
@@ -271,11 +287,12 @@ export default function GuessCharacterPage() {
     
     setShowIntroModal(false);
     setShowLevelCompleteModal(false);
+    setShowGameOverModal(false); // إخفاء نافذة الوحش عند بدء لعبة جديدة
     initializeRound(dbCharacters, [], selectedLevel);
   };
 
   useEffect(() => {
-    if (showIntroModal || showLevelCompleteModal || isTimeUp || gameFinished || !difficulty || isLoading) return;
+    if (showIntroModal || showLevelCompleteModal || showGameOverModal || isTimeUp || gameFinished || !difficulty || isLoading) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -289,7 +306,7 @@ export default function GuessCharacterPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [showIntroModal, showLevelCompleteModal, isTimeUp, gameFinished, difficulty, isLoading]);
+  }, [showIntroModal, showLevelCompleteModal, showGameOverModal, isTimeUp, gameFinished, difficulty, isLoading]);
 
 
   const getCurrentHints = () => {
@@ -386,6 +403,18 @@ export default function GuessCharacterPage() {
       if (!guessedWrongOptions.includes(charName)) {
         setGuessedWrongOptions(prev => [...prev, charName]);
         setWrongAttempts(prev => prev + 1);
+
+        // تتبع الأخطاء الإجمالية بشكل فوري
+        const newTotalMistakes = totalWrongGuesses + 1;
+        setTotalWrongGuesses(newTotalMistakes);
+
+        // إذا وصل اللاعب إلى 15 خطأ، أنهِ اللعبة وأظهر الوحش
+        if (newTotalMistakes >= MAX_MISTAKES) {
+          setGameFinished(true);
+          setTimeout(() => {
+            setShowGameOverModal(true);
+          }, 300);
+        }
       }
     }
   };
@@ -446,6 +475,35 @@ export default function GuessCharacterPage() {
             {t.langName}
         </button>
       </div>
+
+      {/* النافذة الإجبارية عند الخسارة ووصول الأخطاء لـ 15 (Larp Monster Modal) */}
+      {showGameOverModal && (
+        <div className="fixed inset-0 bg-red-950/95 backdrop-blur-xl flex items-center justify-center z-[100] p-4 overflow-y-auto">
+          <div className="bg-zinc-950 border-2 border-red-600 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_100px_rgba(220,38,38,0.5)] animate-in zoom-in-75 duration-700 my-8">
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-4 text-red-500 animate-pulse">{t.gameOverTitle}</h2>
+            
+            <div className="relative mx-auto w-48 md:w-56 h-48 md:h-56 flex justify-center items-center mb-6 overflow-hidden rounded-2xl border-4 border-red-900/50 shadow-2xl">
+              <div className="absolute inset-0 bg-red-600 blur-[60px] opacity-30 animate-pulse"></div>
+              {larpMonsterImage ? (
+                 <img src={larpMonsterImage} alt="Larp Monster" className="w-full h-full object-cover relative z-10" />
+              ) : (
+                 <div className="text-6xl animate-bounce">👹</div>
+              )}
+            </div>
+            
+            <p className="text-base md:text-lg text-zinc-300 font-bold mb-8 leading-relaxed">
+              {t.gameOverDesc}
+            </p>
+
+            <button 
+              onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowGameOverModal(false); }} 
+              className="w-full bg-red-700 hover:bg-red-600 transition-colors text-white py-4 rounded-xl font-bold text-lg md:text-xl shadow-[0_0_20px_rgba(220,38,38,0.3)] active:scale-95"
+            >
+              {t.restartGame} 🔄
+            </button>
+          </div>
+        </div>
+      )}
 
       {showIntroModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
