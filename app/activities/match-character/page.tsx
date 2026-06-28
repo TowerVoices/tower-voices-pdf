@@ -325,21 +325,20 @@ export default function MatchCharacterPage() {
       dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} 
       className="min-h-screen flex flex-col p-4 md:p-8 bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white relative z-0"
     >
-      <div className={`absolute top-6 ${currentLanguage === 'ar' ? 'left-6 md:left-12' : 'right-6 md:right-12'} z-50`}>
+      <div className={`absolute top-4 md:top-6 ${currentLanguage === 'ar' ? 'left-4 md:left-12' : 'right-4 md:right-12'} z-[60]`}>
         <button 
             onClick={() => {
               const nextLang = currentLanguage === 'ar' ? 'en' : 'ar';
               setCurrentLanguage(nextLang);
               localStorage.setItem('siteLang', nextLang);
             }}
-            className="flex items-center gap-2 border border-indigo-500/30 bg-indigo-900/40 rounded-full px-4 py-2 hover:bg-indigo-900/60 transition-colors text-sm font-semibold backdrop-blur-md shadow-lg"
+            className="flex items-center gap-2 border border-indigo-500/30 bg-indigo-900/40 rounded-full px-3 py-1.5 md:px-4 md:py-2 hover:bg-indigo-900/60 transition-colors text-xs md:text-sm font-semibold backdrop-blur-md shadow-lg"
         >
-            <span className="w-4 h-4 bg-transparent border border-white rounded-full flex items-center justify-center text-xs">🌐</span>
+            <span className="w-4 h-4 bg-transparent border border-white rounded-full flex items-center justify-center text-[10px]">🌐</span>
             {t.langName}
         </button>
       </div>
 
-      {/* 🔥 نافذة التعليمات تم إضافة overflow-y-auto وتصغيرها للجوال */}
       {showIntroModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 text-center w-full max-w-lg shadow-[0_0_50px_rgba(79,70,229,0.15)] animate-in zoom-in-95 duration-300 my-8">
@@ -376,25 +375,37 @@ export default function MatchCharacterPage() {
         </div>
       )}
 
-      <div className="w-full max-w-6xl mx-auto flex-shrink-0 mt-14 md:mt-0">
-        <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-center md:text-start">
+      {/* عنوان اللعبة */}
+      <div className="w-full max-w-6xl mx-auto flex-shrink-0 mt-14 md:mt-4 mb-2">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center md:text-start text-indigo-400">
           {t.gameTitle}
         </h1>
-
-        <div className="flex gap-3 md:gap-4 mb-6 flex-wrap justify-center md:justify-start text-sm md:text-base">
-          <div className="border border-indigo-500/30 bg-indigo-900/20 rounded-lg px-4 py-2 font-semibold">
-            {t.level} {currentLevel}
-          </div>
-          <div className="border border-zinc-700 bg-zinc-800/50 rounded-lg px-4 py-2">
-            ⏱️ {seconds} {t.seconds}
-          </div>
-          <div className="border border-zinc-700 bg-zinc-800/50 rounded-lg px-4 py-2 flex items-center gap-1">
-            🎯 {t.errors}: {errors}
-          </div>
-        </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center w-full">
+      {/* 🔥 الشريط العلوي الثابت (Sticky Header) لحل مشكلة التمرير في الجوال */}
+      {!showIntroModal && (
+        <div className="sticky top-0 z-40 bg-[#000000]/80 md:bg-transparent backdrop-blur-md md:backdrop-blur-none pt-3 pb-3 -mx-4 px-4 md:mx-0 md:px-0 border-b border-zinc-800/50 md:border-none mb-6">
+          <div className="flex flex-wrap justify-between items-center bg-zinc-900/90 p-3 md:p-4 rounded-xl md:rounded-2xl border border-zinc-800 gap-2 md:gap-4 shadow-lg w-full max-w-6xl mx-auto">
+             <div className="flex items-center gap-2">
+                <span className="bg-indigo-950/60 text-indigo-400 font-bold px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-indigo-900/50 text-xs sm:text-sm whitespace-nowrap">
+                  {t.level} {currentLevel}
+                </span>
+             </div>
+             
+             <div className="flex gap-2 md:gap-3 text-xs md:text-sm font-semibold">
+                <span className="bg-zinc-800 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-zinc-700 flex items-center gap-1">
+                  ⏱️ {seconds} <span className="hidden sm:inline">{t.seconds}</span>
+                </span>
+                <span className="bg-zinc-800 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-zinc-700 flex items-center gap-1">
+                  🎯 <span className="hidden sm:inline">{t.errors}:</span> {errors}
+                </span>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* شبكة البطاقات (Grid) */}
+      <div className="flex-1 flex items-center justify-center w-full pb-8">
         <div 
           className={`bg-zinc-800/80 border-4 border-zinc-900 rounded-3xl p-3 sm:p-4 md:p-6 w-full mx-auto shadow-2xl backdrop-blur-sm transition-all duration-500 ${
             shuffledCards.length === 12 ? 'max-w-4xl' : 
@@ -443,10 +454,9 @@ export default function MatchCharacterPage() {
         </div>
       </div>
 
-      {/* 🔥 نافذة الفوز تم إضافة overflow-y-auto وتصغير الصورة للجوال */}
       {showRewardModal && reward && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300 my-8">
+          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 my-8">
             <h2 className="text-2xl md:text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{t.winTitle}</h2>
             <p className="mb-4 md:mb-6 text-sm md:text-base text-zinc-400">{t.gotCard}</p>
 
