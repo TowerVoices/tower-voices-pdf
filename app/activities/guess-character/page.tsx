@@ -2,120 +2,79 @@
 
 import { useState, useEffect, useRef } from "react";
 import { client } from "@/app/sanity.client"; 
-import Link from "next/link";
 
 interface CharacterFromSanity {
-  name: string;
-  nameEn: string;
+  pairId: number;
   image: string;
-  hints: string[];
-  hintsEn: string[];
-  echidnaHints?: string[];   
-  echidnaHintsEn?: string[]; 
+  name: string;      
+  nameEn: string;    
+  infoTexts: string[];   
+  infoTextsEn: string[]; 
 }
 
 interface RewardFromSanity {
-  name: string;
-  nameEn: string;
+  name: string;      
+  nameEn: string;    
   image: string;
   rarity: string;
 }
 
+interface CardData {
+  id: number;
+  pairId: number;
+  type: "character" | "info";
+  image?: string;
+  text?: string;
+}
+
 const uiTexts = {
   ar: {
-    gameTitle: "خمن الشخصية",
-    subTitle: "هل يمكنك معرفة الشخصية من خلال التلميحات؟",
-    hintNumber: "تلميح",
-    showNextHint: "👀 أظهر تلميحاً آخر",
-    noMoreHints: "لا يوجد تلميحات أخرى!",
-    selectAnswer: "من تكون هذه الشخصية؟",
+    gameTitle: "طابق الشخصية مع المعلومة",
+    startChallenge: "ابدأ التحدي الآن 🚀",
+    subTitle: "اختبر ذاكرتك ومعرفتك بشخصيات \"ري زيرو\". طابق كل شخصية مع المعلومة الصحيحة.",
+    level: "المستوى",
+    errors: "الأخطاء",
+    seconds: "ثانية",
     preparing: "جاري تجهيز التحدي...",
+    winTitle: "🎉 عمل رائع!",
     gotCard: "حصلت على بطاقة جديدة",
+    perfect: "يمنحك فرصة عالية جداً لبطاقة أسطورية!",
+    good: "يمنحك فرصة لبطاقة نادرة.",
+    average: "أكثر من ذلك يمنحك بطاقات عادية، فركز جيداً!",
     rewardRarity: "الندرة",
     share: "📤 مشاركة النتيجة",
+    nextLevel: "المستوى التالي ←",
+    replay: "إعادة اللعب 🔄",
     langName: "English",
-    getCardsTitle: "قواعد الحصول على البطاقات 🃏",
-    rule1Title: "مستوى الصعوبة:",
-    rule1Desc: "كلما اخترت مستوى أصعب (مثل إيكيدنا)، زادت فرصتك بشكل كبير للحصول على بطاقات أسطورية ونادرة.",
-    rule2Title: "الأخطاء والتلميحات:",
-    rule2Desc: "كل تخمين خاطئ أو استخدام لتلميح إضافي يقلل من هذه النسبة تدريجياً.",
-    rule3Title: "البطاقات العادية:",
-    rule3Desc: "إذا كانت أخطاؤك كثيرة أو اعتمدت كلياً على المستوى السهل، فستحصل غالباً على بطاقات عادية.",
-    usedHints: "التلميحات",
-    wrongGuesses: "الأخطاء",
-    totalHints: "إجمالي التلميحات", // 🔥 تم الإضافة
-    totalErrors: "إجمالي الأخطاء",    // 🔥 تم الإضافة
-    notEnoughData: "عذراً، لم نجد شخصيات تحتوي على تلميحات في قاعدة البيانات.",
-    startGameBtn: "فهمت، لنبدأ 🚀",
-    selectLevel: "اختر مستوى الصعوبة:",
-    levelLarp: "لارب (Larp)",
-    levelLarpDesc: "15 ثانية للتخمين",
-    levelSubaru: "سوبارو (Subaru)",
-    levelSubaruDesc: "10 ثواني للتخمين",
-    levelEchidna: "إيكيدنا (Echidna)",
-    levelEchidnaDesc: "5 ثواني، تلميح صعب جداً وبدون إضافات!",
-    echidnaConstraint: "وضع إيكيدنا: التلميحات الإضافية معطلة!",
-    timeUp: "انتهى الوقت!",
-    correctAnswerWas: "الإجابة الصحيحة كانت:",
-    tryAgain: "إعادة المحاولة 🔄",
-    changeLevel: "تغيير المستوى",
-    seconds: "ثانية",
-    round: "الجولة",
-    of: "من",
-    levelCompleteTitle: "🎉 اكتمل التحدي!",
-    levelCompleteDesc: "لقد أتممت 5 جولات بنجاح وحصلت على مكافأتك.",
-    backToMenu: "العودة للمركز 🏠"
+    getCardsTitle: "كيف تحصل على البطاقات؟ 🃏",
+    perfectTitle: "لعب مثالي (0 - 5 أخطاء)",
+    goodTitle: "لعب جيد (6 - 10 أخطاء)"
   },
   en: {
-    gameTitle: "Guess the Character",
-    subTitle: "Can you figure out the character from the hints?",
-    hintNumber: "Hint",
-    showNextHint: "👀 Show another hint",
-    noMoreHints: "No more hints available!",
-    selectAnswer: "Who is this character?",
+    gameTitle: "Match Character to Info",
+    startChallenge: "Start Challenge Now 🚀",
+    subTitle: "Test your memory. Match each Re:Zero character with their correct information.",
+    level: "Level",
+    errors: "Errors",
+    seconds: "sec",
     preparing: "Preparing Challenge...",
+    winTitle: "🎉 Amazing Job!",
     gotCard: "You obtained a new card",
+    perfect: "gives a very high chance of a Legendary card!",
+    good: "gives a chance of a Rare card.",
+    average: "More than that grants Common cards, so focus well!",
     rewardRarity: "Rarity",
     share: "📤 Share Result",
+    nextLevel: "Next Level ←",
+    replay: "Replay 🔄",
     langName: "العربية",
-    getCardsTitle: "How to get Cards? 🃏",
-    rule1Title: "Difficulty Level:",
-    rule1Desc: "Choosing harder levels (like Echidna) massively increases your chance for Legendary and Rare cards.",
-    rule2Title: "Hints & Mistakes:",
-    rule2Desc: "Every wrong guess or extra hint used drops your chance for high-rarity cards.",
-    rule3Title: "Common Cards:",
-    rule3Desc: "Playing on easy or making many mistakes will likely result in Common cards.",
-    usedHints: "Hints",
-    wrongGuesses: "Errors",
-    totalHints: "Total Hints",     // 🔥 تم الإضافة
-    totalErrors: "Total Errors",    // 🔥 تم الإضافة
-    notEnoughData: "Sorry, no characters with hints found in the database.",
-    startGameBtn: "Got it, Let's go! 🚀",
-    selectLevel: "Select Difficulty:",
-    levelLarp: "Larp",
-    levelLarpDesc: "15 seconds to guess",
-    levelSubaru: "Subaru",
-    levelSubaruDesc: "10 seconds to guess",
-    levelEchidna: "Echidna",
-    levelEchidnaDesc: "5 seconds, very hard hint, no extras!",
-    echidnaConstraint: "Echidna Mode: Extra hints disabled!",
-    timeUp: "Time's Up!",
-    correctAnswerWas: "The correct answer was:",
-    tryAgain: "Try Again 🔄",
-    changeLevel: "Change Level",
-    seconds: "sec",
-    round: "Round",
-    of: "of",
-    levelCompleteTitle: "🎉 Challenge Completed!",
-    levelCompleteDesc: "You completed 5 rounds and claimed your reward.",
-    backToMenu: "Back to Center 🏠"
+    getCardsTitle: "Get Cards! 🃏",
+    perfectTitle: "Perfect (0 - 5 Errors)",
+    goodTitle: "Good (6 - 10 Errors)"
   }
 };
 
-type Difficulty = 'larp' | 'subaru' | 'echidna' | null;
-const MAX_ROUNDS = 5;
-
-export default function GuessCharacterPage() {
+export default function MatchCharacterPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
   const [isMounted, setIsMounted] = useState(false);
 
@@ -126,6 +85,7 @@ export default function GuessCharacterPage() {
       const savedLang = localStorage.getItem('siteLang');
       
       let targetLang: 'ar' | 'en' = 'ar';
+
       if (urlLang === 'en' || urlLang === 'ar') {
         targetLang = urlLang;
         localStorage.setItem('siteLang', urlLang);
@@ -133,7 +93,9 @@ export default function GuessCharacterPage() {
         targetLang = savedLang;
       } else {
         const browserLang = navigator.language || (navigator.languages && navigator.languages[0]);
-        if (browserLang && !browserLang.toLowerCase().startsWith('ar')) targetLang = 'en';
+        if (browserLang && !browserLang.toLowerCase().startsWith('ar')) {
+          targetLang = 'en';
+        }
       }
       
       setCurrentLanguage(targetLang);
@@ -147,41 +109,35 @@ export default function GuessCharacterPage() {
   const [dbRewards, setDbRewards] = useState<RewardFromSanity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Game & Timer State
-  const [difficulty, setDifficulty] = useState<Difficulty>(null);
-  const [timeLeft, setTimeLeft] = useState<number>(0);
-  const [isTimeUp, setIsTimeUp] = useState(false);
-  const [gameFinished, setGameFinished] = useState(false); 
-
-  const [currentRound, setCurrentRound] = useState(1);
-  const [usedChars, setUsedChars] = useState<string[]>([]);
-  const [shuffledHintIndices, setShuffledHintIndices] = useState<number[]>([]); 
-
-  const [targetChar, setTargetChar] = useState<CharacterFromSanity | null>(null);
-  const [options, setOptions] = useState<CharacterFromSanity[]>([]);
-  const [revealedHintsCount, setRevealedHintsCount] = useState(1);
+  const [shuffledCards, setShuffledCards] = useState<CardData[]>([]);
+  const [openedCards, setOpenedCards] = useState<number[]>([]);
+  const [matchedCards, setMatchedCards] = useState<number[]>([]);
   
-  const [wrongAttempts, setWrongAttempts] = useState(0);
-  const [guessedWrongOptions, setGuessedWrongOptions] = useState<string[]>([]);
-  const [totalHintsUsed, setTotalHintsUsed] = useState(0);
-  const [totalWrongGuesses, setTotalWrongGuesses] = useState(0);
-  
-  const [correctGuess, setCorrectGuess] = useState<string | null>(null);
-
+  const [currentLevel, setCurrentLevel] = useState(1);
   const [reward, setReward] = useState<any>(null);
-  const [showIntroModal, setShowIntroModal] = useState(true);
-  const [showLevelCompleteModal, setShowLevelCompleteModal] = useState(false);
-  const [introStep, setIntroStep] = useState<1 | 2>(1); 
+  
+  const [showRewardModal, setShowRewardModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [showIntroModal, setShowIntroModal] = useState(true);
+
+  const [errors, setErrors] = useState(0); 
+  const [seconds, setSeconds] = useState(0);
+  const [gameFinished, setGameFinished] = useState(false);
+  
+  const [lastWonReward, setLastWonReward] = useState<string | null>(null);
+
+  const usedInfoTextsRef = useRef<Record<number, number[]>>({});
+
+  const MAX_LEVEL = 3;
 
   useEffect(() => {
     const fetchSanityData = async () => {
       try {
         const charQuery = `*[_type == "activityCharacter"]{
-          name, nameEn,      
+          pairId,
           "image": image.asset->url,
-          hints, hintsEn,
-          echidnaHints, echidnaHintsEn
+          name, nameEn,      
+          infoTexts, infoTextsEn 
         }`;
         
         const rewardQuery = `*[_type == "activityReward"]{
@@ -195,140 +151,112 @@ export default function GuessCharacterPage() {
           client.fetch(rewardQuery)
         ]);
 
-        const validChars = charData.filter((c: any) => c.hints && c.hints.length > 0);
-        setDbCharacters(validChars);
+        setDbCharacters(charData);
         setDbRewards(rewardData);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching data from Sanity:", error);
         setIsLoading(false);
       }
     };
     fetchSanityData();
   }, []);
 
-  const initializeRound = (chars: CharacterFromSanity[], used: string[], currentDiff: Difficulty) => {
-    if (chars.length < 4) return;
+  const initializeLevel = (level: number, characters: CharacterFromSanity[]) => {
+    if (characters.length === 0) return;
+
+    if (level === 1) usedInfoTextsRef.current = {};
+
+    const targetCount = level === 1 ? 3 : level === 2 ? 6 : 8;
+    const count = Math.min(targetCount, characters.length);
     
-    let availableChars = chars.filter(c => !used.includes(c.name));
-    if (availableChars.length === 0) {
-        availableChars = [...chars];
-        setUsedChars([]);
-    }
+    const selected = [...characters]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, count);
 
-    const shuffledAvailable = [...availableChars].sort(() => Math.random() - 0.5);
-    const target = shuffledAvailable[0];
+    let idCounter = 1;
+    const newCards: CardData[] = selected
+      .flatMap((item) => {
+        const texts = currentLanguage === 'en' ? item.infoTextsEn : item.infoTexts;
+        if (!texts || texts.length === 0) return []; 
+        
+        let availableIndices = texts.map((_, index) => index); 
+        const usedIndices = usedInfoTextsRef.current[item.pairId] || []; 
 
-    setUsedChars(prev => [...prev, target.name]);
+        const unusedIndices = availableIndices.filter(index => !usedIndices.includes(index));
+        
+        if (unusedIndices.length > 0) availableIndices = unusedIndices;
 
-    const distractors = chars.filter(c => c.name !== target.name).sort(() => Math.random() - 0.5).slice(0, 3);
-    const finalOptions = [target, ...distractors].sort(() => Math.random() - 0.5);
+        const pickedIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+        const randomText = texts[pickedIndex];
 
-    let hintsLen = 0;
-    if (currentDiff === 'echidna') {
-       hintsLen = target.echidnaHints?.length || target.hints?.length || 0;
-    } else {
-       hintsLen = target.hints?.length || 0;
-    }
-    const randomizedIndices = Array.from({length: hintsLen}, (_, i) => i).sort(() => Math.random() - 0.5);
+        if (texts.length > 0) {
+          if (!usedInfoTextsRef.current[item.pairId]) usedInfoTextsRef.current[item.pairId] = [];
+          usedInfoTextsRef.current[item.pairId].push(pickedIndex);
+        }
 
-    setShuffledHintIndices(randomizedIndices);
-    setTargetChar(target);
-    setOptions(finalOptions);
-    setRevealedHintsCount(1);
-    setWrongAttempts(0);
-    setGuessedWrongOptions([]);
-    setCorrectGuess(null);
-    setIsTimeUp(false);
+        return [
+          { id: idCounter++, pairId: item.pairId, type: "character" as const, image: item.image },
+          { id: idCounter++, pairId: item.pairId, type: "info" as const, text: randomText },
+        ];
+      })
+      .sort(() => Math.random() - 0.5);
+
+    setShuffledCards(newCards);
+    setOpenedCards([]);
+    setMatchedCards([]);
+    setErrors(0); 
+    setSeconds(0);
     setGameFinished(false);
-  };
-
-  const startGame = (selectedLevel: Difficulty) => {
-    setDifficulty(selectedLevel);
-    setCurrentRound(1); 
-    setUsedChars([]);   
-    setTotalHintsUsed(0);
-    setTotalWrongGuesses(0);
-    
-    if (selectedLevel === 'larp') setTimeLeft(15);
-    else if (selectedLevel === 'subaru') setTimeLeft(10);
-    else if (selectedLevel === 'echidna') setTimeLeft(5);
-    
-    setShowIntroModal(false);
-    setShowLevelCompleteModal(false);
-    initializeRound(dbCharacters, [], selectedLevel);
+    setReward(null);
   };
 
   useEffect(() => {
-    if (showIntroModal || showLevelCompleteModal || isTimeUp || gameFinished || !difficulty || isLoading) return;
+    if (dbCharacters.length > 0 && isMounted) {
+      initializeLevel(currentLevel, dbCharacters);
+    }
+  }, [currentLevel, dbCharacters, currentLanguage, isMounted]);
 
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setIsTimeUp(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
+  useEffect(() => {
+    if (gameFinished || shuffledCards.length === 0 || isLoading || showIntroModal || !isMounted) return;
+    const timer = setInterval(() => setSeconds((prev) => prev + 1), 1000);
     return () => clearInterval(timer);
-  }, [showIntroModal, showLevelCompleteModal, isTimeUp, gameFinished, difficulty, isLoading]);
+  }, [gameFinished, shuffledCards, isLoading, showIntroModal, isMounted]);
 
+  const handleShareClick = async () => {
+    if (!reward) return;
+    setIsSharing(true);
 
-  const getCurrentHints = () => {
-    if (!targetChar) return [];
-    
-    let baseHints: string[] = [];
-    if (difficulty === 'echidna') {
-        baseHints = currentLanguage === 'en' && targetChar.echidnaHintsEn && targetChar.echidnaHintsEn.length > 0 
-            ? targetChar.echidnaHintsEn 
-            : (targetChar.echidnaHints && targetChar.echidnaHints.length > 0 ? targetChar.echidnaHints : []);
-        
-        if (!baseHints || baseHints.length === 0) {
-            baseHints = currentLanguage === 'en' && targetChar.hintsEn && targetChar.hintsEn.length > 0 
-                ? targetChar.hintsEn 
-                : targetChar.hints;
-        }
-    } else {
-        baseHints = currentLanguage === 'en' && targetChar.hintsEn && targetChar.hintsEn.length > 0 
-            ? targetChar.hintsEn 
-            : targetChar.hints;
-    }
+    const shareTitle = currentLanguage === 'en' ? "Tower Voices Match Challenge" : "🏆 تحدي أصوات البرج 🏆";
+    const attemptsTitle = currentLanguage === 'en' ? "Errors" : "🎯 الأخطاء";
+    const levelTitle = currentLanguage === 'en' ? "Level" : "✨ المستوى";
+    const secondsTitle = currentLanguage === 'en' ? "sec" : "ثانية";
+    const winMsg = currentLanguage === 'en' ? "I finished the challenge and got card" : "طابقت الشخصيات بنجاح وحصلت على بطاقة";
+    const challengeMsg = currentLanguage === 'en' ? "Can you beat my record? Play from here 👇" : "هل يمكنك تحطيم رقمي؟ جرب التحدي من هنا 👇";
 
-    if (!baseHints) return [];
-    return shuffledHintIndices.map(i => baseHints[i]).filter(h => h !== undefined);
-  };
+    const shareText = `${shareTitle}\n${winMsg} (${currentLanguage === 'en' ? reward.nameEn : reward.name})! 🎉\n\n${levelTitle}: ${currentLevel}\n⏱️ Time: ${seconds} ${secondsTitle}\n${attemptsTitle}: ${errors}\n\n${challengeMsg}\nhttps://towervoices.online/activities/match-character?lang=${currentLanguage}`;
 
-  const currentHintsList = getCurrentHints();
-
-  const handleRevealHint = () => {
-    if (!targetChar || difficulty === 'echidna') return; 
-    if (revealedHintsCount < currentHintsList.length) {
-      setRevealedHintsCount(prev => prev + 1);
+    try {
+      if (navigator.share) {
+        await navigator.share({ text: shareText });
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        alert(currentLanguage === 'en' ? "✅ Copied to clipboard!" : "✅ تم نسخ النتيجة بنجاح!");
+      }
+    } catch (error) {
+      console.log("Share cancelled", error);
+    } finally {
+      setIsSharing(false);
     }
   };
 
-  const calculateFinalReward = (hintsUsed: number, mistakes: number, currentDifficulty: Difficulty) => {
+  const getRandomReward = (mistakesCount: number) => {
     if (dbRewards.length === 0) return null;
-    
-    let legendaryChance = 0;
-    let rareChance = 0;
-
-    if (currentDifficulty === 'echidna') {
-      legendaryChance = 60; rareChance = 30; 
-    } else if (currentDifficulty === 'subaru') {
-      legendaryChance = 35; rareChance = 40; 
-    } else { 
-      legendaryChance = 15; rareChance = 35; 
-    }
-
-    const extraHints = Math.max(0, hintsUsed - 5);
-    const penaltyScore = extraHints + (mistakes * 2);
-
-    legendaryChance = Math.max(2, legendaryChance - (penaltyScore * 5));
-    rareChance = Math.max(10, rareChance - (penaltyScore * 4));
+    let legendaryChance = 5; let rareChance = 25;     
+    if (mistakesCount >= 0 && mistakesCount <= 5) { legendaryChance = 45; rareChance = 65; } 
+    else if (mistakesCount >= 6 && mistakesCount <= 10) { legendaryChance = 45; rareChance = 50; } 
+    else if (mistakesCount >= 11 && mistakesCount <= 20) { legendaryChance = 18; rareChance = 35; } 
+    else { legendaryChance = 5; rareChance = 25; }
 
     const roll = Math.random() * 100;
     let targetRarity = 'common';
@@ -337,86 +265,66 @@ export default function GuessCharacterPage() {
     else targetRarity = 'common'; 
 
     const filteredRewards = dbRewards.filter(r => r.rarity === targetRarity);
-    const pool = filteredRewards.length > 0 ? filteredRewards : dbRewards;
-    return pool[Math.floor(Math.random() * pool.length)];
+    let pool = filteredRewards.length > 0 ? filteredRewards : dbRewards;
+    
+    if (lastWonReward && pool.length > 1) {
+      const withoutLastReward = pool.filter(r => r.name !== lastWonReward);
+      if (withoutLastReward.length > 0) pool = withoutLastReward;
+    }
+
+    const pickedReward = pool[Math.floor(Math.random() * pool.length)];
+    setLastWonReward(pickedReward.name);
+    return pickedReward;
   };
 
-  const handleGuess = (charName: string) => {
-    if (!targetChar || isTimeUp || gameFinished || correctGuess) return;
+  const handleCardClick = (cardId: number) => {
+    if (openedCards.includes(cardId) || matchedCards.includes(cardId) || openedCards.length >= 2) return;
+    const newOpened = [...openedCards, cardId];
+    setOpenedCards(newOpened);
 
-    if (charName === targetChar.name) {
-      setCorrectGuess(charName);
-      setGameFinished(true);
+    if (newOpened.length === 2) {
+      const firstCard = shuffledCards.find((c) => c.id === newOpened[0]);
+      const secondCard = shuffledCards.find((c) => c.id === newOpened[1]);
 
-      const newTotalHints = totalHintsUsed + revealedHintsCount;
-      const newTotalMistakes = totalWrongGuesses + wrongAttempts;
-      setTotalHintsUsed(newTotalHints);
-      setTotalWrongGuesses(newTotalMistakes);
+      if (firstCard && secondCard && firstCard.pairId === secondCard.pairId) {
+        const newMatched = [...matchedCards, ...newOpened];
+        setMatchedCards(newMatched);
+        setOpenedCards([]); 
 
-      setTimeout(() => {
-        if (currentRound >= MAX_ROUNDS) {
-           const wonReward = calculateFinalReward(newTotalHints, newTotalMistakes, difficulty);
-           setReward(wonReward);
-           setShowLevelCompleteModal(true);
-        } else {
-           setCurrentRound(prev => prev + 1);
-           if (difficulty === 'larp') setTimeLeft(15);
-           else if (difficulty === 'subaru') setTimeLeft(10);
-           else if (difficulty === 'echidna') setTimeLeft(5);
-           initializeRound(dbCharacters, usedChars, difficulty);
+        if (newMatched.length === shuffledCards.length) {
+          const wonReward = getRandomReward(errors); 
+          setReward(wonReward);
+          setGameFinished(true);
+          setTimeout(() => setShowRewardModal(true), 500);
         }
-      }, 700);
-
-    } else {
-      if (!guessedWrongOptions.includes(charName)) {
-        setGuessedWrongOptions(prev => [...prev, charName]);
-        setWrongAttempts(prev => prev + 1);
+      } else {
+        setErrors((prev) => prev + 1);
+        setTimeout(() => setOpenedCards([]), 1000);
       }
     }
   };
 
-  const handleShareClick = async () => {
-    if (!reward) return;
-    setIsSharing(true);
-    const levelName = difficulty === 'larp' ? t.levelLarp : difficulty === 'subaru' ? t.levelSubaru : t.levelEchidna;
-    const shareTitle = currentLanguage === 'en' ? "Tower Voices Guess Challenge" : "🏆 تحدي أصوات البرج 🏆";
-    const winMsg = currentLanguage === 'en' ? "I beat the challenge and got card" : "أنهيت التحدي بنجاح وحصلت على بطاقة";
-    const challengeMsg = currentLanguage === 'en' ? "Can you beat my record? Play here 👇" : "هل يمكنك تحطيم رقمي؟ جرب التحدي من هنا 👇";
-
-    const shareText = `${shareTitle}\n${winMsg} (${currentLanguage === 'en' ? reward.nameEn : reward.name})! 🎉\n\n🛡️ ${levelName}\n💡 ${t.usedHints}: ${totalHintsUsed}\n🎯 ${t.wrongGuesses}: ${totalWrongGuesses}\n\n${challengeMsg}\nhttps://towervoices.online/activities/guess-character?lang=${currentLanguage}`;
-
-    try {
-      if (navigator.share) await navigator.share({ text: shareText });
-      else {
-        await navigator.clipboard.writeText(shareText);
-        alert(currentLanguage === 'en' ? "✅ Copied to clipboard!" : "✅ تم نسخ النتيجة بنجاح!");
-      }
-    } catch (error) { console.log("Share cancelled", error); } 
-    finally { setIsSharing(false); }
+  const handleNextLevel = () => {
+    setShowRewardModal(false);
+    if (currentLevel < MAX_LEVEL) setCurrentLevel((prev) => prev + 1);
+    else setCurrentLevel(1);
   };
 
   if (!isMounted || isLoading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#0a0a0a] text-white">
-        <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-      </main>
-    );
-  }
-
-  if (dbCharacters.length < 4) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-[#0a0a0a] text-white p-6 text-center">
-        <div className="bg-red-900/20 border border-red-500/50 p-6 rounded-2xl">
-          <p className="text-red-400 text-lg font-bold">{t.notEnoughData}</p>
-          <Link href="/activities" className="mt-4 inline-block text-zinc-400 hover:text-white underline">العودة للمركز</Link>
+      <main className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       </main>
     );
   }
 
   return (
-    <main dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen flex flex-col p-4 md:p-8 bg-[#0a0a0a] text-white relative">
-      
+    <main 
+      dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} 
+      className="min-h-screen flex flex-col p-4 md:p-8 bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white relative z-0"
+    >
       <div className={`absolute top-6 ${currentLanguage === 'ar' ? 'left-6 md:left-12' : 'right-6 md:right-12'} z-50`}>
         <button 
             onClick={() => {
@@ -424,224 +332,152 @@ export default function GuessCharacterPage() {
               setCurrentLanguage(nextLang);
               localStorage.setItem('siteLang', nextLang);
             }}
-            className="flex items-center gap-2 border border-emerald-500/30 bg-emerald-900/40 rounded-full px-4 py-2 hover:bg-emerald-900/60 transition-colors text-sm font-semibold backdrop-blur-md shadow-lg"
+            className="flex items-center gap-2 border border-indigo-500/30 bg-indigo-900/40 rounded-full px-4 py-2 hover:bg-indigo-900/60 transition-colors text-sm font-semibold backdrop-blur-md shadow-lg"
         >
-            <span className="w-4 h-4 text-xs flex items-center justify-center">🌐</span>
+            <span className="w-4 h-4 bg-transparent border border-white rounded-full flex items-center justify-center text-xs">🌐</span>
             {t.langName}
         </button>
       </div>
 
-      {/* نافذة القواعد واختيار المستوى - تم إضافة overflow-y-auto */}
+      {/* 🔥 نافذة التعليمات تم إضافة overflow-y-auto وتصغيرها للجوال */}
       {showIntroModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 w-full max-w-lg shadow-[0_0_50px_rgba(16,185,129,0.15)] animate-in zoom-in-95 duration-300 my-8">
-            <div className="text-center">
-               <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">🤔</div>
-               <h2 className="text-2xl font-bold mb-2 text-white">{t.gameTitle}</h2>
-               <p className="text-zinc-400 mb-6 text-sm">{t.subTitle}</p>
+          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 text-center w-full max-w-lg shadow-[0_0_50px_rgba(79,70,229,0.15)] animate-in zoom-in-95 duration-300 my-8">
+            <div className="w-16 h-16 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl">🎮</div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-white">{t.gameTitle}</h2>
+            <p className="text-zinc-400 mb-6 md:mb-8 leading-relaxed text-sm md:text-base">{t.subTitle}</p>
+
+            <div className="bg-black/40 rounded-2xl p-4 md:p-5 mb-6 md:mb-8 text-start space-y-4 text-sm md:text-base border border-zinc-800">
+              <h3 className="font-bold text-indigo-400 text-center mb-4 md:mb-5">{t.getCardsTitle}</h3>
+              
+              <p className="flex items-center gap-3">
+                <span className="w-3.5 h-3.5 rounded-full bg-yellow-500 flex-shrink-0 shadow-[0_0_10px_rgba(234,179,8,0.5)]"></span>
+                <span className="text-zinc-300"><b className="text-white">{t.perfectTitle}</b> {t.perfect}</span>
+              </p>
+              
+              <p className="flex items-center gap-3">
+                <span className="w-3.5 h-3.5 rounded-full bg-blue-500 flex-shrink-0 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></span>
+                <span className="text-zinc-300"><b className="text-white">{t.goodTitle}</b> {t.good}</span>
+              </p>
+              
+              <p className="flex items-center gap-3">
+                <span className="w-3.5 h-3.5 rounded-full bg-green-400 flex-shrink-0 shadow-[0_0_10px_rgba(74,222,128,0.5)]"></span>
+                <span className="text-zinc-300">{t.average}</span>
+              </p>
             </div>
 
-            {introStep === 1 ? (
-              <div className="animate-in fade-in duration-300">
-                <div className="bg-black/40 rounded-2xl p-4 md:p-5 mb-6 md:mb-8 text-start space-y-4 md:space-y-5 text-sm md:text-base border border-zinc-800">
-                  <h3 className="font-bold text-emerald-400 text-center mb-4 md:mb-5">{t.getCardsTitle}</h3>
-                  <p className="flex items-start gap-3">
-                    <span className="text-xl mt-0.5">📈</span>
-                    <span className="text-zinc-300 leading-relaxed"><b className="text-white">{t.rule1Title}</b> {t.rule1Desc}</span>
-                  </p>
-                  <p className="flex items-start gap-3">
-                    <span className="text-xl mt-0.5">📉</span>
-                    <span className="text-zinc-300 leading-relaxed"><b className="text-white">{t.rule2Title}</b> {t.rule2Desc}</span>
-                  </p>
-                  <p className="flex items-start gap-3">
-                    <span className="text-xl mt-0.5">🟢</span>
-                    <span className="text-zinc-300 leading-relaxed"><b className="text-white">{t.rule3Title}</b> {t.rule3Desc}</span>
-                  </p>
-                </div>
+            <button
+              onClick={() => setShowIntroModal(false)}
+              className="w-full bg-indigo-600 hover:bg-indigo-500 transition-all text-white py-3.5 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-indigo-500/25 active:scale-[0.98]"
+            >
+              {t.startChallenge}
+            </button>
+          </div>
+        </div>
+      )}
 
-                <button
-                  onClick={() => setIntroStep(2)}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 transition-all text-white py-3.5 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-emerald-500/25 active:scale-[0.98]"
+      <div className="w-full max-w-6xl mx-auto flex-shrink-0 mt-14 md:mt-0">
+        <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-center md:text-start">
+          {t.gameTitle}
+        </h1>
+
+        <div className="flex gap-3 md:gap-4 mb-6 flex-wrap justify-center md:justify-start text-sm md:text-base">
+          <div className="border border-indigo-500/30 bg-indigo-900/20 rounded-lg px-4 py-2 font-semibold">
+            {t.level} {currentLevel}
+          </div>
+          <div className="border border-zinc-700 bg-zinc-800/50 rounded-lg px-4 py-2">
+            ⏱️ {seconds} {t.seconds}
+          </div>
+          <div className="border border-zinc-700 bg-zinc-800/50 rounded-lg px-4 py-2 flex items-center gap-1">
+            🎯 {t.errors}: {errors}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 flex items-center justify-center w-full">
+        <div 
+          className={`bg-zinc-800/80 border-4 border-zinc-900 rounded-3xl p-3 sm:p-4 md:p-6 w-full mx-auto shadow-2xl backdrop-blur-sm transition-all duration-500 ${
+            shuffledCards.length === 12 ? 'max-w-4xl' : 
+            shuffledCards.length >= 14 ? 'max-w-6xl' : 
+            'max-w-2xl' 
+          }`}
+        >
+          <div 
+            className={`grid gap-2 sm:gap-3 md:gap-4 w-full mx-auto ${
+              shuffledCards.length === 12 ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6' : 
+              shuffledCards.length >= 14 ? 'grid-cols-4 sm:grid-cols-4 md:grid-cols-8' : 
+              'grid-cols-2 sm:grid-cols-3' 
+            }`}
+          >
+            {shuffledCards.map((card) => {
+              const isOpened = openedCards.includes(card.id);
+              const isMatched = matchedCards.includes(card.id);
+              const isFlipped = isOpened || isMatched;
+
+              return (
+                <div
+                  key={card.id}
+                  onClick={() => handleCardClick(card.id)}
+                  className={`
+                    aspect-[3/4] rounded-xl md:rounded-2xl border transition-all duration-500 cursor-pointer overflow-hidden flex items-center justify-center p-2 md:p-3
+                    ${isMatched ? 'border-green-500/30 bg-green-950/20 opacity-30 grayscale-[50%] pointer-events-none scale-95' : 'hover:scale-[1.02]'}
+                    ${isOpened && !isMatched ? 'border-indigo-500 shadow-[0_0_30px_rgba(99,102,241,0.4)] bg-zinc-700' : ''}
+                    ${!isFlipped ? 'border-zinc-600 bg-gradient-to-b from-zinc-700 to-zinc-900 hover:border-zinc-400' : 'bg-zinc-800'}
+                  `}
                 >
-                  {t.startGameBtn}
-                </button>
-              </div>
-            ) : (
-              <div className="animate-in slide-in-from-right-4 duration-300">
-                <h3 className="font-bold text-emerald-400 text-center mb-4">{t.selectLevel}</h3>
-                <div className="flex flex-col gap-3">
-                    <button onClick={() => startGame('larp')} className="bg-zinc-800/80 hover:bg-emerald-950/40 border border-zinc-700 hover:border-emerald-500 p-4 rounded-xl transition-all flex justify-between items-center group text-start">
-                        <div>
-                            <div className="font-bold text-white group-hover:text-emerald-400">{t.levelLarp}</div>
-                            <div className="text-zinc-400 text-xs mt-1">{t.levelLarpDesc}</div>
-                        </div>
-                        <div className="text-2xl flex-shrink-0 ml-2">🟢</div>
-                    </button>
-                    
-                    <button onClick={() => startGame('subaru')} className="bg-zinc-800/80 hover:bg-yellow-950/40 border border-zinc-700 hover:border-yellow-500 p-4 rounded-xl transition-all flex justify-between items-center group text-start">
-                        <div>
-                            <div className="font-bold text-white group-hover:text-yellow-400">{t.levelSubaru}</div>
-                            <div className="text-zinc-400 text-xs mt-1">{t.levelSubaruDesc}</div>
-                        </div>
-                        <div className="text-2xl flex-shrink-0 ml-2">🟡</div>
-                    </button>
-
-                    <button onClick={() => startGame('echidna')} className="bg-zinc-800/80 hover:bg-red-950/40 border border-zinc-700 hover:border-red-500 p-4 rounded-xl transition-all flex justify-between items-center group text-start">
-                        <div>
-                            <div className="font-bold text-white group-hover:text-red-400">{t.levelEchidna}</div>
-                            <div className="text-zinc-400 text-xs mt-1">{t.levelEchidnaDesc}</div>
-                        </div>
-                        <div className="text-2xl flex-shrink-0 ml-2">🔴</div>
-                    </button>
+                  {isFlipped ? (
+                    card.type === "character" ? (
+                      <img src={card.image} alt="character" className="w-full h-full object-contain pointer-events-none animate-in fade-in zoom-in duration-300" />
+                    ) : (
+                      <div className="text-center font-bold text-zinc-100 text-[10px] sm:text-xs md:text-sm leading-snug animate-in fade-in duration-300">
+                        {card.text}
+                      </div>
+                    )
+                  ) : (
+                    <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-zinc-500">؟</div>
+                  )}
                 </div>
-              </div>
-            )}
+              );
+            })}
           </div>
         </div>
-      )}
+      </div>
 
-      {/* نافذة الخسارة (انتهاء الوقت) - تم تحسينها للجوال */}
-      {isTimeUp && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-red-500/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.15)] animate-in zoom-in-95 duration-300 my-8">
-            <div className="text-4xl md:text-5xl mb-4 animate-bounce">⌛</div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-3 text-red-500">{t.timeUp}</h2>
-            <p className="text-sm md:text-base text-zinc-300 mb-2">{t.correctAnswerWas}</p>
-            
-            <div className="w-24 h-24 md:w-28 md:h-28 mx-auto my-3 md:my-4 rounded-full overflow-hidden border-4 border-zinc-800 shadow-lg bg-zinc-800/50 flex items-center justify-center">
-                <img src={targetChar?.image} alt="character" className="w-full h-full object-contain p-2" />
-            </div>
-            
-            <p className="text-xl md:text-2xl font-bold text-white mb-6 md:mb-8">{currentLanguage === 'en' ? targetChar?.nameEn : targetChar?.name}</p>
-            
-            <div className="flex flex-col gap-2 md:gap-3">
-               <button onClick={() => startGame(difficulty)} className="w-full bg-red-600 hover:bg-red-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-semibold text-sm md:text-base">
-                 {t.tryAgain}
-               </button>
-               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setIsTimeUp(false); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-zinc-300 text-sm md:text-base">
-                 {t.changeLevel}
-               </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 🔥 نافذة الفوز تم إضافة overflow-y-auto وتصغير الصورة للجوال */}
+      {showRewardModal && reward && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300 my-8">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{t.winTitle}</h2>
+            <p className="mb-4 md:mb-6 text-sm md:text-base text-zinc-400">{t.gotCard}</p>
 
-      {/* نافذة إكمال التحدي (النهائية الكبرى) - تم إصلاح الترجمة ودعم الجوال */}
-      {showLevelCompleteModal && reward && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-emerald-500/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_60px_rgba(16,185,129,0.25)] animate-in zoom-in-95 duration-500 my-8">
-            <div className="text-5xl md:text-6xl mb-3 md:mb-4 animate-bounce">🏆</div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{t.levelCompleteTitle}</h2>
-            <p className="text-sm md:text-base text-zinc-300 mb-4 md:mb-6">{t.levelCompleteDesc}</p>
-            
-            <div className="relative mx-auto w-36 md:w-48 flex justify-center items-center mb-4 md:mb-6">
-              {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[50px] opacity-40 rounded-full animate-pulse scale-110"></div>}
-              {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-[50px] opacity-40 rounded-full animate-pulse scale-110"></div>}
-              <img src={reward.image} alt="card" className="w-full h-auto relative z-10 drop-shadow-2xl hover:scale-105 transition-transform duration-500" />
+            <div className="relative mx-auto w-40 md:w-60 flex justify-center items-center mb-4 md:mb-6 mt-2 md:-mt-4">
+              {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
+              {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
+              
+              <img src={reward.image} alt={currentLanguage === 'en' ? reward.nameEn : reward.name} className="w-full h-auto object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500" />
             </div>
             
             <p className={`text-xl md:text-2xl font-bold ${reward.rarity === 'legendary' ? 'text-yellow-400' : reward.rarity === 'rare' ? 'text-blue-400' : 'text-white'}`}>
               {currentLanguage === 'en' ? reward.nameEn : reward.name}
             </p>
-            <p className="text-[10px] md:text-xs mt-1 text-zinc-500 uppercase tracking-widest mb-4 md:mb-6">{t.rewardRarity}: {currentLanguage === 'en' ? reward.rarity.toUpperCase() : (reward.rarity === 'common' ? 'عادي' : reward.rarity === 'rare' ? 'نادر' : 'أسطوري')}</p>
+            <p className="text-[10px] md:text-xs mt-1 text-zinc-500 uppercase tracking-widest">{t.rewardRarity}: {currentLanguage === 'en' ? reward.rarity.toUpperCase() : (reward.rarity === 'common' ? 'عادي' : reward.rarity === 'rare' ? 'نادر' : 'أسطوري')}</p>
 
-            {/* 🔥 هنا تم تطبيق إصلاح الترجمة (totalHints و totalErrors) */}
-            <div className="bg-black/40 p-3 md:p-4 rounded-xl space-y-2 md:space-y-3 text-sm text-zinc-300 text-start border border-zinc-800 mb-4 md:mb-6">
-              <p className="flex justify-between"><span>💡 {t.totalHints}:</span> <span className="font-bold text-white">{totalHintsUsed}</span></p>
-              <p className="flex justify-between"><span>🎯 {t.totalErrors}:</span> <span className="font-bold text-white">{totalWrongGuesses}</span></p>
+            <div className="mt-4 md:mt-6 bg-black/30 p-3 md:p-4 rounded-xl space-y-2 md:space-y-3 text-sm text-zinc-300 text-start border border-zinc-800">
+              <p className="flex justify-between"><span>⏱️ {currentLanguage === 'en' ? 'Time' : 'الزمن'}:</span> <span className="font-bold text-white">{seconds} {t.seconds}</span></p>
+              <p className="flex justify-between"><span>🎯 {t.errors}:</span> <span className="font-bold text-white">{errors}</span></p>
             </div>
 
-            <div className="flex flex-col gap-2 md:gap-3">
-               <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-emerald-600 hover:bg-emerald-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm md:text-base">
-                 {t.share}
-               </button>
-               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowLevelCompleteModal(false); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-zinc-300 block text-sm md:text-base">
-                 {t.changeLevel}
-               </button>
+            <div className="mt-4 md:mt-6 flex flex-col gap-2 md:gap-3">
+              <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-indigo-600 hover:bg-indigo-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm md:text-base">
+                {t.share}
+              </button>
+              <button onClick={handleNextLevel} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-sm md:text-base text-zinc-300 block">
+                {currentLevel < MAX_LEVEL ? t.nextLevel : t.replay}
+              </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* واجهة اللعب الأساسية */}
-      <div className="w-full max-w-4xl mx-auto mt-16 flex flex-col flex-1">
-        
-        <div className="flex flex-wrap justify-between items-center mb-6 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800 gap-4">
-           <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold text-emerald-400 hidden sm:block">{t.gameTitle}</h1>
-              <span className="bg-emerald-950/40 text-emerald-400 font-bold px-3 py-1.5 rounded-lg border border-emerald-900/50 text-sm">
-                {t.round} {currentRound} {t.of} {MAX_ROUNDS}
-              </span>
-              <button onClick={() => { setIntroStep(2); setShowIntroModal(true); }} className="bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-xs hover:bg-zinc-700 transition-colors">
-                ⚙️ {t.changeLevel}
-              </button>
-           </div>
-           
-           <div className="flex gap-3 text-sm font-semibold">
-              <span className={`px-3 py-1.5 rounded-lg border flex items-center gap-1 transition-colors ${timeLeft <= 3 ? 'bg-red-950/80 border-red-500 text-red-400 animate-pulse' : 'bg-zinc-800 border-zinc-700'}`}>
-                ⏱️ {timeLeft} {t.seconds}
-              </span>
-              <span className="bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 hidden sm:block">💡 {t.usedHints}: {revealedHintsCount}</span>
-              <span className="bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700">🎯 {t.wrongGuesses}: {wrongAttempts}</span>
-           </div>
-        </div>
-
-        <div className="flex-1 flex flex-col gap-4 mb-8">
-          {currentHintsList.slice(0, revealedHintsCount).map((hint, index) => (
-            <div key={index} className="bg-zinc-800/80 border border-zinc-700 p-5 rounded-2xl shadow-lg animate-in slide-in-from-bottom-4">
-              <div className="text-emerald-500 text-sm font-bold mb-2">{t.hintNumber} {index + 1}</div>
-              <p className="text-lg md:text-xl text-zinc-200 leading-relaxed">{hint}</p>
-            </div>
-          ))}
-          
-          {revealedHintsCount < currentHintsList.length && difficulty !== 'echidna' ? (
-            <button 
-              onClick={handleRevealHint}
-              className="self-center mt-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-6 py-3 rounded-xl border border-zinc-600 transition-all font-semibold"
-            >
-              {t.showNextHint}
-            </button>
-          ) : (
-            <div className="self-center mt-4 font-bold">
-              {difficulty === 'echidna' ? (
-                <span className="text-red-400 bg-red-950/30 px-4 py-2 rounded-lg border border-red-900/50">⚠️ {t.echidnaConstraint}</span>
-              ) : (
-                <span className="text-zinc-500 text-sm">{t.noMoreHints}</span>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-zinc-900/80 border border-zinc-800 p-6 rounded-3xl mt-auto">
-          <h3 className="text-center font-bold text-zinc-400 mb-6">{t.selectAnswer}</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {options.map((option) => {
-              const isWrong = guessedWrongOptions.includes(option.name);
-              const isCorrect = correctGuess === option.name;
-              const charDisplayName = currentLanguage === 'en' && option.nameEn ? option.nameEn : option.name;
-
-              return (
-                <button
-                  key={option.name}
-                  onClick={() => handleGuess(option.name)}
-                  disabled={isWrong || isTimeUp || gameFinished || correctGuess !== null}
-                  className={`
-                    p-4 rounded-xl border-2 transition-all font-bold text-lg flex items-center justify-between
-                    ${isCorrect ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)] scale-105' 
-                     : isWrong ? 'bg-red-950/20 border-red-900/50 text-red-500/50 cursor-not-allowed line-through' 
-                     : 'bg-zinc-800 border-zinc-700 hover:border-emerald-500 hover:bg-emerald-950/30 text-white active:scale-95'}
-                  `}
-                >
-                  {charDisplayName}
-                  {isCorrect && <span>✅</span>}
-                  {isWrong && <span>❌</span>}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-      </div>
     </main>
   );
 }
