@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { client } from "@/app/sanity.client"; 
 import Link from "next/link";
 
@@ -63,7 +63,7 @@ const uiTexts = {
     round: "الجولة",
     of: "من",
     levelCompleteTitle: "🎉 اكتمل التحدي!",
-    levelCompleteDesc: "لقد أتممت 5 جولات بنجاح وحصلت على مكافأتك.",
+    levelCompleteDesc: "لقد أتممت 10 جولات بنجاح وحصلت على مكافأتك.",
     backToMenu: "العودة للمركز 🏠"
   },
   en: {
@@ -107,13 +107,25 @@ const uiTexts = {
     round: "Round",
     of: "of",
     levelCompleteTitle: "🎉 Challenge Completed!",
-    levelCompleteDesc: "You completed 5 rounds and claimed your reward.",
+    levelCompleteDesc: "You completed 10 rounds and claimed your reward.",
     backToMenu: "Back to Center 🏠"
   }
 };
 
 type Difficulty = 'larp' | 'subaru' | 'echidna' | null;
-const MAX_ROUNDS = 5;
+
+// تعديل عدد المراحل إلى 10
+const MAX_ROUNDS = 10;
+
+// دالة خلط المصفوفات الاحترافية (Fisher-Yates) لمنع أي تكرار
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 export default function GuessCharacterPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
@@ -230,7 +242,10 @@ export default function GuessCharacterPage() {
     } else {
        hintsLen = target.hints?.length || 0;
     }
-    const randomizedIndices = Array.from({length: hintsLen}, (_, i) => i).sort(() => Math.random() - 0.5);
+    
+    // تطبيق التعديل السحري هنا لمنع التكرار باستخدام دالة الخلط المخصصة
+    const baseIndices = Array.from({length: hintsLen}, (_, i) => i);
+    const randomizedIndices = shuffleArray(baseIndices);
 
     setShuffledHintIndices(randomizedIndices);
     setTargetChar(target);
@@ -560,7 +575,7 @@ export default function GuessCharacterPage() {
         </div>
       )}
 
-      {/* 🔥 هنا التعديل السحري: جعلنا الشريط العلوي Sticky */}
+      {/* شريط معلومات اللعبة العلوي المستقر (Sticky) */}
       {!showIntroModal && (
         <div className="sticky top-0 z-[40] pt-14 pb-2 bg-[#0a0a0a]/90 backdrop-blur-md w-full max-w-4xl mx-auto border-b border-zinc-800/50 mb-6">
           <div className="flex flex-wrap justify-between items-center bg-zinc-900/80 p-3 md:p-4 rounded-2xl border border-zinc-800 gap-2 md:gap-4 shadow-md">
