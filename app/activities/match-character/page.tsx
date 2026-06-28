@@ -48,7 +48,10 @@ const uiTexts = {
     langName: "English",
     getCardsTitle: "كيف تحصل على البطاقات؟ 🃏",
     perfectTitle: "لعب مثالي (0 - 5 أخطاء)",
-    goodTitle: "لعب جيد (6 - 10 أخطاء)"
+    goodTitle: "لعب جيد (6 - 10 أخطاء)",
+    gameOverTitle: "💀 لقد خسرت!",
+    gameOverDesc: "لقد تجاوزت الحد الأقصى من الأخطاء (15 خطأ)... استيقظ وحش اللارب ليقضي عليك!",
+    restartGame: "العب من جديد"
   },
   en: {
     gameTitle: "Match Character to Info",
@@ -70,9 +73,15 @@ const uiTexts = {
     langName: "العربية",
     getCardsTitle: "Get Cards! 🃏",
     perfectTitle: "Perfect (0 - 5 Errors)",
-    goodTitle: "Good (6 - 10 Errors)"
+    goodTitle: "Good (6 - 10 Errors)",
+    gameOverTitle: "💀 Game Over!",
+    gameOverDesc: "You exceeded 15 mistakes... The Larp Monster has awakened to consume you!",
+    restartGame: "Play Again"
   }
 };
+
+const MAX_LEVEL = 3;
+const MAX_MISTAKES = 15; // الحد الأقصى للأخطاء المسموح بها
 
 export default function MatchCharacterPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
@@ -107,6 +116,7 @@ export default function MatchCharacterPage() {
 
   const [dbCharacters, setDbCharacters] = useState<CharacterFromSanity[]>([]);
   const [dbRewards, setDbRewards] = useState<RewardFromSanity[]>([]);
+  const [larpMonsterImage, setLarpMonsterImage] = useState<string | null>(null); // صورة الوحش
   const [isLoading, setIsLoading] = useState(true);
 
   const [shuffledCards, setShuffledCards] = useState<CardData[]>([]);
@@ -117,6 +127,7 @@ export default function MatchCharacterPage() {
   const [reward, setReward] = useState<any>(null);
   
   const [showRewardModal, setShowRewardModal] = useState(false);
+  const [showGameOverModal, setShowGameOverModal] = useState(false); // نافذة النهاية لوحش اللارب
   const [isSharing, setIsSharing] = useState(false);
   const [showIntroModal, setShowIntroModal] = useState(true);
 
@@ -127,8 +138,6 @@ export default function MatchCharacterPage() {
   const [lastWonReward, setLastWonReward] = useState<string | null>(null);
 
   const usedInfoTextsRef = useRef<Record<number, number[]>>({});
-
-  const MAX_LEVEL = 3;
 
   useEffect(() => {
     const fetchSanityData = async () => {
@@ -146,13 +155,22 @@ export default function MatchCharacterPage() {
           rarity
         }`;
 
-        const [charData, rewardData] = await Promise.all([
+        // استعلام جلب صورة وحش اللارب من الإعدادات العامة
+        const settingsQuery = `*[_type == "gameSettings"][0]{
+          "larpMonsterImage": larpMonsterImage.asset->url
+        }`;
+
+        const [charData, rewardData, settingsData] = await Promise.all([
           client.fetch(charQuery),
-          client.fetch(rewardQuery)
+          client.fetch(rewardQuery),
+          client.fetch(settingsQuery)
         ]);
 
         setDbCharacters(charData);
         setDbRewards(rewardData);
+        if (settingsData?.larpMonsterImage) {
+          setLarpMonsterImage(settingsData.larpMonsterImage);
+        }
         setIsLoading(false);
       } catch (error) {
         console.error("Error fetching data from Sanity:", error);
@@ -209,6 +227,7 @@ export default function MatchCharacterPage() {
     setSeconds(0);
     setGameFinished(false);
     setReward(null);
+    setShowGameOverModal(false); // إخفاء نافذة الوحش عند بداية مستوى جديد
   };
 
   useEffect(() => {
@@ -218,10 +237,10 @@ export default function MatchCharacterPage() {
   }, [currentLevel, dbCharacters, currentLanguage, isMounted]);
 
   useEffect(() => {
-    if (gameFinished || shuffledCards.length === 0 || isLoading || showIntroModal || !isMounted) return;
+    if (gameFinished || shuffledCards.length === 0 || isLoading || showIntroModal || showGameOverModal || !isMounted) return;
     const timer = setInterval(() => setSeconds((prev) => prev + 1), 1000);
     return () => clearInterval(timer);
-  }, [gameFinished, shuffledCards, isLoading, showIntroModal, isMounted]);
+  }, [gameFinished, shuffledCards, isLoading, showIntroModal, showGameOverModal, isMounted]);
 
   const handleShareClick = async () => {
     if (!reward) return;
@@ -252,7 +271,7 @@ export default function MatchCharacterPage() {
 
   const getRandomReward = (mistakesCount: number) => {
     if (dbRewards.length === 0) return null;
-    let legendaryChance = 5; let rareChance = 25;     
+    let legendaryChance = 5; let rareChance = 25;      
     if (mistakesCount >= 0 && mistakesCount <= 5) { legendaryChance = 45; rareChance = 65; } 
     else if (mistakesCount >= 6 && mistakesCount <= 10) { legendaryChance = 45; rareChance = 50; } 
     else if (mistakesCount >= 11 && mistakesCount <= 20) { legendaryChance = 18; rareChance = 35; } 
@@ -278,7 +297,8 @@ export default function MatchCharacterPage() {
   };
 
   const handleCardClick = (cardId: number) => {
-    if (openedCards.includes(cardId) || matchedCards.includes(cardId) || openedCards.length >= 2) return;
+    if (openedCards.includes(cardId) || matchedCards.includes(cardId) || openedCards.length >= 2 || gameFinished) return;
+    
     const newOpened = [...openedCards, cardId];
     setOpenedCards(newOpened);
 
@@ -298,7 +318,15 @@ export default function MatchCharacterPage() {
           setTimeout(() => setShowRewardModal(true), 500);
         }
       } else {
-        setErrors((prev) => prev + 1);
+        // تحديث الأخطاء والتحقق من وحش اللارب
+        const newErrors = errors + 1;
+        setErrors(newErrors);
+        
+        if (newErrors >= MAX_MISTAKES) {
+          setGameFinished(true);
+          setTimeout(() => setShowGameOverModal(true), 300);
+        }
+
         setTimeout(() => setOpenedCards([]), 1000);
       }
     }
@@ -308,6 +336,15 @@ export default function MatchCharacterPage() {
     setShowRewardModal(false);
     if (currentLevel < MAX_LEVEL) setCurrentLevel((prev) => prev + 1);
     else setCurrentLevel(1);
+  };
+
+  const handleRestartGame = () => {
+    setShowGameOverModal(false);
+    if (currentLevel !== 1) {
+      setCurrentLevel(1); // هذا سيقوم بتشغيل الـ useEffect لإعادة ضبط الجولة
+    } else {
+      initializeLevel(1, dbCharacters); // إذا كان بالفعل المستوى 1، نقوم بضبطه يدوياً
+    }
   };
 
   if (!isMounted || isLoading) {
@@ -339,6 +376,35 @@ export default function MatchCharacterPage() {
             {t.langName}
         </button>
       </div>
+
+      {/* النافذة الإجبارية عند الخسارة ووصول الأخطاء لـ 15 (Larp Monster Modal) */}
+      {showGameOverModal && (
+        <div className="fixed inset-0 bg-red-950/95 backdrop-blur-xl flex items-center justify-center z-[100] p-4 overflow-y-auto">
+          <div className="bg-zinc-950 border-2 border-red-600 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_100px_rgba(220,38,38,0.5)] animate-in zoom-in-75 duration-700 my-8">
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-4 text-red-500 animate-pulse">{t.gameOverTitle}</h2>
+            
+            <div className="relative mx-auto w-48 md:w-56 h-48 md:h-56 flex justify-center items-center mb-6 overflow-hidden rounded-2xl border-4 border-red-900/50 shadow-2xl">
+              <div className="absolute inset-0 bg-red-600 blur-[60px] opacity-30 animate-pulse"></div>
+              {larpMonsterImage ? (
+                 <img src={larpMonsterImage} alt="Larp Monster" className="w-full h-full object-cover relative z-10" />
+              ) : (
+                 <div className="text-6xl animate-bounce">👹</div>
+              )}
+            </div>
+            
+            <p className="text-base md:text-lg text-zinc-300 font-bold mb-8 leading-relaxed">
+              {t.gameOverDesc}
+            </p>
+
+            <button 
+              onClick={handleRestartGame} 
+              className="w-full bg-red-700 hover:bg-red-600 transition-colors text-white py-4 rounded-xl font-bold text-lg md:text-xl shadow-[0_0_20px_rgba(220,38,38,0.3)] active:scale-95"
+            >
+              {t.restartGame} 🔄
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* نافذة التعليمات */}
       {showIntroModal && (
@@ -399,7 +465,7 @@ export default function MatchCharacterPage() {
                 <span className="bg-zinc-800 px-4 py-2 rounded-lg border border-zinc-700 flex items-center gap-1">
                   ⏱️ {seconds} {t.seconds}
                 </span>
-                <span className="bg-zinc-800 px-4 py-2 rounded-lg border border-zinc-700 flex items-center gap-1">
+                <span className={`px-4 py-2 rounded-lg border flex items-center gap-1 transition-colors ${errors >= 12 ? 'bg-red-950 border-red-500 text-red-400 animate-pulse' : 'bg-zinc-800 border-zinc-700'}`}>
                   🎯 {t.errors}: {errors}
                 </span>
              </div>
@@ -415,7 +481,7 @@ export default function MatchCharacterPage() {
                    <span className="bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 flex items-center gap-1">
                      ⏱️ {seconds}
                    </span>
-                   <span className="bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 flex items-center gap-1">
+                   <span className={`px-3 py-1.5 rounded-lg border flex items-center gap-1 transition-colors ${errors >= 12 ? 'bg-red-950 border-red-500 text-red-400 animate-pulse' : 'bg-zinc-800 border-zinc-700'}`}>
                      🎯 {errors}
                    </span>
                 </div>
