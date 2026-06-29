@@ -83,6 +83,16 @@ const uiTexts = {
 const MAX_LEVEL = 3;
 const MAX_MISTAKES = 15; // الحد الأقصى للأخطاء المسموح بها
 
+// 🔥 دالة الخلط العشوائي الحقيقية والعادلة 100% (Fisher-Yates Shuffle)
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 export default function MatchCharacterPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
   const [isMounted, setIsMounted] = useState(false);
@@ -188,12 +198,11 @@ export default function MatchCharacterPage() {
     const targetCount = level === 1 ? 3 : level === 2 ? 6 : 8;
     const count = Math.min(targetCount, characters.length);
     
-    const selected = [...characters]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, count);
+    // 🔥 استخدام دالة الخلط العادلة لاختيار الشخصيات
+    const selected = shuffleArray(characters).slice(0, count);
 
     let idCounter = 1;
-    const newCards: CardData[] = selected
+    const newCardsPairs: CardData[] = selected
       .flatMap((item) => {
         const texts = currentLanguage === 'en' ? item.infoTextsEn : item.infoTexts;
         if (!texts || texts.length === 0) return []; 
@@ -217,8 +226,10 @@ export default function MatchCharacterPage() {
           { id: idCounter++, pairId: item.pairId, type: "character" as const, image: item.image },
           { id: idCounter++, pairId: item.pairId, type: "info" as const, text: randomText },
         ];
-      })
-      .sort(() => Math.random() - 0.5);
+      });
+
+    // 🔥 استخدام دالة الخلط العادلة لتوزيع البطاقات على الشاشة
+    const newCards = shuffleArray(newCardsPairs);
 
     setShuffledCards(newCards);
     setOpenedCards([]);
