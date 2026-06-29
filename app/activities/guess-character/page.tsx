@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { client } from "@/app/sanity.client"; 
 import Link from "next/link";
 
@@ -43,8 +43,8 @@ const uiTexts = {
     rule3Desc: "إذا كانت أخطاؤك كثيرة أو اعتمدت كلياً على المستوى السهل، فستحصل غالباً على بطاقات عادية.",
     usedHints: "التلميحات",
     wrongGuesses: "الأخطاء",
-    totalHints: "إجمالي التلميحات",
-    totalErrors: "إجمالي الأخطاء",
+    totalHints: "إجمالي التلميحات", 
+    totalErrors: "إجمالي الأخطاء",    
     notEnoughData: "عذراً، لم نجد شخصيات تحتوي على تلميحات في قاعدة البيانات.",
     startGameBtn: "فهمت، لنبدأ 🚀",
     selectLevel: "اختر مستوى الصعوبة:",
@@ -90,8 +90,8 @@ const uiTexts = {
     rule3Desc: "Playing on easy or making many mistakes will likely result in Common cards.",
     usedHints: "Hints",
     wrongGuesses: "Errors",
-    totalHints: "Total Hints",
-    totalErrors: "Total Errors",
+    totalHints: "Total Hints",     
+    totalErrors: "Total Errors",    
     notEnoughData: "Sorry, no characters with hints found in the database.",
     startGameBtn: "Got it, Let's go! 🚀",
     selectLevel: "Select Difficulty:",
@@ -121,7 +121,7 @@ const uiTexts = {
 type Difficulty = 'larp' | 'subaru' | 'echidna' | null;
 
 const MAX_ROUNDS = 10;
-const MAX_MISTAKES = 15; // الحد الأقصى المسموح به للأخطاء
+const MAX_MISTAKES = 15; 
 
 // دالة خلط المصفوفات الاحترافية (Fisher-Yates) لمنع أي تكرار
 function shuffleArray<T>(array: T[]): T[] {
@@ -163,7 +163,7 @@ export default function GuessCharacterPage() {
 
   const [dbCharacters, setDbCharacters] = useState<CharacterFromSanity[]>([]);
   const [dbRewards, setDbRewards] = useState<RewardFromSanity[]>([]);
-  const [larpMonsterImage, setLarpMonsterImage] = useState<string | null>(null); // صورة الوحش
+  const [larpMonsterImage, setLarpMonsterImage] = useState<string | null>(null); 
   const [isLoading, setIsLoading] = useState(true);
 
   // Game & Timer State
@@ -173,7 +173,7 @@ export default function GuessCharacterPage() {
   const [gameFinished, setGameFinished] = useState(false); 
 
   const [currentRound, setCurrentRound] = useState(1);
-  const [usedChars, setUsedChars] = useState<string[]>([]);
+  const usedCharsRef = useRef<string[]>([]); 
   const [shuffledHintIndices, setShuffledHintIndices] = useState<number[]>([]); 
 
   const [targetChar, setTargetChar] = useState<CharacterFromSanity | null>(null);
@@ -190,7 +190,7 @@ export default function GuessCharacterPage() {
   const [reward, setReward] = useState<any>(null);
   const [showIntroModal, setShowIntroModal] = useState(true);
   const [showLevelCompleteModal, setShowLevelCompleteModal] = useState(false);
-  const [showGameOverModal, setShowGameOverModal] = useState(false); // نافذة النهاية لوحش اللارب
+  const [showGameOverModal, setShowGameOverModal] = useState(false); 
   const [introStep, setIntroStep] = useState<1 | 2>(1); 
   const [isSharing, setIsSharing] = useState(false);
 
@@ -210,7 +210,6 @@ export default function GuessCharacterPage() {
           rarity
         }`;
 
-        // استعلام جلب صورة وحش اللارب
         const settingsQuery = `*[_type == "gameSettings"][0]{
           "larpMonsterImage": larpMonsterImage.asset->url
         }`;
@@ -236,22 +235,23 @@ export default function GuessCharacterPage() {
     fetchSanityData();
   }, []);
 
-  const initializeRound = (chars: CharacterFromSanity[], used: string[], currentDiff: Difficulty) => {
+  const initializeRound = (chars: CharacterFromSanity[], currentDiff: Difficulty) => {
     if (chars.length < 4) return;
     
-    let availableChars = chars.filter(c => !used.includes(c.name));
+    let availableChars = chars.filter(c => !usedCharsRef.current.includes(c.name));
     if (availableChars.length === 0) {
         availableChars = [...chars];
-        setUsedChars([]);
+        usedCharsRef.current = [];
     }
 
-    const shuffledAvailable = [...availableChars].sort(() => Math.random() - 0.5);
+    const shuffledAvailable = shuffleArray(availableChars);
     const target = shuffledAvailable[0];
 
-    setUsedChars(prev => [...prev, target.name]);
+    usedCharsRef.current.push(target.name);
 
-    const distractors = chars.filter(c => c.name !== target.name).sort(() => Math.random() - 0.5).slice(0, 3);
-    const finalOptions = [target, ...distractors].sort(() => Math.random() - 0.5);
+    const distractorsPool = chars.filter(c => c.name !== target.name);
+    const distractors = shuffleArray(distractorsPool).slice(0, 3);
+    const finalOptions = shuffleArray([target, ...distractors]);
 
     let hintsLen = 0;
     if (currentDiff === 'echidna') {
@@ -277,7 +277,7 @@ export default function GuessCharacterPage() {
   const startGame = (selectedLevel: Difficulty) => {
     setDifficulty(selectedLevel);
     setCurrentRound(1); 
-    setUsedChars([]);   
+    usedCharsRef.current = []; 
     setTotalHintsUsed(0);
     setTotalWrongGuesses(0);
     
@@ -287,8 +287,8 @@ export default function GuessCharacterPage() {
     
     setShowIntroModal(false);
     setShowLevelCompleteModal(false);
-    setShowGameOverModal(false); // إخفاء نافذة الوحش عند بدء لعبة جديدة
-    initializeRound(dbCharacters, [], selectedLevel);
+    setShowGameOverModal(false); 
+    initializeRound(dbCharacters, selectedLevel);
   };
 
   useEffect(() => {
@@ -356,7 +356,7 @@ export default function GuessCharacterPage() {
       legendaryChance = 15; rareChance = 35; 
     }
 
-    const extraHints = Math.max(0, hintsUsed - 5);
+    const extraHints = Math.max(0, hintsUsed - MAX_ROUNDS);
     const penaltyScore = extraHints + (mistakes * 2);
 
     legendaryChance = Math.max(2, legendaryChance - (penaltyScore * 5));
@@ -395,7 +395,7 @@ export default function GuessCharacterPage() {
            if (difficulty === 'larp') setTimeLeft(15);
            else if (difficulty === 'subaru') setTimeLeft(10);
            else if (difficulty === 'echidna') setTimeLeft(5);
-           initializeRound(dbCharacters, usedChars, difficulty);
+           initializeRound(dbCharacters, difficulty); 
         }
       }, 700);
 
@@ -404,11 +404,9 @@ export default function GuessCharacterPage() {
         setGuessedWrongOptions(prev => [...prev, charName]);
         setWrongAttempts(prev => prev + 1);
 
-        // تتبع الأخطاء الإجمالية بشكل فوري
         const newTotalMistakes = totalWrongGuesses + 1;
         setTotalWrongGuesses(newTotalMistakes);
 
-        // إذا وصل اللاعب إلى 15 خطأ، أنهِ اللعبة وأظهر الوحش
         if (newTotalMistakes >= MAX_MISTAKES) {
           setGameFinished(true);
           setTimeout(() => {
@@ -461,22 +459,20 @@ export default function GuessCharacterPage() {
   return (
     <main dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen flex flex-col p-4 md:p-8 bg-[#0a0a0a] text-white relative">
       
-      {/* Navbar مع زر اللغة */}
-      <div className={`absolute top-4 ${currentLanguage === 'ar' ? 'left-4' : 'right-4'} z-[60]`}>
+      <div className={`absolute top-4 md:top-6 ${currentLanguage === 'ar' ? 'left-4 md:left-12' : 'right-4 md:right-12'} z-[60]`}>
         <button 
             onClick={() => {
               const nextLang = currentLanguage === 'ar' ? 'en' : 'ar';
               setCurrentLanguage(nextLang);
               localStorage.setItem('siteLang', nextLang);
             }}
-            className="flex items-center gap-2 border border-emerald-500/30 bg-emerald-900/40 rounded-full px-3 py-1.5 hover:bg-emerald-900/60 transition-colors text-xs font-semibold backdrop-blur-md shadow-lg"
+            className="flex items-center gap-2 border border-emerald-500/30 bg-emerald-900/40 rounded-full px-3 py-1.5 md:px-4 md:py-2 hover:bg-emerald-900/60 transition-colors text-xs md:text-sm font-semibold backdrop-blur-md shadow-lg"
         >
-            <span className="w-3.5 h-3.5 flex items-center justify-center">🌐</span>
+            <span className="w-4 h-4 text-[10px] md:text-xs flex items-center justify-center">🌐</span>
             {t.langName}
         </button>
       </div>
 
-      {/* النافذة الإجبارية عند الخسارة ووصول الأخطاء لـ 15 (Larp Monster Modal) */}
       {showGameOverModal && (
         <div className="fixed inset-0 bg-red-950/95 backdrop-blur-xl flex items-center justify-center z-[100] p-4 overflow-y-auto">
           <div className="bg-zinc-950 border-2 border-red-600 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_100px_rgba(220,38,38,0.5)] animate-in zoom-in-75 duration-700 my-8">
@@ -633,8 +629,8 @@ export default function GuessCharacterPage() {
         </div>
       )}
 
-      {/* شريط معلومات اللعبة العلوي المستقر (Sticky) */}
-      {!showIntroModal && (
+      {/* الشريط العلوي الثابت (Sticky) */}
+      {!showIntroModal && !showGameOverModal && (
         <div className="sticky top-0 z-[40] pt-14 pb-2 bg-[#0a0a0a]/90 backdrop-blur-md w-full max-w-4xl mx-auto border-b border-zinc-800/50 mb-6">
           <div className="flex flex-wrap justify-between items-center bg-zinc-900/80 p-3 md:p-4 rounded-2xl border border-zinc-800 gap-2 md:gap-4 shadow-md">
              <div className="flex items-center gap-2 md:gap-3">
@@ -713,6 +709,7 @@ export default function GuessCharacterPage() {
             })}
           </div>
         </div>
+
       </div>
     </main>
   );
