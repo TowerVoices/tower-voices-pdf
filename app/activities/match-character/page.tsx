@@ -83,7 +83,17 @@ const uiTexts = {
 const MAX_LEVEL = 3;
 const MAX_MISTAKES = 15;
 
-// 🔥 دالة الخلط العشوائي الحقيقية والعادلة 100% (Fisher-Yates Shuffle)
+// 🔥 دالة تشغيل الصوت
+const playSound = (audioPath: string) => {
+  if (typeof window !== "undefined") {
+    const audio = new Audio(audioPath);
+    if (audioPath.includes("larp-monster")) audio.volume = 0.8;
+    else audio.volume = 1.0;
+    
+    audio.play().catch(err => console.log("Audio play blocked by browser:", err));
+  }
+};
+
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -147,7 +157,6 @@ export default function MatchCharacterPage() {
   
   const [lastWonReward, setLastWonReward] = useState<string | null>(null);
 
-  // الذاكرة التتبعية لمعلومات الشخصيات لمنع التكرار
   const usedInfoTextsRef = useRef<Record<number, number[]>>({});
 
   useEffect(() => {
@@ -198,7 +207,6 @@ export default function MatchCharacterPage() {
     const targetCount = level === 1 ? 3 : level === 2 ? 6 : 8;
     const count = Math.min(targetCount, characters.length);
     
-    // 🔥 اختيار الشخصيات بعشوائية عادلة
     const selected = shuffleArray(characters).slice(0, count);
 
     let idCounter = 1;
@@ -207,21 +215,18 @@ export default function MatchCharacterPage() {
         const texts = currentLanguage === 'en' ? item.infoTextsEn : item.infoTexts;
         if (!texts || texts.length === 0) return []; 
         
-        // 🔥 نظام ذكي لمنع تكرار المعلومات حتى استنفاذها
         if (!usedInfoTextsRef.current[item.pairId]) {
             usedInfoTextsRef.current[item.pairId] = [];
         }
 
         let availableIndices = texts.map((_, index) => index)
-                                   .filter(i => !usedInfoTextsRef.current[item.pairId].includes(i));
+                                    .filter(i => !usedInfoTextsRef.current[item.pairId].includes(i));
 
-        // إعادة تدوير المعلومات إذا تم استهلاكها بالكامل
         if (availableIndices.length === 0) {
             usedInfoTextsRef.current[item.pairId] = [];
             availableIndices = texts.map((_, index) => index);
         }
 
-        // خلط المؤشرات المتاحة بشكل عادل ثم اختيار الأول لضمان العشوائية التامة
         const shuffledAvailableIndices = shuffleArray(availableIndices);
         const pickedIndex = shuffledAvailableIndices[0];
 
@@ -233,7 +238,6 @@ export default function MatchCharacterPage() {
         ];
       });
 
-    // 🔥 خلط البطاقات بشكل عشوائي عادل على الشبكة
     const newCards = shuffleArray(newCardsPairs);
 
     setShuffledCards(newCards);
@@ -287,7 +291,7 @@ export default function MatchCharacterPage() {
 
   const getRandomReward = (mistakesCount: number) => {
     if (dbRewards.length === 0) return null;
-    let legendaryChance = 5; let rareChance = 25;      
+    let legendaryChance = 5; let rareChance = 25;       
     if (mistakesCount >= 0 && mistakesCount <= 5) { legendaryChance = 45; rareChance = 65; } 
     else if (mistakesCount >= 6 && mistakesCount <= 10) { legendaryChance = 45; rareChance = 50; } 
     else if (mistakesCount >= 11 && mistakesCount <= 20) { legendaryChance = 18; rareChance = 35; } 
@@ -339,7 +343,10 @@ export default function MatchCharacterPage() {
         
         if (newErrors >= MAX_MISTAKES) {
           setGameFinished(true);
-          setTimeout(() => setShowGameOverModal(true), 300);
+          setTimeout(() => {
+            playSound('/sounds/larp-monster.mp3'); // 🔥 تشغيل صوت الوحش عند الخسارة
+            setShowGameOverModal(true);
+          }, 300);
         }
 
         setTimeout(() => setOpenedCards([]), 1000);

@@ -123,7 +123,17 @@ type Difficulty = 'larp' | 'subaru' | 'echidna' | null;
 const MAX_ROUNDS = 10;
 const MAX_MISTAKES = 15; 
 
-// دالة خلط المصفوفات الاحترافية (Fisher-Yates) لمنع أي تكرار
+// 🔥 دالة تشغيل الصوت
+const playSound = (audioPath: string) => {
+  if (typeof window !== "undefined") {
+    const audio = new Audio(audioPath);
+    if (audioPath.includes("larp-monster")) audio.volume = 0.8;
+    else audio.volume = 1.0;
+    
+    audio.play().catch(err => console.log("Audio play blocked by browser:", err));
+  }
+};
+
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -410,6 +420,7 @@ export default function GuessCharacterPage() {
         if (newTotalMistakes >= MAX_MISTAKES) {
           setGameFinished(true);
           setTimeout(() => {
+            playSound('/sounds/larp-monster.mp3'); // 🔥 تشغيل صوت الوحش عند الخسارة النهائية
             setShowGameOverModal(true);
           }, 300);
         }
