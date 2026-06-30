@@ -117,6 +117,16 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
+const playSound = (audioPath: string) => {
+  if (typeof window !== "undefined") {
+    const audio = new Audio(audioPath);
+    if (audioPath.includes("larp-monster")) audio.volume = 0.8;
+    else audio.volume = 1.0;
+    
+    audio.play().catch(err => console.log("Audio play blocked by browser:", err));
+  }
+};
+
 export default function QuizPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
   const [isMounted, setIsMounted] = useState(false);
@@ -248,7 +258,6 @@ export default function QuizPage() {
     }
   };
 
-  // 🔥 دالة الموت المحدثة: تفرق بين التراجع بالزمن والموت النهائي
   const processDeath = () => {
     if (isTransitioning && selectedOption === null) return; 
     setIsTransitioning(true);
@@ -257,8 +266,15 @@ export default function QuizPage() {
     setDeathsCount(nextDeaths);
     
     if (lives > 0) {
-      // ✅ لا تزال تملك أرواح: تظهر العودة بالموت للتراجع بالزمن
+      // 🔥 تحديد أي صوت يتم تشغيله بناءً على عدد مرات الموت
+      if (difficulty === 'echidna' || nextDeaths >= 3) {
+        playSound('/sounds/return-by-death.mp3'); // الصوت القوي (العودة للبداية)
+      } else {
+        playSound('/sounds/return-by-death-short.mp3'); // الصوت الجديد (للمحاولة 1 و 2)
+      }
+      
       setIsDying(true);
+      
       setTimeout(() => {
         setLives(prev => prev - 1);
         setIsDying(false);
@@ -288,7 +304,8 @@ export default function QuizPage() {
         setIsTransitioning(false);
       }, 2800); 
     } else {
-      // 💀 نفدت أرواحك (صفر): تظهر شاشة الوحش فوراً بدون أي تأثير للعودة بالموت
+      // 💀 موت نهائي (صفر أرواح)
+      playSound('/sounds/larp-monster.mp3'); 
       setShowGameOverModal(true);
       setIsTransitioning(false);
     }
@@ -411,7 +428,6 @@ export default function QuizPage() {
 
       {showGameOverModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
-          {/* 🔥 دمج الخلفية الحمراء المرعبة الخاصة بالموت النهائي مباشرة مع نافذة الوحش */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(120,0,0,0.85)_0%,rgba(0,0,0,1)_80%)] backdrop-blur-md"></div>
           
           <div className="bg-zinc-950 border-2 border-red-600 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_100px_rgba(220,38,38,0.5)] animate-in zoom-in-75 duration-700 my-8 relative z-10">
