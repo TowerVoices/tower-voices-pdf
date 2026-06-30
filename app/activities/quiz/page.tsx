@@ -47,9 +47,9 @@ const uiTexts = {
     levelLarp: "لارب (Larp)",
     levelLarpDesc: "15 ثانية للسؤال، لديك 3 أرواح.",
     levelSubaru: "سوبارو (Subaru)",
-    levelSubaruDesc: "10 ثواني للسؤال، لديك روحان (2).", // 🔥 تم التعديل
+    levelSubaruDesc: "10 ثواني للسؤال، لديك روحان (2).",
     levelEchidna: "إيكيدنا (Echidna)",
-    levelEchidnaDesc: "5 ثواني للسؤال، لديك روح 1 (الخطأ يعيدك للبداية!).", // 🔥 تم التعديل
+    levelEchidnaDesc: "5 ثواني للسؤال، لديك روح 1 (الخطأ يعيدك للبداية!).",
     levelNovel: "قارئ الرواية (Novel)", 
     levelNovelDesc: "10 ثوانٍ للسؤال. ⚠️ تحذير شديد: حرق للأحداث المتقدمة!",
     timeUp: "انتهى الوقت!",
@@ -87,9 +87,9 @@ const uiTexts = {
     levelLarp: "Larp",
     levelLarpDesc: "15s per question, 3 Lives.",
     levelSubaru: "Subaru",
-    levelSubaruDesc: "10s per question, 2 Lives.", // 🔥 تم التعديل
+    levelSubaruDesc: "10s per question, 2 Lives.",
     levelEchidna: "Echidna",
-    levelEchidnaDesc: "5s per question, 1 Life (Mistake = Restart!).", // 🔥 تم التعديل
+    levelEchidnaDesc: "5s per question, 1 Life (Mistake = Restart!).",
     levelNovel: "Novel Reader", 
     levelNovelDesc: "10s per question. ⚠️ Extreme Warning: Spoilers ahead!",
     timeUp: "Time's Up!",
@@ -222,10 +222,9 @@ export default function QuizPage() {
     setDeathsCount(0);
     setSelectedOption(null);
     
-    // 🔥 تم تعديل الأرواح لتناسب طلبك
     if (selectedLevel === 'larp') { setLives(3); setTimeLeft(15); }
-    else if (selectedLevel === 'subaru') { setLives(2); setTimeLeft(10); } // سوبارو 2 أرواح
-    else if (selectedLevel === 'echidna') { setLives(1); setTimeLeft(5); } // إيكيدنا 1 روح
+    else if (selectedLevel === 'subaru') { setLives(2); setTimeLeft(10); } 
+    else if (selectedLevel === 'echidna') { setLives(1); setTimeLeft(5); } 
     else if (selectedLevel === 'novel') { setLives(2); setTimeLeft(10); } 
 
     setShowIntroModal(false);
@@ -249,25 +248,25 @@ export default function QuizPage() {
     }
   };
 
-  const triggerReturnByDeath = () => {
+  // 🔥 دالة الموت المحدثة: تفرق بين التراجع بالزمن والموت النهائي
+  const processDeath = () => {
     if (isTransitioning && selectedOption === null) return; 
     setIsTransitioning(true);
-    setIsDying(true);
     
     const nextDeaths = deathsCount + 1;
     setDeathsCount(nextDeaths);
     
-    setTimeout(() => {
-      if (lives > 0) {
+    if (lives > 0) {
+      // ✅ لا تزال تملك أرواح: تظهر العودة بالموت للتراجع بالزمن
+      setIsDying(true);
+      setTimeout(() => {
         setLives(prev => prev - 1);
         setIsDying(false);
         
         let rewindAmount = 0;
-        // 🔥 ميكانيكية إيكيدنا: تعيدك من البداية دائماً عند الخطأ الأول
         if (difficulty === 'echidna') {
           rewindAmount = currentQuestionIndex; 
         } else {
-          // الأنظمة العادية لباقي المستويات
           if (nextDeaths === 1) rewindAmount = 1;
           else if (nextDeaths === 2) rewindAmount = 2;
           else if (nextDeaths >= 3) rewindAmount = currentQuestionIndex; 
@@ -287,11 +286,12 @@ export default function QuizPage() {
         else if (difficulty === 'novel') setTimeLeft(10);
 
         setIsTransitioning(false);
-      } else {
-        setIsDying(false);
-        setShowGameOverModal(true);
-      }
-    }, 2800); 
+      }, 2800); 
+    } else {
+      // 💀 نفدت أرواحك (صفر): تظهر شاشة الوحش فوراً بدون أي تأثير للعودة بالموت
+      setShowGameOverModal(true);
+      setIsTransitioning(false);
+    }
   };
 
   const handleAnswer = (selectedIndex: number) => {
@@ -308,7 +308,7 @@ export default function QuizPage() {
       }, 800);
     } else {
       setTimeout(() => {
-        triggerReturnByDeath();
+        processDeath();
       }, 500); 
     }
   };
@@ -320,7 +320,7 @@ export default function QuizPage() {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          triggerReturnByDeath(); 
+          processDeath(); 
           return 0;
         }
         return prev - 1;
@@ -328,7 +328,7 @@ export default function QuizPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [showIntroModal, showGameOverModal, showWinModal, isTransitioning, isLoading]);
+  }, [showIntroModal, showGameOverModal, showWinModal, isTransitioning, isLoading, lives]);
 
   const finishGame = (finalScore: number) => {
     let legendaryChance = 0; let rareChance = 0;
@@ -410,8 +410,11 @@ export default function QuizPage() {
       </div>
 
       {showGameOverModal && (
-        <div className="fixed inset-0 bg-red-950/95 backdrop-blur-xl flex items-center justify-center z-[100] p-4 overflow-y-auto">
-          <div className="bg-zinc-950 border-2 border-red-600 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_100px_rgba(220,38,38,0.5)] animate-in zoom-in-75 duration-700 my-8">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
+          {/* 🔥 دمج الخلفية الحمراء المرعبة الخاصة بالموت النهائي مباشرة مع نافذة الوحش */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(120,0,0,0.85)_0%,rgba(0,0,0,1)_80%)] backdrop-blur-md"></div>
+          
+          <div className="bg-zinc-950 border-2 border-red-600 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_100px_rgba(220,38,38,0.5)] animate-in zoom-in-75 duration-700 my-8 relative z-10">
             <h2 className="text-3xl md:text-4xl font-extrabold mb-4 text-red-500 animate-pulse">{t.gameOverTitle}</h2>
             
             <div className="relative mx-auto w-48 md:w-56 h-48 md:h-56 flex justify-center items-center mb-6 overflow-hidden rounded-2xl border-4 border-red-900/50 shadow-2xl">
@@ -613,7 +616,7 @@ export default function QuizPage() {
                   if (idx === selectedOption) {
                     btnStyle += idx === currentQ.newCorrectIndex 
                       ? "bg-orange-500 border-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.6)] scale-[1.02] " 
-                      : "bg-red-900/80 border-red-500 line-through opacity-70 "; 
+                      : "bg-red-900/80 border-red-500 opacity-70 "; 
                   } else {
                     btnStyle += "bg-zinc-800 border-zinc-700 opacity-50 ";
                   }
