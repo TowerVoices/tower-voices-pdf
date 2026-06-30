@@ -16,23 +16,37 @@ export default {
       validation: (Rule: any) => Rule.required(),
     },
     {
+      name: 'questionImage',
+      title: 'صورة مرفقة بالسؤال (اختياري)',
+      description: 'إذا رفعت صورة هنا، سيظهر السؤال كـ "خمن المشهد/الشخصية".',
+      type: 'image',
+      options: { hotspot: true },
+    },
+    // 🔥 الإضافة الجديدة: تحذير الحرق
+    {
+      name: 'isNovelSpoiler',
+      title: 'هل السؤال من الرواية؟ (تحذير حرق ⚠️)',
+      description: 'قم بتفعيل هذا الخيار إذا كان السؤال يحتوي على أحداث من الرواية ولم يظهر في الأنمي بعد، لكي يظهر فقط في مستوى "قراء الرواية".',
+      type: 'boolean',
+      initialValue: false,
+    },
+    {
       name: 'options',
-      title: 'الخيارات (عربي) - اكتب 4 خيارات',
+      title: 'الخيارات (عربي)',
       type: 'array',
       of: [{ type: 'string' }],
-      validation: (Rule: any) => Rule.required().length(4),
+      validation: (Rule: any) => Rule.required().min(2).max(4),
     },
     {
       name: 'optionsEn',
-      title: 'الخيارات (إنجليزي) - اكتب 4 خيارات بنفس الترتيب',
+      title: 'الخيارات (إنجليزي)',
       type: 'array',
       of: [{ type: 'string' }],
-      validation: (Rule: any) => Rule.required().length(4),
+      validation: (Rule: any) => Rule.required().min(2).max(4),
     },
     {
       name: 'correctAnswerIndex',
-      title: 'رقم الإجابة الصحيحة (من 0 إلى 3)',
-      description: 'مثلاً: إذا كانت الإجابة الصحيحة هي الخيار الأول اكتب 0، وإذا كانت الثاني اكتب 1، وهكذا.',
+      title: 'رقم الإجابة الصحيحة (يبدأ من 0)',
       type: 'number',
       validation: (Rule: any) => Rule.required().min(0).max(3),
     }
