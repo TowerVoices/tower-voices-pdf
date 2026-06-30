@@ -89,20 +89,20 @@ export default function ActivitiesPage() {
       title: currentLanguage === 'ar' ? "خمن الشخصية" : "Guess the Character",
       description: currentLanguage === 'ar' ? "هل يمكنك معرفة الشخصية من خلال التلميحات؟" : "Can you figure out the character from the hints?",
       icon: "🤔",
-      link: "/activities/guess-character", // 🔥 تم تفعيل الرابط
+      link: "/activities/guess-character",
       color: "from-emerald-600 to-teal-600",
       btnColor: "text-emerald-400 group-hover:text-emerald-300",
-      isComingSoon: false // 🔥 تم إزالة علامة "قريباً"
+      isComingSoon: false 
     },
     {
       id: "quiz",
       title: currentLanguage === 'ar' ? "اختبار المعرفة" : "Knowledge Quiz",
       description: currentLanguage === 'ar' ? "أجب عن الأسئلة واكتشف مدى معرفتك بالقصة" : "Answer questions and discover your lore knowledge",
       icon: "📜",
-      link: "#",
+      link: "/activities/quiz", // 🔥 تم تفعيل الرابط
       color: "from-orange-600 to-red-600",
       btnColor: "text-orange-400 group-hover:text-orange-300",
-      isComingSoon: true
+      isComingSoon: false // 🔥 تم إزالة علامة "قريباً" ليصبح التحدي متاحاً
     }
   ];
 
