@@ -12,7 +12,7 @@ interface QuizQuestion {
   options: string[];
   optionsEn: string[];
   correctAnswerIndex: number;
-  isNovelSpoiler?: boolean; // 🔥 حقل الحرق الجديد
+  isNovelSpoiler?: boolean; 
 }
 
 interface RewardFromSanity {
@@ -38,7 +38,7 @@ const uiTexts = {
     rule2Title: "الإجابات الصحيحة:",
     rule2Desc: "كلما زادت إجاباتك الصحيحة من أصل 10، زادت فرصة البطاقة النادرة.",
     rule3Title: "العودة بالموت:",
-    rule3Desc: "لديك عدد محدود من الأرواح حسب الصعوبة. إذا فقدتها جميعاً، ستخسر!",
+    rule3Desc: "يعيدك بالزمن! الموتة الأولى ترجعك سؤال، الثانية سؤالين، والثالثة ستعيدك لـنقطة البداية 💀",
     score: "الإجابات الصحيحة",
     lives: "الأرواح",
     notEnoughData: "عذراً، يجب إضافة 10 أسئلة على الأقل في لوحة Sanity للبدء.",
@@ -50,7 +50,7 @@ const uiTexts = {
     levelSubaruDesc: "10 ثواني للسؤال، لديك روح 1 فقط.",
     levelEchidna: "إيكيدنا (Echidna)",
     levelEchidnaDesc: "5 ثواني للسؤال، الموت من أول خطأ!",
-    levelNovel: "قارئ الرواية (Novel)", // 🔥 مستوى الرواية
+    levelNovel: "قارئ الرواية (Novel)", 
     levelNovelDesc: "10 ثوانٍ للسؤال. ⚠️ تحذير شديد: حرق للأحداث المتقدمة!",
     timeUp: "انتهى الوقت!",
     correctAnswerWas: "الإجابة الصحيحة كانت:",
@@ -78,7 +78,7 @@ const uiTexts = {
     rule2Title: "Correct Answers:",
     rule2Desc: "The more correct answers out of 10, the better the card.",
     rule3Title: "Return by Death:",
-    rule3Desc: "You have limited lives based on difficulty. Lose them all, you die!",
+    rule3Desc: "Rewinds time! 1st death = back 1 Q, 2nd = back 2 Qs, 3rd = restart from save point 💀",
     score: "Correct Answers",
     lives: "Lives",
     notEnoughData: "Sorry, you need at least 10 questions in Sanity to start.",
@@ -90,7 +90,7 @@ const uiTexts = {
     levelSubaruDesc: "10s per question, 1 Life.",
     levelEchidna: "Echidna",
     levelEchidnaDesc: "5s per question, Death on first mistake!",
-    levelNovel: "Novel Reader", // 🔥 مستوى الرواية
+    levelNovel: "Novel Reader", 
     levelNovelDesc: "10s per question. ⚠️ Extreme Warning: Spoilers ahead!",
     timeUp: "Time's Up!",
     correctAnswerWas: "The correct answer was:",
@@ -152,6 +152,9 @@ export default function QuizPage() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [lives, setLives] = useState(0);
   const [score, setScore] = useState(0);
+  
+  // 🔥 تتبع عدد المرات التي مات فيها اللاعب (لتحديد كم سؤال يرجع للخلف)
+  const [deathsCount, setDeathsCount] = useState(0);
 
   // Effects & Modals
   const [isDying, setIsDying] = useState(false); 
@@ -192,11 +195,9 @@ export default function QuizPage() {
   }, []);
 
   const startGame = (selectedLevel: Difficulty) => {
-    // 🔥 فلترة الأسئلة: أسئلة الرواية فقط لمستوى الرواية، وأسئلة الأنمي فقط لباقي المستويات
     const isNovelMode = selectedLevel === 'novel';
     const filteredDB = dbQuestions.filter(q => isNovelMode ? q.isNovelSpoiler : !q.isNovelSpoiler);
 
-    // التحقق من توفر 10 أسئلة للمسار المطلوب
     if (filteredDB.length < TOTAL_QUESTIONS) {
       alert(currentLanguage === 'ar' 
         ? `عذراً! لا يوجد عدد كافٍ من الأسئلة لهذا المسار. المتوفر: ${filteredDB.length} والمطلوب: 10.` 
@@ -220,12 +221,12 @@ export default function QuizPage() {
     setActiveQuestions(randomizedQuestions as any);
     setCurrentQuestionIndex(0);
     setScore(0);
+    setDeathsCount(0); // تصفير عداد الموت عند بداية اللعبة
     
-    // إعدادات المستويات
     if (selectedLevel === 'larp') { setLives(3); setTimeLeft(15); }
     else if (selectedLevel === 'subaru') { setLives(1); setTimeLeft(10); }
     else if (selectedLevel === 'echidna') { setLives(0); setTimeLeft(5); }
-    else if (selectedLevel === 'novel') { setLives(2); setTimeLeft(10); } // إعدادات مستوى الرواية
+    else if (selectedLevel === 'novel') { setLives(2); setTimeLeft(10); } 
 
     setShowIntroModal(false);
     setShowGameOverModal(false);
@@ -247,20 +248,46 @@ export default function QuizPage() {
     }
   };
 
+  // 🔥 ميكانيكية العودة بالزمن (العودة بالموت)
   const triggerReturnByDeath = () => {
+    if (isTransitioning) return; // منع التكرار
     setIsTransitioning(true);
     setIsDying(true);
+    
+    const nextDeaths = deathsCount + 1;
+    setDeathsCount(nextDeaths);
     
     setTimeout(() => {
       if (lives > 0) {
         setLives(prev => prev - 1);
         setIsDying(false);
-        handleNextQuestion();
+        
+        // حساب عدد الأسئلة التي سيرجعها اللاعب بناءً على عدد مرات موته
+        let rewindAmount = 0;
+        if (nextDeaths === 1) rewindAmount = 1;
+        else if (nextDeaths === 2) rewindAmount = 2;
+        else if (nextDeaths >= 3) rewindAmount = currentQuestionIndex; // العودة لنقطة البداية (السؤال الأول)
+
+        // إرجاع اللاعب بالزمن (وإفقاده تقدمه)
+        setCurrentQuestionIndex(prev => {
+          const newIndex = Math.max(0, prev - rewindAmount);
+          setScore(newIndex); // الرصيد ينقص بناءً على عدد الأسئلة التي رجعها
+          return newIndex;
+        });
+
+        // إعادة ضبط الوقت للسؤال المعروض
+        if (difficulty === 'larp') setTimeLeft(15);
+        else if (difficulty === 'subaru') setTimeLeft(10);
+        else if (difficulty === 'echidna') setTimeLeft(5);
+        else if (difficulty === 'novel') setTimeLeft(10);
+
+        setIsTransitioning(false);
       } else {
+        // انتهت الأرواح = شاشة الوحش
         setIsDying(false);
         setShowGameOverModal(true);
       }
-    }, 2500); 
+    }, 2800); // إطالة وقت الموت قليلاً للاستمتاع برعب ساتيلا!
   };
 
   const handleAnswer = (selectedIndex: number) => {
@@ -301,7 +328,7 @@ export default function QuizPage() {
     let legendaryChance = 0; let rareChance = 0;
 
     if (difficulty === 'echidna') { legendaryChance = 70; rareChance = 30; } 
-    else if (difficulty === 'novel') { legendaryChance = 50; rareChance = 40; } // فرصة جيدة لقراء الرواية!
+    else if (difficulty === 'novel') { legendaryChance = 50; rareChance = 40; } 
     else if (difficulty === 'subaru') { legendaryChance = 25; rareChance = 50; }
     else { legendaryChance = 10; rareChance = 30; }
 
@@ -340,18 +367,23 @@ export default function QuizPage() {
 
   if (!isMounted || isLoading) return <main className="min-h-screen flex items-center justify-center bg-[#0a0a0a]"><div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div></main>;
 
+  const currentQ: any = activeQuestions[currentQuestionIndex];
+
   return (
     <main dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen flex flex-col p-4 md:p-8 bg-[#0a0a0a] text-white relative overflow-hidden">
       
-      {/* تأثير العودة بالموت (يد ساتيلا المخيفة) */}
+      {/* 🔥 تأثير العودة بالموت الجديد بألوان ساحرة الحسد (ساتيلا) */}
       {isDying && (
         <div className="fixed inset-0 z-[200] pointer-events-none animate-pulse flex items-center justify-center overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(153,27,27,0.6)_0%,rgba(0,0,0,1)_70%)]"></div>
+            {/* الخلفية المظلمة الدامية */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(120,0,0,0.85)_0%,rgba(0,0,0,1)_80%)]"></div>
+            
+            {/* النص الأسود (كاليد المظلمة) مع الهالة البنفسجية المتوهجة والفوشيا */}
             <h1 
-               className="text-5xl md:text-8xl font-black text-black relative z-10 glitch-text tracking-widest text-center px-4 animate-bounce"
+               className="text-6xl md:text-8xl lg:text-9xl font-black text-black relative z-10 glitch-text tracking-widest text-center px-4"
                style={{ 
-                 textShadow: "0 0 10px #a855f7, 0 0 30px #d946ef, 0 0 60px #9333ea, 0 0 90px #c026d3",
-                 WebkitTextStroke: "2px rgba(217, 70, 239, 0.8)" 
+                 textShadow: "0 0 15px #a855f7, 0 0 30px #d946ef, 0 0 50px #9333ea, 0 0 80px #c026d3",
+                 WebkitTextStroke: "2px #c026d3" // خط فوشيا/بنفسجي حاد
                }}
             >
                 {t.returnByDeath}
@@ -464,7 +496,7 @@ export default function QuizPage() {
                         <div className="text-2xl flex-shrink-0 ml-2">🔴</div>
                     </button>
 
-                    {/* 🔥 الزر الجديد لمسار الرواية مع التنبيه البصري الجميل */}
+                    {/* الزر الخاص بمسار الرواية مع التنبيه */}
                     <button onClick={() => startGame('novel')} className="bg-zinc-800/80 hover:bg-purple-950/40 border border-zinc-700 hover:border-purple-500 p-4 rounded-xl transition-all flex justify-between items-center group text-start relative overflow-hidden">
                         <div className={`absolute top-0 ${currentLanguage === 'ar' ? 'left-0 rounded-br-lg' : 'right-0 rounded-bl-lg'} bg-red-600 text-white text-[10px] font-bold px-2 py-0.5`}>
                            {currentLanguage === 'en' ? 'SPOILER ⚠️' : 'حرق ⚠️'}
@@ -517,8 +549,8 @@ export default function QuizPage() {
         </div>
       )}
 
-      {/* الشريط العلوي الثابت */}
-      {!showIntroModal && !showGameOverModal && !showWinModal && activeQuestions[currentQuestionIndex] && (
+      {/* الشريط العلوي الثابت (Sticky) للكمبيوتر والجوال */}
+      {!showIntroModal && !showGameOverModal && !showWinModal && currentQ && (
         <div className="sticky top-0 z-[40] pt-14 pb-2 bg-[#0a0a0a]/90 backdrop-blur-md w-full max-w-4xl mx-auto border-b border-zinc-800/50 mb-6">
           <div className="flex flex-wrap justify-between items-center bg-zinc-900/80 p-3 md:p-4 rounded-2xl border border-zinc-800 gap-2 md:gap-4 shadow-md">
              <div className="flex items-center gap-2 md:gap-3">
@@ -532,24 +564,23 @@ export default function QuizPage() {
                   ⏱️ {timeLeft} {t.seconds}
                 </span>
                 <span className="bg-zinc-800 px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-zinc-700">✅ {score}</span>
-                <span className={`px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border flex items-center gap-1 ${lives === 0 ? 'bg-red-900/20 border-red-500 text-red-400' : 'bg-zinc-800 border-zinc-700'}`}>❤️ {lives}</span>
+                <span className={`px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border flex items-center gap-1 transition-colors ${lives === 0 ? 'bg-red-950/60 border-red-500 text-red-400' : 'bg-zinc-800 border-zinc-700'}`}>❤️ {lives}</span>
              </div>
           </div>
         </div>
       )}
 
       {/* واجهة الأسئلة */}
-      {!showIntroModal && !showGameOverModal && !showWinModal && activeQuestions[currentQuestionIndex] && (
+      {!showIntroModal && !showGameOverModal && !showWinModal && currentQ && (
         <div className="w-full max-w-4xl mx-auto flex flex-col flex-1 pb-8">
           
           <div className="flex-1 flex flex-col justify-center gap-4 mb-8">
               <div className="bg-zinc-800/80 border border-zinc-700 p-6 md:p-10 rounded-3xl shadow-lg text-center animate-in zoom-in-95">
                 
-                {/* عرض الصورة إن وجدت للأسئلة المصورة */}
-                {activeQuestions[currentQuestionIndex].questionImage && (
+                {currentQ.questionImage && (
                   <div className="mb-6 flex justify-center">
                     <img 
-                       src={activeQuestions[currentQuestionIndex].questionImage} 
+                       src={currentQ.questionImage} 
                        alt="Question" 
                        className="max-h-48 md:max-h-64 w-auto object-contain rounded-xl border-2 border-zinc-700 shadow-md" 
                     />
@@ -557,19 +588,19 @@ export default function QuizPage() {
                 )}
 
                 <h3 className="text-xl md:text-3xl font-bold text-white leading-relaxed">
-                    {currentLanguage === 'en' ? activeQuestions[currentQuestionIndex].questionEn : activeQuestions[currentQuestionIndex].question}
+                    {currentLanguage === 'en' ? currentQ.questionEn : currentQ.question}
                 </h3>
               </div>
           </div>
 
           <div className="bg-zinc-900/80 border border-zinc-800 p-5 md:p-8 rounded-3xl mt-auto">
             <div className={`grid gap-3 md:gap-4 ${
-                (activeQuestions[currentQuestionIndex] as any).currentOptions.length === 2 
-                  ? 'grid-cols-1 sm:grid-cols-2' // شكل مناسب لأسئلة صح/خطأ
+                currentQ.currentOptions.length === 2 
+                  ? 'grid-cols-1 sm:grid-cols-2' 
                   : 'grid-cols-1 sm:grid-cols-2'
               }`}
             >
-              {(activeQuestions[currentQuestionIndex] as any).currentOptions.map((opt: string, idx: number) => {
+              {currentQ.currentOptions.map((opt: string, idx: number) => {
                 return (
                   <button
                     key={idx}
