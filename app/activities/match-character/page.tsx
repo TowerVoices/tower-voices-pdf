@@ -81,7 +81,7 @@ const uiTexts = {
 };
 
 const MAX_LEVEL = 3;
-const MAX_MISTAKES = 15; // الحد الأقصى للأخطاء المسموح بها
+const MAX_MISTAKES = 15;
 
 // 🔥 دالة الخلط العشوائي الحقيقية والعادلة 100% (Fisher-Yates Shuffle)
 function shuffleArray<T>(array: T[]): T[] {
@@ -126,7 +126,7 @@ export default function MatchCharacterPage() {
 
   const [dbCharacters, setDbCharacters] = useState<CharacterFromSanity[]>([]);
   const [dbRewards, setDbRewards] = useState<RewardFromSanity[]>([]);
-  const [larpMonsterImage, setLarpMonsterImage] = useState<string | null>(null); // صورة الوحش
+  const [larpMonsterImage, setLarpMonsterImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const [shuffledCards, setShuffledCards] = useState<CardData[]>([]);
@@ -137,7 +137,7 @@ export default function MatchCharacterPage() {
   const [reward, setReward] = useState<any>(null);
   
   const [showRewardModal, setShowRewardModal] = useState(false);
-  const [showGameOverModal, setShowGameOverModal] = useState(false); // نافذة النهاية لوحش اللارب
+  const [showGameOverModal, setShowGameOverModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [showIntroModal, setShowIntroModal] = useState(true);
 
@@ -147,6 +147,7 @@ export default function MatchCharacterPage() {
   
   const [lastWonReward, setLastWonReward] = useState<string | null>(null);
 
+  // الذاكرة التتبعية لمعلومات الشخصيات لمنع التكرار
   const usedInfoTextsRef = useRef<Record<number, number[]>>({});
 
   useEffect(() => {
@@ -165,7 +166,6 @@ export default function MatchCharacterPage() {
           rarity
         }`;
 
-        // استعلام جلب صورة وحش اللارب من الإعدادات العامة
         const settingsQuery = `*[_type == "gameSettings"][0]{
           "larpMonsterImage": larpMonsterImage.asset->url
         }`;
@@ -198,7 +198,7 @@ export default function MatchCharacterPage() {
     const targetCount = level === 1 ? 3 : level === 2 ? 6 : 8;
     const count = Math.min(targetCount, characters.length);
     
-    // 🔥 استخدام دالة الخلط العادلة لاختيار الشخصيات
+    // 🔥 اختيار الشخصيات بعشوائية عادلة
     const selected = shuffleArray(characters).slice(0, count);
 
     let idCounter = 1;
@@ -207,28 +207,33 @@ export default function MatchCharacterPage() {
         const texts = currentLanguage === 'en' ? item.infoTextsEn : item.infoTexts;
         if (!texts || texts.length === 0) return []; 
         
-        let availableIndices = texts.map((_, index) => index); 
-        const usedIndices = usedInfoTextsRef.current[item.pairId] || []; 
-
-        const unusedIndices = availableIndices.filter(index => !usedIndices.includes(index));
-        
-        if (unusedIndices.length > 0) availableIndices = unusedIndices;
-
-        const pickedIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
-        const randomText = texts[pickedIndex];
-
-        if (texts.length > 0) {
-          if (!usedInfoTextsRef.current[item.pairId]) usedInfoTextsRef.current[item.pairId] = [];
-          usedInfoTextsRef.current[item.pairId].push(pickedIndex);
+        // 🔥 نظام ذكي لمنع تكرار المعلومات حتى استنفاذها
+        if (!usedInfoTextsRef.current[item.pairId]) {
+            usedInfoTextsRef.current[item.pairId] = [];
         }
+
+        let availableIndices = texts.map((_, index) => index)
+                                   .filter(i => !usedInfoTextsRef.current[item.pairId].includes(i));
+
+        // إعادة تدوير المعلومات إذا تم استهلاكها بالكامل
+        if (availableIndices.length === 0) {
+            usedInfoTextsRef.current[item.pairId] = [];
+            availableIndices = texts.map((_, index) => index);
+        }
+
+        // خلط المؤشرات المتاحة بشكل عادل ثم اختيار الأول لضمان العشوائية التامة
+        const shuffledAvailableIndices = shuffleArray(availableIndices);
+        const pickedIndex = shuffledAvailableIndices[0];
+
+        usedInfoTextsRef.current[item.pairId].push(pickedIndex);
 
         return [
           { id: idCounter++, pairId: item.pairId, type: "character" as const, image: item.image },
-          { id: idCounter++, pairId: item.pairId, type: "info" as const, text: randomText },
+          { id: idCounter++, pairId: item.pairId, type: "info" as const, text: texts[pickedIndex] },
         ];
       });
 
-    // 🔥 استخدام دالة الخلط العادلة لتوزيع البطاقات على الشاشة
+    // 🔥 خلط البطاقات بشكل عشوائي عادل على الشبكة
     const newCards = shuffleArray(newCardsPairs);
 
     setShuffledCards(newCards);
@@ -238,7 +243,7 @@ export default function MatchCharacterPage() {
     setSeconds(0);
     setGameFinished(false);
     setReward(null);
-    setShowGameOverModal(false); // إخفاء نافذة الوحش عند بداية مستوى جديد
+    setShowGameOverModal(false);
   };
 
   useEffect(() => {
@@ -329,7 +334,6 @@ export default function MatchCharacterPage() {
           setTimeout(() => setShowRewardModal(true), 500);
         }
       } else {
-        // تحديث الأخطاء والتحقق من وحش اللارب
         const newErrors = errors + 1;
         setErrors(newErrors);
         
@@ -352,9 +356,9 @@ export default function MatchCharacterPage() {
   const handleRestartGame = () => {
     setShowGameOverModal(false);
     if (currentLevel !== 1) {
-      setCurrentLevel(1); // هذا سيقوم بتشغيل الـ useEffect لإعادة ضبط الجولة
+      setCurrentLevel(1); 
     } else {
-      initializeLevel(1, dbCharacters); // إذا كان بالفعل المستوى 1، نقوم بضبطه يدوياً
+      initializeLevel(1, dbCharacters);
     }
   };
 
@@ -373,7 +377,6 @@ export default function MatchCharacterPage() {
       dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} 
       className="min-h-screen flex flex-col p-4 md:p-8 bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white relative z-0"
     >
-      {/* زر اللغة */}
       <div className={`absolute top-4 md:top-6 ${currentLanguage === 'ar' ? 'left-4 md:left-12' : 'right-4 md:right-12'} z-[60]`}>
         <button 
             onClick={() => {
@@ -388,7 +391,6 @@ export default function MatchCharacterPage() {
         </button>
       </div>
 
-      {/* النافذة الإجبارية عند الخسارة ووصول الأخطاء لـ 15 (Larp Monster Modal) */}
       {showGameOverModal && (
         <div className="fixed inset-0 bg-red-950/95 backdrop-blur-xl flex items-center justify-center z-[100] p-4 overflow-y-auto">
           <div className="bg-zinc-950 border-2 border-red-600 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_100px_rgba(220,38,38,0.5)] animate-in zoom-in-75 duration-700 my-8">
@@ -417,7 +419,6 @@ export default function MatchCharacterPage() {
         </div>
       )}
 
-      {/* نافذة التعليمات */}
       {showIntroModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 text-center w-full max-w-lg shadow-[0_0_50px_rgba(79,70,229,0.15)] animate-in zoom-in-95 duration-300 my-8">
@@ -454,17 +455,14 @@ export default function MatchCharacterPage() {
         </div>
       )}
 
-      {/* عنوان اللعبة */}
       <div className="w-full max-w-6xl mx-auto flex-shrink-0 mt-14 md:mt-4 mb-2 md:mb-0">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center md:text-start text-indigo-400">
           {t.gameTitle}
         </h1>
       </div>
 
-      {/* 🔥 شريط الإحصائيات (عادي للكمبيوتر، وثابت بالأسفل للجوال) */}
       {!showIntroModal && (
         <>
-          {/* نسخة الكمبيوتر (تظهر فقط في الشاشات الكبيرة) */}
           <div className="hidden md:flex flex-wrap justify-between items-center mb-6 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800 gap-4 w-full max-w-6xl mx-auto mt-4">
              <div className="flex items-center gap-3">
                 <span className="bg-indigo-950/60 text-indigo-400 font-bold px-4 py-2 rounded-lg border border-indigo-900/50 text-sm">
@@ -482,7 +480,6 @@ export default function MatchCharacterPage() {
              </div>
           </div>
 
-          {/* نسخة الجوال (شريط ثابت أسفل الشاشة لحل مشكلة التمرير واختفاء الوقت) */}
           <div className="md:hidden fixed bottom-0 left-0 w-full z-[45] bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 p-3 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
              <div className="flex justify-between items-center max-w-sm mx-auto">
                 <span className="bg-indigo-950/60 text-indigo-400 font-bold px-3 py-1.5 rounded-lg border border-indigo-900/50 text-xs">
@@ -501,7 +498,6 @@ export default function MatchCharacterPage() {
         </>
       )}
 
-      {/* شبكة البطاقات (Grid) */}
       <div className="flex-1 flex items-center justify-center w-full pb-20 md:pb-8 mt-4 md:mt-0">
         <div 
           className={`bg-zinc-800/80 border-4 border-zinc-900 rounded-3xl p-3 sm:p-4 md:p-6 w-full mx-auto shadow-2xl backdrop-blur-sm transition-all duration-500 ${
@@ -551,7 +547,6 @@ export default function MatchCharacterPage() {
         </div>
       </div>
 
-      {/* نافذة الفوز */}
       {showRewardModal && reward && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 my-8">
