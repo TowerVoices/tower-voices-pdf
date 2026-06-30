@@ -4,6 +4,7 @@ import comment from './comment' // استدعاء ملف التعليقات ال
 import activityCharacter from './activityCharacter' // استدعاء ملف شخصيات الفعاليات الجديد
 import activityReward from './activityReward' // استدعاء ملف المكافآت الجديد (البطاقات)
 import gameSettings from './gameSettings' // استدعاء ملف إعدادات اللعبة (وحش اللارب)
+import activityQuiz from './activityQuiz' // 🔥 استدعاء ملف أسئلة اختبار المعرفة الجديد
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -11,6 +12,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     comment, 
     activityCharacter,
     activityReward, 
-    gameSettings // إضافته هنا هي ما ستجعله يظهر في القائمة الجانبية
+    gameSettings,
+    activityQuiz // 🔥 إضافة الأسئلة هنا لتظهر في لوحة التحكم
   ], 
 }
