@@ -300,7 +300,10 @@ export default function QuizPage() {
         handleNextQuestion();
       }, 800);
     } else {
-      triggerReturnByDeath();
+      // 🔥 تم تقليل وقت الانتظار عند الخطأ إلى 500ms لتسريع ظهور تأثير الموت
+      setTimeout(() => {
+        triggerReturnByDeath();
+      }, 500); 
     }
   };
 
@@ -598,22 +601,20 @@ export default function QuizPage() {
                 
                 const optText = optsArray[originalIdx];
 
-                // 🔥 تعديل لون الإجابة الصحيحة إلى البرتقالي المتوهج بدلاً من الأخضر
+                // 🔥 تعديل النمط: لا نكشف الإجابة الصحيحة إذا كان الاختيار خاطئاً
                 let btnStyle = "p-4 md:p-5 rounded-2xl border-2 transition-all font-bold text-base md:text-lg text-white text-center flex justify-center items-center gap-2 ";
 
                 if (selectedOption !== null) {
-                  if (idx === currentQ.newCorrectIndex) {
-                    // الزر الصحيح (لون برتقالي متوهج يناسب الثيم)
-                    btnStyle += "bg-orange-500 border-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.6)] scale-[1.02] ";
-                  } else if (idx === selectedOption) {
-                    // الزر الخاطئ الذي اختاره اللاعب (أحمر)
-                    btnStyle += "bg-red-900/80 border-red-500 line-through opacity-70 ";
+                  if (idx === selectedOption) {
+                    // فقط الزر الذي نقر عليه اللاعب يتلون
+                    btnStyle += idx === currentQ.newCorrectIndex 
+                      ? "bg-orange-500 border-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.6)] scale-[1.02] " // برتقالي للصحيح
+                      : "bg-red-900/80 border-red-500 opacity-70 "; // أحمر للخاطئ
                   } else {
-                    // الأزرار الأخرى التي لم يتم اختيارها
+                    // باقي الأزرار تظل كما هي (مخفية/معتمة) بدون تحديد الصح والخطأ
                     btnStyle += "bg-zinc-800 border-zinc-700 opacity-50 ";
                   }
                 } else {
-                  // الحالة الافتراضية قبل الاختيار
                   btnStyle += "border-zinc-700 bg-zinc-800 hover:border-orange-500 hover:bg-orange-950/30 active:scale-95 ";
                 }
 
@@ -625,8 +626,10 @@ export default function QuizPage() {
                     className={btnStyle}
                   >
                     {optText}
-                    {selectedOption !== null && idx === currentQ.newCorrectIndex && <span>✅</span>}
-                    {selectedOption !== null && idx === selectedOption && idx !== currentQ.newCorrectIndex && <span>❌</span>}
+                    {/* تمت إزالة الرموز التي تكشف الإجابة الصحيحة ✅ و ❌ */}
+                    {selectedOption !== null && idx === selectedOption && (
+                        <span>{idx === currentQ.newCorrectIndex ? "✅" : "❌"}</span>
+                    )}
                   </button>
                 );
               })}
