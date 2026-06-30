@@ -153,6 +153,7 @@ export default function QuizPage() {
   const [lives, setLives] = useState(0);
   const [score, setScore] = useState(0);
   
+  // 🔥 تتبع عدد المرات التي مات فيها اللاعب (لتحديد كم سؤال يرجع للخلف)
   const [deathsCount, setDeathsCount] = useState(0);
 
   // Effects & Modals
@@ -220,7 +221,7 @@ export default function QuizPage() {
     setActiveQuestions(randomizedQuestions as any);
     setCurrentQuestionIndex(0);
     setScore(0);
-    setDeathsCount(0);
+    setDeathsCount(0); // تصفير عداد الموت عند بداية اللعبة
     
     if (selectedLevel === 'larp') { setLives(3); setTimeLeft(15); }
     else if (selectedLevel === 'subaru') { setLives(1); setTimeLeft(10); }
@@ -247,8 +248,9 @@ export default function QuizPage() {
     }
   };
 
+  // 🔥 ميكانيكية العودة بالزمن (العودة بالموت)
   const triggerReturnByDeath = () => {
-    if (isTransitioning) return; 
+    if (isTransitioning) return; // منع التكرار
     setIsTransitioning(true);
     setIsDying(true);
     
@@ -260,17 +262,20 @@ export default function QuizPage() {
         setLives(prev => prev - 1);
         setIsDying(false);
         
+        // حساب عدد الأسئلة التي سيرجعها اللاعب بناءً على عدد مرات موته
         let rewindAmount = 0;
         if (nextDeaths === 1) rewindAmount = 1;
         else if (nextDeaths === 2) rewindAmount = 2;
-        else if (nextDeaths >= 3) rewindAmount = currentQuestionIndex; 
+        else if (nextDeaths >= 3) rewindAmount = currentQuestionIndex; // العودة لنقطة البداية (السؤال الأول)
 
+        // إرجاع اللاعب بالزمن (وإفقاده تقدمه)
         setCurrentQuestionIndex(prev => {
           const newIndex = Math.max(0, prev - rewindAmount);
-          setScore(newIndex); 
+          setScore(newIndex); // الرصيد ينقص بناءً على عدد الأسئلة التي رجعها
           return newIndex;
         });
 
+        // إعادة ضبط الوقت للسؤال المعروض
         if (difficulty === 'larp') setTimeLeft(15);
         else if (difficulty === 'subaru') setTimeLeft(10);
         else if (difficulty === 'echidna') setTimeLeft(5);
@@ -278,10 +283,11 @@ export default function QuizPage() {
 
         setIsTransitioning(false);
       } else {
+        // انتهت الأرواح = شاشة الوحش
         setIsDying(false);
         setShowGameOverModal(true);
       }
-    }, 2800); 
+    }, 2800); // إطالة وقت الموت قليلاً للاستمتاع برعب ساتيلا!
   };
 
   const handleAnswer = (selectedIndex: number) => {
@@ -359,22 +365,25 @@ export default function QuizPage() {
     finally { setIsSharing(false); }
   };
 
-  if (!isMounted || isLoading) return <main className="min-h-screen flex items-center justify-center bg-[#0a0a0a]"><div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div></main>;
+  if (!isMounted || isLoading) return <main className="min-h-screen flex items-center justify-center bg-[#0a0a0a]"><div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div></main>;
 
   const currentQ: any = activeQuestions[currentQuestionIndex];
 
   return (
     <main dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen flex flex-col p-4 md:p-8 bg-[#0a0a0a] text-white relative overflow-hidden">
       
-      {/* تأثير العودة بالموت الجديد بألوان ساحرة الحسد (ساتيلا) */}
+      {/* 🔥 تأثير العودة بالموت الجديد بألوان ساحرة الحسد (ساتيلا) */}
       {isDying && (
         <div className="fixed inset-0 z-[200] pointer-events-none animate-pulse flex items-center justify-center overflow-hidden">
+            {/* الخلفية المظلمة الدامية */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(120,0,0,0.85)_0%,rgba(0,0,0,1)_80%)]"></div>
+            
+            {/* النص الأسود (كاليد المظلمة) مع الهالة البنفسجية المتوهجة والفوشيا */}
             <h1 
                className="text-6xl md:text-8xl lg:text-9xl font-black text-black relative z-10 glitch-text tracking-widest text-center px-4"
                style={{ 
                  textShadow: "0 0 15px #a855f7, 0 0 30px #d946ef, 0 0 50px #9333ea, 0 0 80px #c026d3",
-                 WebkitTextStroke: "2px #c026d3" 
+                 WebkitTextStroke: "2px #c026d3" // خط فوشيا/بنفسجي حاد
                }}
             >
                 {t.returnByDeath}
@@ -382,7 +391,7 @@ export default function QuizPage() {
         </div>
       )}
 
-      {/* زر اللغة باللون البرتقالي */}
+      {/* زر اللغة */}
       <div className={`absolute top-4 md:top-6 ${currentLanguage === 'ar' ? 'left-4 md:left-12' : 'right-4 md:right-12'} z-[60]`}>
         <button 
             onClick={() => {
@@ -390,7 +399,7 @@ export default function QuizPage() {
               setCurrentLanguage(nextLang);
               localStorage.setItem('siteLang', nextLang);
             }}
-            className="flex items-center gap-2 border border-orange-500/30 bg-orange-900/40 rounded-full px-3 py-1.5 md:px-4 md:py-2 hover:bg-orange-900/60 transition-colors text-xs md:text-sm font-semibold backdrop-blur-md shadow-lg"
+            className="flex items-center gap-2 border border-emerald-500/30 bg-emerald-900/40 rounded-full px-3 py-1.5 md:px-4 md:py-2 hover:bg-emerald-900/60 transition-colors text-xs md:text-sm font-semibold backdrop-blur-md shadow-lg"
         >
             <span className="w-4 h-4 text-[10px] md:text-xs flex items-center justify-center">🌐</span>
             {t.langName}
@@ -427,9 +436,9 @@ export default function QuizPage() {
 
       {showIntroModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 w-full max-w-lg shadow-[0_0_50px_rgba(249,115,22,0.15)] animate-in zoom-in-95 duration-300 my-8">
+          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 w-full max-w-lg shadow-[0_0_50px_rgba(16,185,129,0.15)] animate-in zoom-in-95 duration-300 my-8">
             <div className="text-center">
-               <div className="w-16 h-16 bg-orange-500/20 text-orange-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">📜</div>
+               <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">📜</div>
                <h2 className="text-2xl font-bold mb-2 text-white">{t.gameTitle}</h2>
                <p className="text-zinc-400 mb-6 text-sm">{t.subTitle}</p>
             </div>
@@ -437,7 +446,7 @@ export default function QuizPage() {
             {introStep === 1 ? (
               <div className="animate-in fade-in duration-300">
                 <div className="bg-black/40 rounded-2xl p-4 md:p-5 mb-6 md:mb-8 text-start space-y-4 md:space-y-5 text-sm md:text-base border border-zinc-800">
-                  <h3 className="font-bold text-orange-400 text-center mb-4 md:mb-5">{t.getCardsTitle}</h3>
+                  <h3 className="font-bold text-emerald-400 text-center mb-4 md:mb-5">{t.getCardsTitle}</h3>
                   <p className="flex items-start gap-3">
                     <span className="text-xl mt-0.5">📈</span>
                     <span className="text-zinc-300 leading-relaxed"><b className="text-white">{t.rule1Title}</b> {t.rule1Desc}</span>
@@ -454,16 +463,15 @@ export default function QuizPage() {
 
                 <button
                   onClick={() => setIntroStep(2)}
-                  className="w-full bg-orange-600 hover:bg-orange-500 transition-all text-white py-3.5 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-orange-500/25 active:scale-[0.98]"
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 transition-all text-white py-3.5 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-emerald-500/25 active:scale-[0.98]"
                 >
                   {t.startGameBtn}
                 </button>
               </div>
             ) : (
               <div className="animate-in slide-in-from-right-4 duration-300">
-                <h3 className="font-bold text-orange-400 text-center mb-4">{t.selectLevel}</h3>
+                <h3 className="font-bold text-emerald-400 text-center mb-4">{t.selectLevel}</h3>
                 <div className="flex flex-col gap-3">
-                    {/* أزرار الصعوبة تحافظ على ألوانها التي تميز كل شخصية */}
                     <button onClick={() => startGame('larp')} className="bg-zinc-800/80 hover:bg-emerald-950/40 border border-zinc-700 hover:border-emerald-500 p-4 rounded-xl transition-all flex justify-between items-center group text-start">
                         <div>
                             <div className="font-bold text-white group-hover:text-emerald-400">{t.levelLarp}</div>
@@ -488,6 +496,7 @@ export default function QuizPage() {
                         <div className="text-2xl flex-shrink-0 ml-2">🔴</div>
                     </button>
 
+                    {/* الزر الخاص بمسار الرواية مع التنبيه */}
                     <button onClick={() => startGame('novel')} className="bg-zinc-800/80 hover:bg-purple-950/40 border border-zinc-700 hover:border-purple-500 p-4 rounded-xl transition-all flex justify-between items-center group text-start relative overflow-hidden">
                         <div className={`absolute top-0 ${currentLanguage === 'ar' ? 'left-0 rounded-br-lg' : 'right-0 rounded-bl-lg'} bg-red-600 text-white text-[10px] font-bold px-2 py-0.5`}>
                            {currentLanguage === 'en' ? 'SPOILER ⚠️' : 'حرق ⚠️'}
@@ -507,9 +516,9 @@ export default function QuizPage() {
 
       {showWinModal && reward && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-orange-500/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_60px_rgba(249,115,22,0.25)] animate-in zoom-in-95 duration-500 my-8">
+          <div className="bg-zinc-900 border border-emerald-500/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_60px_rgba(16,185,129,0.25)] animate-in zoom-in-95 duration-500 my-8">
             <div className="text-5xl md:text-6xl mb-3 md:mb-4 animate-bounce">🏆</div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400">{t.winTitle}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{t.winTitle}</h2>
             <p className="text-sm md:text-base text-zinc-300 mb-4 md:mb-6">{t.gotCard}</p>
             
             <div className="relative mx-auto w-36 md:w-48 flex justify-center items-center mb-4 md:mb-6">
@@ -529,7 +538,7 @@ export default function QuizPage() {
             </div>
 
             <div className="flex flex-col gap-2 md:gap-3">
-               <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-orange-600 hover:bg-orange-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm md:text-base">
+               <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-emerald-600 hover:bg-emerald-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm md:text-base">
                  {t.share}
                </button>
                <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowWinModal(false); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-zinc-300 block text-sm md:text-base">
@@ -540,12 +549,12 @@ export default function QuizPage() {
         </div>
       )}
 
-      {/* الشريط العلوي الثابت باللون البرتقالي */}
-      {!showIntroModal && !showGameOverModal && !showWinModal && activeQuestions[currentQuestionIndex] && (
+      {/* الشريط العلوي الثابت (Sticky) للكمبيوتر والجوال */}
+      {!showIntroModal && !showGameOverModal && !showWinModal && currentQ && (
         <div className="sticky top-0 z-[40] pt-14 pb-2 bg-[#0a0a0a]/90 backdrop-blur-md w-full max-w-4xl mx-auto border-b border-zinc-800/50 mb-6">
           <div className="flex flex-wrap justify-between items-center bg-zinc-900/80 p-3 md:p-4 rounded-2xl border border-zinc-800 gap-2 md:gap-4 shadow-md">
              <div className="flex items-center gap-2 md:gap-3">
-                <span className="bg-orange-950/40 text-orange-400 font-bold px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-orange-900/50 text-[10px] md:text-sm">
+                <span className="bg-emerald-950/40 text-emerald-400 font-bold px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-emerald-900/50 text-[10px] md:text-sm">
                   {t.questionNum} {currentQuestionIndex + 1} {t.of} {TOTAL_QUESTIONS}
                 </span>
              </div>
@@ -555,23 +564,23 @@ export default function QuizPage() {
                   ⏱️ {timeLeft} {t.seconds}
                 </span>
                 <span className="bg-zinc-800 px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-zinc-700">✅ {score}</span>
-                <span className={`px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border flex items-center gap-1 ${lives === 0 ? 'bg-red-900/20 border-red-500 text-red-400' : 'bg-zinc-800 border-zinc-700'}`}>❤️ {lives}</span>
+                <span className={`px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border flex items-center gap-1 transition-colors ${lives === 0 ? 'bg-red-950/60 border-red-500 text-red-400' : 'bg-zinc-800 border-zinc-700'}`}>❤️ {lives}</span>
              </div>
           </div>
         </div>
       )}
 
       {/* واجهة الأسئلة */}
-      {!showIntroModal && !showGameOverModal && !showWinModal && activeQuestions[currentQuestionIndex] && (
+      {!showIntroModal && !showGameOverModal && !showWinModal && currentQ && (
         <div className="w-full max-w-4xl mx-auto flex flex-col flex-1 pb-8">
           
           <div className="flex-1 flex flex-col justify-center gap-4 mb-8">
               <div className="bg-zinc-800/80 border border-zinc-700 p-6 md:p-10 rounded-3xl shadow-lg text-center animate-in zoom-in-95">
                 
-                {activeQuestions[currentQuestionIndex].questionImage && (
+                {currentQ.questionImage && (
                   <div className="mb-6 flex justify-center">
                     <img 
-                       src={activeQuestions[currentQuestionIndex].questionImage} 
+                       src={currentQ.questionImage} 
                        alt="Question" 
                        className="max-h-48 md:max-h-64 w-auto object-contain rounded-xl border-2 border-zinc-700 shadow-md" 
                     />
@@ -579,26 +588,25 @@ export default function QuizPage() {
                 )}
 
                 <h3 className="text-xl md:text-3xl font-bold text-white leading-relaxed">
-                    {currentLanguage === 'en' ? activeQuestions[currentQuestionIndex].questionEn : activeQuestions[currentQuestionIndex].question}
+                    {currentLanguage === 'en' ? currentQ.questionEn : currentQ.question}
                 </h3>
               </div>
           </div>
 
           <div className="bg-zinc-900/80 border border-zinc-800 p-5 md:p-8 rounded-3xl mt-auto">
             <div className={`grid gap-3 md:gap-4 ${
-                (activeQuestions[currentQuestionIndex] as any).currentOptions.length === 2 
+                currentQ.currentOptions.length === 2 
                   ? 'grid-cols-1 sm:grid-cols-2' 
                   : 'grid-cols-1 sm:grid-cols-2'
               }`}
             >
-              {(activeQuestions[currentQuestionIndex] as any).currentOptions.map((opt: string, idx: number) => {
+              {currentQ.currentOptions.map((opt: string, idx: number) => {
                 return (
                   <button
                     key={idx}
                     onClick={() => handleAnswer(idx)}
                     disabled={isTransitioning}
-                    // تأثير التمرير (Hover) باللون البرتقالي
-                    className="p-4 md:p-5 rounded-2xl border-2 border-zinc-700 bg-zinc-800 hover:border-orange-500 hover:bg-orange-950/30 transition-all font-bold text-base md:text-lg text-white active:scale-95 text-center"
+                    className="p-4 md:p-5 rounded-2xl border-2 border-zinc-700 bg-zinc-800 hover:border-emerald-500 hover:bg-emerald-950/30 transition-all font-bold text-base md:text-lg text-white active:scale-95 text-center"
                   >
                     {opt}
                   </button>
