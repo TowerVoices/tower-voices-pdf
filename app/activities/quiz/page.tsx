@@ -47,9 +47,9 @@ const uiTexts = {
     levelLarp: "لارب (Larp)",
     levelLarpDesc: "15 ثانية للسؤال، لديك 3 أرواح.",
     levelSubaru: "سوبارو (Subaru)",
-    levelSubaruDesc: "10 ثواني للسؤال، لديك روح 1 فقط.",
+    levelSubaruDesc: "10 ثواني للسؤال، لديك روحان (2).", // 🔥 تم التعديل
     levelEchidna: "إيكيدنا (Echidna)",
-    levelEchidnaDesc: "5 ثواني للسؤال، الموت من أول خطأ!",
+    levelEchidnaDesc: "5 ثواني للسؤال، لديك روح 1 (الخطأ يعيدك للبداية!).", // 🔥 تم التعديل
     levelNovel: "قارئ الرواية (Novel)", 
     levelNovelDesc: "10 ثوانٍ للسؤال. ⚠️ تحذير شديد: حرق للأحداث المتقدمة!",
     timeUp: "انتهى الوقت!",
@@ -87,9 +87,9 @@ const uiTexts = {
     levelLarp: "Larp",
     levelLarpDesc: "15s per question, 3 Lives.",
     levelSubaru: "Subaru",
-    levelSubaruDesc: "10s per question, 1 Life.",
+    levelSubaruDesc: "10s per question, 2 Lives.", // 🔥 تم التعديل
     levelEchidna: "Echidna",
-    levelEchidnaDesc: "5s per question, Death on first mistake!",
+    levelEchidnaDesc: "5s per question, 1 Life (Mistake = Restart!).", // 🔥 تم التعديل
     levelNovel: "Novel Reader", 
     levelNovelDesc: "10s per question. ⚠️ Extreme Warning: Spoilers ahead!",
     timeUp: "Time's Up!",
@@ -222,9 +222,10 @@ export default function QuizPage() {
     setDeathsCount(0);
     setSelectedOption(null);
     
+    // 🔥 تم تعديل الأرواح لتناسب طلبك
     if (selectedLevel === 'larp') { setLives(3); setTimeLeft(15); }
-    else if (selectedLevel === 'subaru') { setLives(1); setTimeLeft(10); }
-    else if (selectedLevel === 'echidna') { setLives(0); setTimeLeft(5); }
+    else if (selectedLevel === 'subaru') { setLives(2); setTimeLeft(10); } // سوبارو 2 أرواح
+    else if (selectedLevel === 'echidna') { setLives(1); setTimeLeft(5); } // إيكيدنا 1 روح
     else if (selectedLevel === 'novel') { setLives(2); setTimeLeft(10); } 
 
     setShowIntroModal(false);
@@ -262,9 +263,15 @@ export default function QuizPage() {
         setIsDying(false);
         
         let rewindAmount = 0;
-        if (nextDeaths === 1) rewindAmount = 1;
-        else if (nextDeaths === 2) rewindAmount = 2;
-        else if (nextDeaths >= 3) rewindAmount = currentQuestionIndex; 
+        // 🔥 ميكانيكية إيكيدنا: تعيدك من البداية دائماً عند الخطأ الأول
+        if (difficulty === 'echidna') {
+          rewindAmount = currentQuestionIndex; 
+        } else {
+          // الأنظمة العادية لباقي المستويات
+          if (nextDeaths === 1) rewindAmount = 1;
+          else if (nextDeaths === 2) rewindAmount = 2;
+          else if (nextDeaths >= 3) rewindAmount = currentQuestionIndex; 
+        }
 
         setCurrentQuestionIndex(prev => {
           const newIndex = Math.max(0, prev - rewindAmount);
@@ -300,7 +307,6 @@ export default function QuizPage() {
         handleNextQuestion();
       }, 800);
     } else {
-      // 🔥 تم تقليل وقت الانتظار عند الخطأ إلى 500ms لتسريع ظهور تأثير الموت
       setTimeout(() => {
         triggerReturnByDeath();
       }, 500); 
@@ -601,17 +607,14 @@ export default function QuizPage() {
                 
                 const optText = optsArray[originalIdx];
 
-                // 🔥 تعديل النمط: لا نكشف الإجابة الصحيحة إذا كان الاختيار خاطئاً
                 let btnStyle = "p-4 md:p-5 rounded-2xl border-2 transition-all font-bold text-base md:text-lg text-white text-center flex justify-center items-center gap-2 ";
 
                 if (selectedOption !== null) {
                   if (idx === selectedOption) {
-                    // فقط الزر الذي نقر عليه اللاعب يتلون
                     btnStyle += idx === currentQ.newCorrectIndex 
-                      ? "bg-orange-500 border-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.6)] scale-[1.02] " // برتقالي للصحيح
-                      : "bg-red-900/80 border-red-500 opacity-70 "; // أحمر للخاطئ
+                      ? "bg-orange-500 border-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.6)] scale-[1.02] " 
+                      : "bg-red-900/80 border-red-500 line-through opacity-70 "; 
                   } else {
-                    // باقي الأزرار تظل كما هي (مخفية/معتمة) بدون تحديد الصح والخطأ
                     btnStyle += "bg-zinc-800 border-zinc-700 opacity-50 ";
                   }
                 } else {
@@ -626,10 +629,6 @@ export default function QuizPage() {
                     className={btnStyle}
                   >
                     {optText}
-                    {/* تمت إزالة الرموز التي تكشف الإجابة الصحيحة ✅ و ❌ */}
-                    {selectedOption !== null && idx === selectedOption && (
-                        <span>{idx === currentQ.newCorrectIndex ? "✅" : "❌"}</span>
-                    )}
                   </button>
                 );
               })}
