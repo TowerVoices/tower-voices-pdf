@@ -83,14 +83,22 @@ const uiTexts = {
 const MAX_LEVEL = 3;
 const MAX_MISTAKES = 15;
 
-// 🔥 دالة تشغيل الصوت
+// 🔥 دالة تشغيل الصوت المحسنة
 const playSound = (audioPath: string) => {
   if (typeof window !== "undefined") {
     const audio = new Audio(audioPath);
     if (audioPath.includes("larp-monster")) audio.volume = 0.8;
     else audio.volume = 1.0;
     
-    audio.play().catch(err => console.log("Audio play blocked by browser:", err));
+    const playPromise = audio.play();
+    
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        // Playback started successfully
+      }).catch(error => {
+        console.log("Audio play blocked by browser:", error);
+      });
+    }
   }
 };
 
@@ -343,8 +351,8 @@ export default function MatchCharacterPage() {
         
         if (newErrors >= MAX_MISTAKES) {
           setGameFinished(true);
+          playSound('/sounds/larp-monster.mp3'); // 🔥 تشغيل صوت الوحش فوراً عند الخسارة
           setTimeout(() => {
-            playSound('/sounds/larp-monster.mp3'); // 🔥 تشغيل صوت الوحش عند الخسارة
             setShowGameOverModal(true);
           }, 300);
         }
@@ -368,6 +376,16 @@ export default function MatchCharacterPage() {
       initializeLevel(1, dbCharacters);
     }
   };
+
+  // 🔥 دالة لبدء التحدي وتجهيز المتصفح للأصوات
+  const handleStartChallenge = () => {
+      // هذه الخطوة تخبر المتصفح أن المستخدم تفاعل، مما يسهل تشغيل الأصوات لاحقاً
+      const audio = new Audio('/sounds/larp-monster.mp3');
+      audio.volume = 0; // صامت
+      audio.play().catch(()=> {}); 
+      
+      setShowIntroModal(false);
+  }
 
   if (!isMounted || isLoading) {
     return (
@@ -453,7 +471,7 @@ export default function MatchCharacterPage() {
             </div>
 
             <button
-              onClick={() => setShowIntroModal(false)}
+              onClick={handleStartChallenge}
               className="w-full bg-indigo-600 hover:bg-indigo-500 transition-all text-white py-3.5 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-indigo-500/25 active:scale-[0.98]"
             >
               {t.startChallenge}
