@@ -123,7 +123,6 @@ type Difficulty = 'larp' | 'subaru' | 'echidna' | null;
 const MAX_ROUNDS = 10;
 const MAX_MISTAKES = 15; 
 
-// 🔥 دالة تشغيل الصوت المحسنة
 const playSound = (audioPath: string) => {
   if (typeof window !== "undefined") {
     const audio = new Audio(audioPath);
@@ -179,7 +178,6 @@ export default function GuessCharacterPage() {
   const [larpMonsterImage, setLarpMonsterImage] = useState<string | null>(null); 
   const [isLoading, setIsLoading] = useState(true);
 
-  // Game & Timer State
   const [difficulty, setDifficulty] = useState<Difficulty>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isTimeUp, setIsTimeUp] = useState(false);
@@ -187,6 +185,10 @@ export default function GuessCharacterPage() {
 
   const [currentRound, setCurrentRound] = useState(1);
   const usedCharsRef = useRef<string[]>([]); 
+  
+  // 🔥 إضافة نظام الذاكرة الذكي للتلميحات
+  const usedHintsRef = useRef<Record<string, number[]>>({}); 
+  
   const [shuffledHintIndices, setShuffledHintIndices] = useState<number[]>([]); 
 
   const [targetChar, setTargetChar] = useState<CharacterFromSanity | null>(null);
@@ -266,15 +268,41 @@ export default function GuessCharacterPage() {
     const distractors = shuffleArray(distractorsPool).slice(0, 3);
     const finalOptions = shuffleArray([target, ...distractors]);
 
-    let hintsLen = 0;
+    // 🔥 1. جلب مصفوفة التلميحات الصحيحة لمعرفة عددها
+    let targetHintsArray: string[] = [];
     if (currentDiff === 'echidna') {
-       hintsLen = target.echidnaHints?.length || target.hints?.length || 0;
+       const echidnaArr = currentLanguage === 'en' ? target.echidnaHintsEn : target.echidnaHints;
+       targetHintsArray = (echidnaArr && echidnaArr.length > 0) ? echidnaArr : ((currentLanguage === 'en' ? target.hintsEn : target.hints) || []);
     } else {
-       hintsLen = target.hints?.length || 0;
+       targetHintsArray = (currentLanguage === 'en' ? target.hintsEn : target.hints) || [];
     }
     
-    const baseIndices = Array.from({length: hintsLen}, (_, i) => i);
-    const randomizedIndices = shuffleArray(baseIndices);
+    const hintsLen = targetHintsArray.length;
+
+    // 🔥 2. نظام التدوير العادل للتلميحات (يمنع التكرار حتى تظهر كلها)
+    if (!usedHintsRef.current[target.name]) {
+        usedHintsRef.current[target.name] = [];
+    }
+
+    let availableHintIndices = Array.from({length: hintsLen}, (_, i) => i)
+                                    .filter(i => !usedHintsRef.current[target.name].includes(i));
+
+    // إذا ظهرت كل التلميحات، نقوم بتصفير الذاكرة لتبدأ الدورة بشكل عادل من جديد
+    if (availableHintIndices.length === 0) {
+        usedHintsRef.current[target.name] = [];
+        availableHintIndices = Array.from({length: hintsLen}, (_, i) => i);
+    }
+
+    // خلط التلميحات المتاحة واختيار الأول ليكون التلميح الأساسي (الذي يظهر في الشاشة)
+    const shuffledAvailableHints = shuffleArray(availableHintIndices);
+    const primaryHintIndex = shuffledAvailableHints[0];
+
+    // تسجيل أننا استخدمنا هذا التلميح كي لا يتكرر قريباً
+    usedHintsRef.current[target.name].push(primaryHintIndex);
+
+    // ترتيب باقي التلميحات بعد التلميح الأساسي
+    const remainingIndices = Array.from({length: hintsLen}, (_, i) => i).filter(i => i !== primaryHintIndex);
+    const randomizedIndices = [primaryHintIndex, ...shuffleArray(remainingIndices)];
 
     setShuffledHintIndices(randomizedIndices);
     setTargetChar(target);
@@ -304,7 +332,6 @@ export default function GuessCharacterPage() {
     initializeRound(dbCharacters, selectedLevel);
   };
 
-  // 🔥 دالة مبدئية لكسر حظر المتصفح للأصوات
   const handleStartChallenge = () => {
     const audio = new Audio('/sounds/larp-monster.mp3');
     audio.volume = 0;
@@ -334,20 +361,17 @@ export default function GuessCharacterPage() {
     if (!targetChar) return [];
     
     let baseHints: string[] = [];
+
     if (difficulty === 'echidna') {
-        baseHints = currentLanguage === 'en' && targetChar.echidnaHintsEn && targetChar.echidnaHintsEn.length > 0 
-            ? targetChar.echidnaHintsEn 
-            : (targetChar.echidnaHints && targetChar.echidnaHints.length > 0 ? targetChar.echidnaHints : []);
-        
-        if (!baseHints || baseHints.length === 0) {
-            baseHints = currentLanguage === 'en' && targetChar.hintsEn && targetChar.hintsEn.length > 0 
-                ? targetChar.hintsEn 
-                : targetChar.hints;
-        }
+      const specificEchidnaHints = currentLanguage === 'en' ? targetChar.echidnaHintsEn : targetChar.echidnaHints;
+      
+      if (specificEchidnaHints && specificEchidnaHints.length > 0) {
+        baseHints = specificEchidnaHints;
+      } else {
+        baseHints = (currentLanguage === 'en' ? targetChar.hintsEn : targetChar.hints) || [];
+      }
     } else {
-        baseHints = currentLanguage === 'en' && targetChar.hintsEn && targetChar.hintsEn.length > 0 
-            ? targetChar.hintsEn 
-            : targetChar.hints;
+      baseHints = (currentLanguage === 'en' ? targetChar.hintsEn : targetChar.hints) || [];
     }
 
     if (!baseHints) return [];
@@ -430,7 +454,6 @@ export default function GuessCharacterPage() {
 
         if (newTotalMistakes >= MAX_MISTAKES) {
           setGameFinished(true);
-          // 🔥 تشغيل صوت الوحش عند الخسارة
           playSound('/sounds/larp-monster.mp3');
           
           setTimeout(() => {
