@@ -123,14 +123,17 @@ type Difficulty = 'larp' | 'subaru' | 'echidna' | null;
 const MAX_ROUNDS = 10;
 const MAX_MISTAKES = 15; 
 
-// 🔥 دالة تشغيل الصوت
+// 🔥 دالة تشغيل الصوت المحسنة
 const playSound = (audioPath: string) => {
   if (typeof window !== "undefined") {
     const audio = new Audio(audioPath);
     if (audioPath.includes("larp-monster")) audio.volume = 0.8;
     else audio.volume = 1.0;
     
-    audio.play().catch(err => console.log("Audio play blocked by browser:", err));
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(err => console.log("Audio play blocked by browser:", err));
+    }
   }
 };
 
@@ -301,6 +304,14 @@ export default function GuessCharacterPage() {
     initializeRound(dbCharacters, selectedLevel);
   };
 
+  // 🔥 دالة مبدئية لكسر حظر المتصفح للأصوات
+  const handleStartChallenge = () => {
+    const audio = new Audio('/sounds/larp-monster.mp3');
+    audio.volume = 0;
+    audio.play().catch(()=>{});
+    setIntroStep(2);
+  };
+
   useEffect(() => {
     if (showIntroModal || showLevelCompleteModal || showGameOverModal || isTimeUp || gameFinished || !difficulty || isLoading) return;
 
@@ -419,8 +430,10 @@ export default function GuessCharacterPage() {
 
         if (newTotalMistakes >= MAX_MISTAKES) {
           setGameFinished(true);
+          // 🔥 تشغيل صوت الوحش عند الخسارة
+          playSound('/sounds/larp-monster.mp3');
+          
           setTimeout(() => {
-            playSound('/sounds/larp-monster.mp3'); // 🔥 تشغيل صوت الوحش عند الخسارة النهائية
             setShowGameOverModal(true);
           }, 300);
         }
@@ -540,7 +553,7 @@ export default function GuessCharacterPage() {
                 </div>
 
                 <button
-                  onClick={() => setIntroStep(2)}
+                  onClick={handleStartChallenge}
                   className="w-full bg-emerald-600 hover:bg-emerald-500 transition-all text-white py-3.5 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-emerald-500/25 active:scale-[0.98]"
                 >
                   {t.startGameBtn}
