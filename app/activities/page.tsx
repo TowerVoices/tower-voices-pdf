@@ -5,8 +5,8 @@ import Link from "next/link";
 
 const uiTexts = {
   ar: {
-    pageTitle: "مركز الفعاليات",
-    subtitle: "اختر التحدي الذي يناسبك واجمع المكافآت",
+    pageTitle: "Who Are You?",
+    subtitle: "استعد ذكرياتك... واحذر من larpMonster ومن Call of the Witch!",
     soon: "قريباً ⏳",
     preparing: "يتم التجهيز...",
     startChallenge: "ابدأ التحدي",
@@ -14,8 +14,8 @@ const uiTexts = {
     langName: "English"
   },
   en: {
-    pageTitle: "Activities Center",
-    subtitle: "Choose your challenge and collect rewards",
+    pageTitle: "Who Are You?",
+    subtitle: "Reclaim your memories... and beware the larpMonster and the Call of the Witch!",
     soon: "Soon ⏳",
     preparing: "Preparing...",
     startChallenge: "Start Challenge",
@@ -99,10 +99,10 @@ export default function ActivitiesPage() {
       title: currentLanguage === 'ar' ? "اختبار المعرفة" : "Knowledge Quiz",
       description: currentLanguage === 'ar' ? "أجب عن الأسئلة واكتشف مدى معرفتك بالقصة" : "Answer questions and discover your lore knowledge",
       icon: "📜",
-      link: "/activities/quiz", // 🔥 تم تفعيل الرابط
+      link: "/activities/quiz", 
       color: "from-orange-600 to-red-600",
       btnColor: "text-orange-400 group-hover:text-orange-300",
-      isComingSoon: false // 🔥 تم إزالة علامة "قريباً" ليصبح التحدي متاحاً
+      isComingSoon: false 
     }
   ];
 
@@ -123,10 +123,14 @@ export default function ActivitiesPage() {
       </div>
 
       <div className="text-center mb-12 mt-12 md:mt-0">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 to-zinc-400">
+        {/* 🔥 تم تغيير العنوان ليصبح أكثر بروزاً وغموضاً */}
+        <h1 className="text-4xl md:text-6xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 to-zinc-500 tracking-wider font-serif">
           {t.pageTitle}
         </h1>
-        <p className="text-zinc-400 text-lg">{t.subtitle}</p>
+        {/* 🔥 تم تغيير لون الوصف ليصبح تحذيرياً (يميل للأحمر المكتوم) ليتناسب مع التحذير */}
+        <p className="text-red-400/80 font-medium text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+          {t.subtitle}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
