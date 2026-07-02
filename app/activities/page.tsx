@@ -5,8 +5,8 @@ import Link from "next/link";
 
 const uiTexts = {
   ar: {
-    pageTitle: "Who Are You?",
-    subtitle: "استعد ذكرياتك... واحذر من larpMonster ومن Call of the Witch!",
+    pageTitle: "مَن أنت؟",
+    subtitle: "استعد ذكرياتك... واحذر من وحش اللارب ومن نداء الساحرة!",
     soon: "قريباً ⏳",
     preparing: "يتم التجهيز...",
     startChallenge: "ابدأ التحدي",
@@ -75,14 +75,14 @@ export default function ActivitiesPage() {
 
   const activities = [
     {
-      id: "match-character",
-      title: currentLanguage === 'ar' ? "طابق الشخصية" : "Match Character",
-      description: currentLanguage === 'ar' ? "اختبر ذاكرتك في مطابقة الشخصيات مع معلوماتها" : "Test your memory by matching characters with their info",
-      icon: "🎴",
-      link: "/activities/match-character",
-      color: "from-indigo-600 to-purple-600",
-      btnColor: "text-indigo-400 group-hover:text-indigo-300",
-      isComingSoon: false
+      id: "quiz",
+      title: currentLanguage === 'ar' ? "اختبار المعرفة" : "Knowledge Quiz",
+      description: currentLanguage === 'ar' ? "أجب عن الأسئلة واكتشف مدى معرفتك بالقصة" : "Answer questions and discover your lore knowledge",
+      icon: "📜",
+      link: "/activities/quiz", 
+      color: "from-orange-600 to-red-600",
+      btnColor: "text-orange-400 group-hover:text-orange-300",
+      isComingSoon: false 
     },
     {
       id: "guess-character",
@@ -95,14 +95,14 @@ export default function ActivitiesPage() {
       isComingSoon: false 
     },
     {
-      id: "quiz",
-      title: currentLanguage === 'ar' ? "اختبار المعرفة" : "Knowledge Quiz",
-      description: currentLanguage === 'ar' ? "أجب عن الأسئلة واكتشف مدى معرفتك بالقصة" : "Answer questions and discover your lore knowledge",
-      icon: "📜",
-      link: "/activities/quiz", 
-      color: "from-orange-600 to-red-600",
-      btnColor: "text-orange-400 group-hover:text-orange-300",
-      isComingSoon: false 
+      id: "match-character",
+      title: currentLanguage === 'ar' ? "طابق الشخصية" : "Match Character",
+      description: currentLanguage === 'ar' ? "اختبر ذاكرتك في مطابقة الشخصيات مع معلوماتها" : "Test your memory by matching characters with their info",
+      icon: "🎴",
+      link: "/activities/match-character",
+      color: "from-indigo-600 to-purple-600",
+      btnColor: "text-indigo-400 group-hover:text-indigo-300",
+      isComingSoon: false
     }
   ];
 
@@ -122,13 +122,14 @@ export default function ActivitiesPage() {
         </button>
       </div>
 
-      <div className="text-center mb-12 mt-12 md:mt-0">
-        {/* 🔥 تم تغيير العنوان ليصبح أكثر بروزاً وغموضاً */}
-        <h1 className="text-4xl md:text-6xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 to-zinc-500 tracking-wider font-serif">
+      <div className="text-center mb-12 mt-12 md:mt-0 flex flex-col items-center">
+        <h1 
+          className="text-4xl md:text-6xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 to-zinc-500 tracking-wider font-serif drop-shadow-[0_0_15px_rgba(255,255,255,0.05)]"
+        >
           {t.pageTitle}
         </h1>
-        {/* 🔥 تم تغيير لون الوصف ليصبح تحذيرياً (يميل للأحمر المكتوم) ليتناسب مع التحذير */}
-        <p className="text-red-400/80 font-medium text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+        
+        <p className="text-red-500/80 font-medium text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
           {t.subtitle}
         </p>
       </div>
