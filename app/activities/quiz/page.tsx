@@ -50,7 +50,7 @@ const uiTexts = {
     levelSubaruDesc: "10 ثواني للسؤال، لديك روحان (2).",
     levelEchidna: "إيكيدنا (Echidna)",
     levelEchidnaDesc: "5 ثواني للسؤال، لديك روح 1 (الخطأ يعيدك للبداية!).",
-    levelNovel: "قارئ الرواية (Novel)", 
+    levelNovel: "مكتبة تايجيتا (Taygeta)", // 🔥 التعديل هنا
     levelNovelDesc: "10 ثوانٍ للسؤال. ⚠️ تحذير شديد: حرق للأحداث المتقدمة!",
     timeUp: "انتهى الوقت!",
     correctAnswerWas: "الإجابة الصحيحة كانت:",
@@ -62,7 +62,7 @@ const uiTexts = {
     gameOverDesc: "استنفدت جميع أرواحك... وحش اللارب التهمك!",
     restartGame: "العب من جديد",
     returnByDeath: "العودة بالموت...",
-    backToActivities: "العودة للفعاليات 🏠" // 🔥 إضافة الترجمة
+    backToActivities: "العودة للفعاليات 🏠"
   },
   en: {
     gameTitle: "Knowledge Quiz",
@@ -91,7 +91,7 @@ const uiTexts = {
     levelSubaruDesc: "10s per question, 2 Lives.",
     levelEchidna: "Echidna",
     levelEchidnaDesc: "5s per question, 1 Life (Mistake = Restart!).",
-    levelNovel: "Novel Reader", 
+    levelNovel: "Taygeta Library", // 🔥 التعديل هنا
     levelNovelDesc: "10s per question. ⚠️ Extreme Warning: Spoilers ahead!",
     timeUp: "Time's Up!",
     correctAnswerWas: "The correct answer was:",
@@ -103,7 +103,7 @@ const uiTexts = {
     gameOverDesc: "You ran out of lives... The Larp Monster consumed you!",
     restartGame: "Play Again",
     returnByDeath: "Return by Death...",
-    backToActivities: "Back to Activities 🏠" // 🔥 إضافة الترجمة
+    backToActivities: "Back to Activities 🏠"
   }
 };
 
@@ -446,7 +446,6 @@ export default function QuizPage() {
               {t.gameOverDesc}
             </p>
 
-            {/* 🔥 تعديل الأزرار في نافذة الخسارة */}
             <div className="flex flex-col gap-3 w-full">
               <button 
                 onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowGameOverModal(false); }} 
@@ -567,7 +566,6 @@ export default function QuizPage() {
               <p className="flex justify-between"><span>❤️ {t.lives}:</span> <span className="font-bold text-white">{lives}</span></p>
             </div>
 
-            {/* 🔥 تعديل الأزرار في نافذة الفوز */}
             <div className="flex flex-col gap-2 md:gap-3">
                <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-orange-600 hover:bg-orange-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm md:text-base">
                  {t.share}
