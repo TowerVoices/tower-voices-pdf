@@ -61,7 +61,8 @@ const uiTexts = {
     gameOverTitle: "💀 لقد خسرت!",
     gameOverDesc: "استنفدت جميع أرواحك... وحش اللارب التهمك!",
     restartGame: "العب من جديد",
-    returnByDeath: "العودة بالموت..."
+    returnByDeath: "العودة بالموت...",
+    backToActivities: "العودة للفعاليات 🏠" // 🔥 إضافة الترجمة
   },
   en: {
     gameTitle: "Knowledge Quiz",
@@ -101,7 +102,8 @@ const uiTexts = {
     gameOverTitle: "💀 Game Over!",
     gameOverDesc: "You ran out of lives... The Larp Monster consumed you!",
     restartGame: "Play Again",
-    returnByDeath: "Return by Death..."
+    returnByDeath: "Return by Death...",
+    backToActivities: "Back to Activities 🏠" // 🔥 إضافة الترجمة
   }
 };
 
@@ -266,11 +268,10 @@ export default function QuizPage() {
     setDeathsCount(nextDeaths);
     
     if (lives > 0) {
-      // 🔥 تحديد أي صوت يتم تشغيله بناءً على عدد مرات الموت
       if (difficulty === 'echidna' || nextDeaths >= 3) {
-        playSound('/sounds/return-by-death.mp3'); // الصوت القوي (العودة للبداية)
+        playSound('/sounds/return-by-death.mp3'); 
       } else {
-        playSound('/sounds/return-by-death-short.mp3'); // الصوت الجديد (للمحاولة 1 و 2)
+        playSound('/sounds/return-by-death-short.mp3'); 
       }
       
       setIsDying(true);
@@ -304,7 +305,6 @@ export default function QuizPage() {
         setIsTransitioning(false);
       }, 2800); 
     } else {
-      // 💀 موت نهائي (صفر أرواح)
       playSound('/sounds/larp-monster.mp3'); 
       setShowGameOverModal(true);
       setIsTransitioning(false);
@@ -446,12 +446,21 @@ export default function QuizPage() {
               {t.gameOverDesc}
             </p>
 
-            <button 
-              onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowGameOverModal(false); }} 
-              className="w-full bg-red-700 hover:bg-red-600 transition-colors text-white py-4 rounded-xl font-bold text-lg md:text-xl shadow-[0_0_20px_rgba(220,38,38,0.3)] active:scale-95"
-            >
-              {t.restartGame} 🔄
-            </button>
+            {/* 🔥 تعديل الأزرار في نافذة الخسارة */}
+            <div className="flex flex-col gap-3 w-full">
+              <button 
+                onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowGameOverModal(false); }} 
+                className="w-full bg-red-700 hover:bg-red-600 transition-colors text-white py-4 rounded-xl font-bold text-lg md:text-xl shadow-[0_0_20px_rgba(220,38,38,0.3)] active:scale-95"
+              >
+                {t.restartGame} 🔄
+              </button>
+              <Link 
+                href="/activities" 
+                className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-zinc-300 block text-sm md:text-base text-center"
+              >
+                {t.backToActivities}
+              </Link>
+            </div>
           </div>
         </div>
       )}
@@ -558,6 +567,7 @@ export default function QuizPage() {
               <p className="flex justify-between"><span>❤️ {t.lives}:</span> <span className="font-bold text-white">{lives}</span></p>
             </div>
 
+            {/* 🔥 تعديل الأزرار في نافذة الفوز */}
             <div className="flex flex-col gap-2 md:gap-3">
                <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-orange-600 hover:bg-orange-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm md:text-base">
                  {t.share}
@@ -565,6 +575,12 @@ export default function QuizPage() {
                <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowWinModal(false); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-zinc-300 block text-sm md:text-base">
                  {t.changeLevel}
                </button>
+               <Link 
+                 href="/activities" 
+                 className="w-full bg-black/40 hover:bg-black/60 border border-transparent hover:border-zinc-800 transition-colors py-3 rounded-xl font-semibold text-sm md:text-base text-zinc-400 block mt-1 text-center"
+               >
+                 {t.backToActivities}
+               </Link>
             </div>
           </div>
         </div>
