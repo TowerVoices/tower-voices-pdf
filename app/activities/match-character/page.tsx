@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { client } from "@/app/sanity.client"; 
+import Link from "next/link";
 
 interface CharacterFromSanity {
   pairId: number;
@@ -51,7 +52,8 @@ const uiTexts = {
     goodTitle: "لعب جيد (6 - 10 أخطاء)",
     gameOverTitle: "💀 لقد خسرت!",
     gameOverDesc: "لقد تجاوزت الحد الأقصى من الأخطاء (15 خطأ)... استيقظ وحش اللارب ليقضي عليك!",
-    restartGame: "العب من جديد"
+    restartGame: "العب من جديد",
+    backToActivities: "العودة للفعاليات 🏠" // 🔥 إضافة الترجمة
   },
   en: {
     gameTitle: "Match Character to Info",
@@ -76,7 +78,8 @@ const uiTexts = {
     goodTitle: "Good (6 - 10 Errors)",
     gameOverTitle: "💀 Game Over!",
     gameOverDesc: "You exceeded 15 mistakes... The Larp Monster has awakened to consume you!",
-    restartGame: "Play Again"
+    restartGame: "Play Again",
+    backToActivities: "Back to Activities 🏠" // 🔥 إضافة الترجمة
   }
 };
 
@@ -351,7 +354,7 @@ export default function MatchCharacterPage() {
         
         if (newErrors >= MAX_MISTAKES) {
           setGameFinished(true);
-          playSound('/sounds/larp-monster.mp3'); // 🔥 تشغيل صوت الوحش فوراً عند الخسارة
+          playSound('/sounds/larp-monster.mp3'); // تشغيل صوت الوحش فوراً عند الخسارة
           setTimeout(() => {
             setShowGameOverModal(true);
           }, 300);
@@ -377,11 +380,9 @@ export default function MatchCharacterPage() {
     }
   };
 
-  // 🔥 دالة لبدء التحدي وتجهيز المتصفح للأصوات
   const handleStartChallenge = () => {
-      // هذه الخطوة تخبر المتصفح أن المستخدم تفاعل، مما يسهل تشغيل الأصوات لاحقاً
       const audio = new Audio('/sounds/larp-monster.mp3');
-      audio.volume = 0; // صامت
+      audio.volume = 0; 
       audio.play().catch(()=> {}); 
       
       setShowIntroModal(false);
@@ -434,12 +435,21 @@ export default function MatchCharacterPage() {
               {t.gameOverDesc}
             </p>
 
-            <button 
-              onClick={handleRestartGame} 
-              className="w-full bg-red-700 hover:bg-red-600 transition-colors text-white py-4 rounded-xl font-bold text-lg md:text-xl shadow-[0_0_20px_rgba(220,38,38,0.3)] active:scale-95"
-            >
-              {t.restartGame} 🔄
-            </button>
+            {/* 🔥 تعديل الأزرار في نافذة الخسارة */}
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={handleRestartGame} 
+                className="w-full bg-red-700 hover:bg-red-600 transition-colors text-white py-3 md:py-4 rounded-xl font-bold text-lg shadow-[0_0_20px_rgba(220,38,38,0.3)] active:scale-95"
+              >
+                {t.restartGame} 🔄
+              </button>
+              <Link 
+                href="/activities" 
+                className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-zinc-300 block text-sm md:text-base"
+              >
+                {t.backToActivities}
+              </Link>
+            </div>
           </div>
         </div>
       )}
@@ -595,6 +605,7 @@ export default function MatchCharacterPage() {
               <p className="flex justify-between"><span>🎯 {t.errors}:</span> <span className="font-bold text-white">{errors}</span></p>
             </div>
 
+            {/* 🔥 تعديل الأزرار في نافذة الفوز */}
             <div className="mt-4 md:mt-6 flex flex-col gap-2 md:gap-3">
               <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-indigo-600 hover:bg-indigo-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm md:text-base">
                 {t.share}
@@ -602,6 +613,12 @@ export default function MatchCharacterPage() {
               <button onClick={handleNextLevel} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-sm md:text-base text-zinc-300 block">
                 {currentLevel < MAX_LEVEL ? t.nextLevel : t.replay}
               </button>
+              <Link 
+                href="/activities" 
+                className="w-full bg-black/40 hover:bg-black/60 border border-transparent hover:border-zinc-800 transition-colors py-3 rounded-xl font-semibold text-sm md:text-base text-zinc-400 block mt-1"
+              >
+                {t.backToActivities}
+              </Link>
             </div>
           </div>
         </div>
