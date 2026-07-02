@@ -67,7 +67,8 @@ const uiTexts = {
     backToMenu: "العودة للمركز 🏠",
     gameOverTitle: "💀 لقد خسرت!",
     gameOverDesc: "لقد تجاوزت الحد الأقصى من الأخطاء (15 خطأ)... استيقظ وحش اللارب ليقضي عليك!",
-    restartGame: "العب من جديد"
+    restartGame: "العب من جديد",
+    backToActivities: "العودة للفعاليات 🏠" // 🔥 إضافة الترجمة
   },
   en: {
     gameTitle: "Guess the Character",
@@ -114,7 +115,8 @@ const uiTexts = {
     backToMenu: "Back to Center 🏠",
     gameOverTitle: "💀 Game Over!",
     gameOverDesc: "You exceeded 15 mistakes... The Larp Monster has awakened to consume you!",
-    restartGame: "Play Again"
+    restartGame: "Play Again",
+    backToActivities: "Back to Activities 🏠" // 🔥 إضافة الترجمة
   }
 };
 
@@ -186,7 +188,6 @@ export default function GuessCharacterPage() {
   const [currentRound, setCurrentRound] = useState(1);
   const usedCharsRef = useRef<string[]>([]); 
   
-  // 🔥 إضافة نظام الذاكرة الذكي للتلميحات
   const usedHintsRef = useRef<Record<string, number[]>>({}); 
   
   const [shuffledHintIndices, setShuffledHintIndices] = useState<number[]>([]); 
@@ -268,7 +269,6 @@ export default function GuessCharacterPage() {
     const distractors = shuffleArray(distractorsPool).slice(0, 3);
     const finalOptions = shuffleArray([target, ...distractors]);
 
-    // 🔥 1. جلب مصفوفة التلميحات الصحيحة لمعرفة عددها
     let targetHintsArray: string[] = [];
     if (currentDiff === 'echidna') {
        const echidnaArr = currentLanguage === 'en' ? target.echidnaHintsEn : target.echidnaHints;
@@ -279,7 +279,6 @@ export default function GuessCharacterPage() {
     
     const hintsLen = targetHintsArray.length;
 
-    // 🔥 2. نظام التدوير العادل للتلميحات (يمنع التكرار حتى تظهر كلها)
     if (!usedHintsRef.current[target.name]) {
         usedHintsRef.current[target.name] = [];
     }
@@ -287,20 +286,16 @@ export default function GuessCharacterPage() {
     let availableHintIndices = Array.from({length: hintsLen}, (_, i) => i)
                                     .filter(i => !usedHintsRef.current[target.name].includes(i));
 
-    // إذا ظهرت كل التلميحات، نقوم بتصفير الذاكرة لتبدأ الدورة بشكل عادل من جديد
     if (availableHintIndices.length === 0) {
         usedHintsRef.current[target.name] = [];
         availableHintIndices = Array.from({length: hintsLen}, (_, i) => i);
     }
 
-    // خلط التلميحات المتاحة واختيار الأول ليكون التلميح الأساسي (الذي يظهر في الشاشة)
     const shuffledAvailableHints = shuffleArray(availableHintIndices);
     const primaryHintIndex = shuffledAvailableHints[0];
 
-    // تسجيل أننا استخدمنا هذا التلميح كي لا يتكرر قريباً
     usedHintsRef.current[target.name].push(primaryHintIndex);
 
-    // ترتيب باقي التلميحات بعد التلميح الأساسي
     const remainingIndices = Array.from({length: hintsLen}, (_, i) => i).filter(i => i !== primaryHintIndex);
     const randomizedIndices = [primaryHintIndex, ...shuffleArray(remainingIndices)];
 
@@ -538,12 +533,21 @@ export default function GuessCharacterPage() {
               {t.gameOverDesc}
             </p>
 
-            <button 
-              onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowGameOverModal(false); }} 
-              className="w-full bg-red-700 hover:bg-red-600 transition-colors text-white py-4 rounded-xl font-bold text-lg md:text-xl shadow-[0_0_20px_rgba(220,38,38,0.3)] active:scale-95"
-            >
-              {t.restartGame} 🔄
-            </button>
+            {/* 🔥 تعديل الأزرار في نافذة الخسارة */}
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowGameOverModal(false); }} 
+                className="w-full bg-red-700 hover:bg-red-600 transition-colors text-white py-3 md:py-4 rounded-xl font-bold text-lg md:text-xl shadow-[0_0_20px_rgba(220,38,38,0.3)] active:scale-95"
+              >
+                {t.restartGame} 🔄
+              </button>
+              <Link 
+                href="/activities" 
+                className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-zinc-300 block text-sm md:text-base text-center"
+              >
+                {t.backToActivities}
+              </Link>
+            </div>
           </div>
         </div>
       )}
@@ -629,6 +633,7 @@ export default function GuessCharacterPage() {
             
             <p className="text-xl md:text-2xl font-bold text-white mb-6 md:mb-8">{currentLanguage === 'en' ? targetChar?.nameEn : targetChar?.name}</p>
             
+            {/* 🔥 تعديل الأزرار في نافذة انتهاء الوقت */}
             <div className="flex flex-col gap-2 md:gap-3">
                <button onClick={() => startGame(difficulty)} className="w-full bg-red-600 hover:bg-red-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-semibold text-sm md:text-base">
                  {t.tryAgain}
@@ -636,6 +641,12 @@ export default function GuessCharacterPage() {
                <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setIsTimeUp(false); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-zinc-300 text-sm md:text-base">
                  {t.changeLevel}
                </button>
+               <Link 
+                 href="/activities" 
+                 className="w-full bg-black/40 hover:bg-black/60 border border-transparent hover:border-zinc-800 transition-colors py-3 rounded-xl font-semibold text-sm md:text-base text-zinc-400 block mt-1 text-center"
+               >
+                 {t.backToActivities}
+               </Link>
             </div>
           </div>
         </div>
@@ -664,6 +675,7 @@ export default function GuessCharacterPage() {
               <p className="flex justify-between"><span>🎯 {t.totalErrors}:</span> <span className="font-bold text-white">{totalWrongGuesses}</span></p>
             </div>
 
+            {/* 🔥 تعديل الأزرار في نافذة الفوز */}
             <div className="flex flex-col gap-2 md:gap-3">
                <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-emerald-600 hover:bg-emerald-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm md:text-base">
                  {t.share}
@@ -671,6 +683,12 @@ export default function GuessCharacterPage() {
                <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowLevelCompleteModal(false); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-zinc-300 block text-sm md:text-base">
                  {t.changeLevel}
                </button>
+               <Link 
+                 href="/activities" 
+                 className="w-full bg-black/40 hover:bg-black/60 border border-transparent hover:border-zinc-800 transition-colors py-3 rounded-xl font-semibold text-sm md:text-base text-zinc-400 block mt-1 text-center"
+               >
+                 {t.backToActivities}
+               </Link>
             </div>
           </div>
         </div>
