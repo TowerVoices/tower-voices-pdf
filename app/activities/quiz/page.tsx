@@ -50,7 +50,7 @@ const uiTexts = {
     levelSubaruDesc: "10 ثواني للسؤال، لديك روحان (2).",
     levelEchidna: "إيكيدنا (Echidna)",
     levelEchidnaDesc: "5 ثواني للسؤال، لديك روح 1 (الخطأ يعيدك للبداية!).",
-    levelNovel: "مكتبة تايجيتا (Taygeta)", // 🔥 التعديل هنا
+    levelNovel: "مكتبة تايجيتا (Taygeta)", 
     levelNovelDesc: "10 ثوانٍ للسؤال. ⚠️ تحذير شديد: حرق للأحداث المتقدمة!",
     timeUp: "انتهى الوقت!",
     correctAnswerWas: "الإجابة الصحيحة كانت:",
@@ -91,7 +91,7 @@ const uiTexts = {
     levelSubaruDesc: "10s per question, 2 Lives.",
     levelEchidna: "Echidna",
     levelEchidnaDesc: "5s per question, 1 Life (Mistake = Restart!).",
-    levelNovel: "Taygeta Library", // 🔥 التعديل هنا
+    levelNovel: "Taygeta Library", 
     levelNovelDesc: "10s per question. ⚠️ Extreme Warning: Spoilers ahead!",
     timeUp: "Time's Up!",
     correctAnswerWas: "The correct answer was:",
@@ -607,7 +607,8 @@ export default function QuizPage() {
       {!showIntroModal && !showGameOverModal && !showWinModal && currentQ && (
         <div className="w-full max-w-4xl mx-auto flex flex-col flex-1 pb-8">
           
-          <div className="flex-1 flex flex-col justify-center gap-4 mb-8">
+          {/* 🔥 التعديل هنا: تمت إزالة flex-1 لعدم دفع السؤال لأعلى الشاشة وتعديل الهوامش */}
+          <div className="flex flex-col justify-center gap-4 mt-4 md:mt-8 mb-6 md:mb-10">
               <div className="bg-zinc-800/80 border border-zinc-700 p-6 md:p-10 rounded-3xl shadow-lg text-center animate-in zoom-in-95">
                 
                 {currentQ.questionImage && (
@@ -626,6 +627,7 @@ export default function QuizPage() {
               </div>
           </div>
 
+          {/* صندوق الخيارات يبقى في الأسفل */}
           <div className="bg-zinc-900/80 border border-zinc-800 p-5 md:p-8 rounded-3xl mt-auto">
             <div className={`grid gap-3 md:gap-4 ${
                 currentQ.shuffledIndices.length === 2 
