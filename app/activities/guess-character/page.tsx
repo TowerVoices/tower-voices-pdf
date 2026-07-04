@@ -188,7 +188,6 @@ export default function GuessCharacterPage() {
   const [currentRound, setCurrentRound] = useState(1);
   const usedCharsRef = useRef<string[]>([]); 
   
-  // 🔥 الذاكرة الذكية: تم تحديثها لتسجل نوع التلميح (عادي أو إيكيدنا)
   const usedHintsRef = useRef<Record<string, number[]>>({}); 
   
   const [shuffledHintIndices, setShuffledHintIndices] = useState<number[]>([]); 
@@ -271,13 +270,13 @@ export default function GuessCharacterPage() {
     const finalOptions = shuffleArray([target, ...distractors]);
 
     let targetHintsArray: string[] = [];
-    let poolType = 'normal'; // 🔥 متغير لتحديد نوع مصفوفة التلميحات
+    let poolType = 'normal'; 
 
     if (currentDiff === 'echidna') {
        const echidnaArr = currentLanguage === 'en' ? target.echidnaHintsEn : target.echidnaHints;
        if (echidnaArr && echidnaArr.length > 0) {
            targetHintsArray = echidnaArr;
-           poolType = 'echidna'; // تم استخدام تلميحات إيكيدنا
+           poolType = 'echidna'; 
        } else {
            targetHintsArray = (currentLanguage === 'en' ? target.hintsEn : target.hints) || [];
        }
@@ -286,7 +285,7 @@ export default function GuessCharacterPage() {
     }
     
     const hintsLen = targetHintsArray.length;
-    const memoryKey = `${target.name}_${poolType}`; // 🔥 مفتاح ذاكرة ذكي يفصل المستويات تماماً
+    const memoryKey = `${target.name}_${poolType}`; 
 
     if (!usedHintsRef.current[memoryKey]) {
         usedHintsRef.current[memoryKey] = [];
@@ -510,19 +509,7 @@ export default function GuessCharacterPage() {
   return (
     <main dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen flex flex-col p-4 md:p-8 bg-[#0a0a0a] text-white relative">
       
-      <div className={`absolute top-4 md:top-6 ${currentLanguage === 'ar' ? 'left-4 md:left-12' : 'right-4 md:right-12'} z-[60]`}>
-        <button 
-            onClick={() => {
-              const nextLang = currentLanguage === 'ar' ? 'en' : 'ar';
-              setCurrentLanguage(nextLang);
-              localStorage.setItem('siteLang', nextLang);
-            }}
-            className="flex items-center gap-2 border border-emerald-500/30 bg-emerald-900/40 rounded-full px-3 py-1.5 md:px-4 md:py-2 hover:bg-emerald-900/60 transition-colors text-xs md:text-sm font-semibold backdrop-blur-md shadow-lg"
-        >
-            <span className="w-4 h-4 text-[10px] md:text-xs flex items-center justify-center">🌐</span>
-            {t.langName}
-        </button>
-      </div>
+      {/* تم إزالة زر تبديل اللغة من هنا للحفاظ على تركيز اللاعب */}
 
       {showGameOverModal && (
         <div className="fixed inset-0 bg-red-950/95 backdrop-blur-xl flex items-center justify-center z-[100] p-4 overflow-y-auto">
