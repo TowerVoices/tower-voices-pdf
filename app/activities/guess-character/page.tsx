@@ -186,8 +186,9 @@ export default function GuessCharacterPage() {
   const [gameFinished, setGameFinished] = useState(false); 
 
   const [currentRound, setCurrentRound] = useState(1);
-  const usedCharsRef = useRef<string[]>([]); // 🔥 هذه هي الذاكرة الرئيسية للشخصيات
+  const usedCharsRef = useRef<string[]>([]); 
   
+  // 🔥 الذاكرة الذكية: تم تحديثها لتسجل نوع التلميح (عادي أو إيكيدنا)
   const usedHintsRef = useRef<Record<string, number[]>>({}); 
   
   const [shuffledHintIndices, setShuffledHintIndices] = useState<number[]>([]); 
@@ -254,10 +255,7 @@ export default function GuessCharacterPage() {
   const initializeRound = (chars: CharacterFromSanity[], currentDiff: Difficulty) => {
     if (chars.length < 4) return;
     
-    // 🔥 تصفية الشخصيات التي لم تظهر بعد
     let availableChars = chars.filter(c => !usedCharsRef.current.includes(c.name));
-    
-    // 🔥 إذا ظهرت كل الشخصيات، نقوم بتصفير الذاكرة لتبدأ دورة جديدة بفرص متساوية 100%
     if (availableChars.length === 0) {
         availableChars = [...chars];
         usedCharsRef.current = [];
@@ -266,40 +264,46 @@ export default function GuessCharacterPage() {
     const shuffledAvailable = shuffleArray(availableChars);
     const target = shuffledAvailable[0];
 
-    // تسجيل الشخصية كـ "مستخدمة" لكي لا تظهر مرة أخرى حتى تكتمل الدورة
     usedCharsRef.current.push(target.name);
 
-    // اختيار خيارات خاطئة (تشتيت) بشكل عشوائي تماماً
     const distractorsPool = chars.filter(c => c.name !== target.name);
     const distractors = shuffleArray(distractorsPool).slice(0, 3);
     const finalOptions = shuffleArray([target, ...distractors]);
 
     let targetHintsArray: string[] = [];
+    let poolType = 'normal'; // 🔥 متغير لتحديد نوع مصفوفة التلميحات
+
     if (currentDiff === 'echidna') {
        const echidnaArr = currentLanguage === 'en' ? target.echidnaHintsEn : target.echidnaHints;
-       targetHintsArray = (echidnaArr && echidnaArr.length > 0) ? echidnaArr : ((currentLanguage === 'en' ? target.hintsEn : target.hints) || []);
+       if (echidnaArr && echidnaArr.length > 0) {
+           targetHintsArray = echidnaArr;
+           poolType = 'echidna'; // تم استخدام تلميحات إيكيدنا
+       } else {
+           targetHintsArray = (currentLanguage === 'en' ? target.hintsEn : target.hints) || [];
+       }
     } else {
        targetHintsArray = (currentLanguage === 'en' ? target.hintsEn : target.hints) || [];
     }
     
     const hintsLen = targetHintsArray.length;
+    const memoryKey = `${target.name}_${poolType}`; // 🔥 مفتاح ذاكرة ذكي يفصل المستويات تماماً
 
-    if (!usedHintsRef.current[target.name]) {
-        usedHintsRef.current[target.name] = [];
+    if (!usedHintsRef.current[memoryKey]) {
+        usedHintsRef.current[memoryKey] = [];
     }
 
     let availableHintIndices = Array.from({length: hintsLen}, (_, i) => i)
-                                    .filter(i => !usedHintsRef.current[target.name].includes(i));
+                                    .filter(i => !usedHintsRef.current[memoryKey].includes(i));
 
     if (availableHintIndices.length === 0) {
-        usedHintsRef.current[target.name] = [];
+        usedHintsRef.current[memoryKey] = [];
         availableHintIndices = Array.from({length: hintsLen}, (_, i) => i);
     }
 
     const shuffledAvailableHints = shuffleArray(availableHintIndices);
     const primaryHintIndex = shuffledAvailableHints[0];
 
-    usedHintsRef.current[target.name].push(primaryHintIndex);
+    usedHintsRef.current[memoryKey].push(primaryHintIndex);
 
     const remainingIndices = Array.from({length: hintsLen}, (_, i) => i).filter(i => i !== primaryHintIndex);
     const randomizedIndices = [primaryHintIndex, ...shuffleArray(remainingIndices)];
@@ -318,10 +322,7 @@ export default function GuessCharacterPage() {
   const startGame = (selectedLevel: Difficulty) => {
     setDifficulty(selectedLevel);
     setCurrentRound(1); 
-    
-    // 🔥 تم حذف سطر تصفير الذاكرة (usedCharsRef.current = [];) من هنا!
-    // الآن اللعبة ستتذكر الشخصيات حتى إذا لعب المستخدم 100 جولة متتالية عبر العاب مختلفة.
-
+    usedCharsRef.current = []; 
     setTotalHintsUsed(0);
     setTotalWrongGuesses(0);
     
@@ -544,7 +545,7 @@ export default function GuessCharacterPage() {
             <div className="flex flex-col gap-3 w-full">
               <button 
                 onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowGameOverModal(false); }} 
-                className="w-full bg-red-700 hover:bg-red-600 transition-colors text-white py-3 md:py-4 rounded-xl font-bold text-lg md:text-xl shadow-[0_0_20px_rgba(220,38,38,0.3)] active:scale-95"
+                className="w-full bg-red-700 hover:bg-red-600 transition-colors text-white py-4 rounded-xl font-bold text-lg md:text-xl shadow-[0_0_20px_rgba(220,38,38,0.3)] active:scale-95"
               >
                 {t.restartGame} 🔄
               </button>
