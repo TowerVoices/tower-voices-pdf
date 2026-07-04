@@ -393,8 +393,8 @@ export default function QuizPage() {
   const currentQ = activeQuestions[currentQuestionIndex];
 
   return (
-    // 🔥 التعديل هنا: h-[100dvh] و overflow-hidden تمنع شريط التمرير (Scrollbar) تماماً وتناسب حجم الشاشة بالضبط.
-    <main dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} className="h-[100dvh] w-full flex flex-col p-4 md:p-6 bg-[#0a0a0a] text-white relative overflow-hidden">
+    // 🔥 تم تغيير الارتفاع ليكون ديناميكياً (100dvh ناقص مساحة الـ Header التقريبية) مع منع الـ Scrollbar
+    <main dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} className="h-[calc(100dvh-75px)] w-full flex flex-col p-4 md:p-6 bg-[#0a0a0a] text-white relative overflow-hidden">
       
       {/* تأثير العودة بالموت */}
       {isDying && (
@@ -413,7 +413,7 @@ export default function QuizPage() {
       )}
 
       {/* زر اللغة */}
-      <div className={`absolute top-4 md:top-6 ${currentLanguage === 'ar' ? 'left-4 md:left-8' : 'right-4 md:right-8'} z-[60]`}>
+      <div className={`absolute top-2 md:top-4 ${currentLanguage === 'ar' ? 'left-4' : 'right-4'} z-[60]`}>
         <button 
             onClick={() => {
               const nextLang = currentLanguage === 'ar' ? 'en' : 'ar';
@@ -585,12 +585,12 @@ export default function QuizPage() {
         </div>
       )}
 
-      {/* واجهة اللعب الأساسية - تم تجميعها في حاوية واحدة لضبط الـ Flexbox بدقة */}
+      {/* 🔥 حاوية اللعب الأساسية المجمّعة في المركز */}
       {!showIntroModal && !showGameOverModal && !showWinModal && currentQ && (
-        <div className="w-full max-w-4xl mx-auto flex flex-col flex-1 min-h-0 w-full h-full">
+        <div className="w-full max-w-4xl mx-auto flex flex-col flex-1 min-h-0 relative">
           
-          {/* الشريط العلوي الثابت */}
-          <div className="flex-shrink-0 z-[40] mt-12 md:mt-4 mb-4">
+          {/* الشريط العلوي الثابت للعبة */}
+          <div className="flex-shrink-0 z-[40] mt-10 md:mt-8 mb-4">
             <div className="flex flex-wrap justify-between items-center bg-zinc-900/80 p-3 md:p-4 rounded-2xl border border-zinc-800 gap-2 md:gap-4 shadow-md">
                <div className="flex items-center gap-2 md:gap-3">
                   <span className="bg-orange-950/40 text-orange-400 font-bold px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-orange-900/50 text-[10px] md:text-sm">
@@ -608,10 +608,11 @@ export default function QuizPage() {
             </div>
           </div>
 
-          {/* صندوق السؤال (يتمدد في المنتصف) */}
-          <div className="flex-1 flex flex-col justify-center min-h-0 mb-4">
-              <div className="bg-zinc-800/80 border border-zinc-700 p-6 md:p-10 rounded-3xl shadow-lg text-center animate-in zoom-in-95 overflow-y-auto max-h-full">
-                
+          {/* 🔥 حاوية السؤال والخيارات مجمعة ومتمركزة بمسافة ثابتة */}
+          <div className="flex-1 flex flex-col justify-center items-center gap-6 md:gap-8 min-h-0 pb-4 overflow-y-auto [&::-webkit-scrollbar]:hidden">
+              
+              {/* صندوق السؤال */}
+              <div className="w-full bg-zinc-800/80 border border-zinc-700 p-6 md:p-10 rounded-3xl shadow-lg text-center animate-in zoom-in-95 flex-shrink-0">
                 {currentQ.questionImage && (
                   <div className="mb-6 flex justify-center">
                     <img 
@@ -621,56 +622,54 @@ export default function QuizPage() {
                     />
                   </div>
                 )}
-
                 <h3 className="text-xl md:text-3xl font-bold text-white leading-relaxed">
                     {currentLanguage === 'en' ? currentQ.questionEn : currentQ.question}
                 </h3>
               </div>
+
+              {/* صندوق الخيارات */}
+              <div className="w-full bg-zinc-900/80 border border-zinc-800 p-5 md:p-6 rounded-3xl flex-shrink-0">
+                <div className={`grid gap-3 md:gap-4 ${
+                    currentQ.shuffledIndices.length === 2 
+                      ? 'grid-cols-1 sm:grid-cols-2' 
+                      : 'grid-cols-1 sm:grid-cols-2'
+                  }`}
+                >
+                  {currentQ.shuffledIndices.map((originalIdx: number, idx: number) => {
+                    const optsArray = currentLanguage === 'en' && currentQ.optionsEn && currentQ.optionsEn.length > 0 
+                      ? currentQ.optionsEn 
+                      : currentQ.options;
+                    
+                    const optText = optsArray[originalIdx];
+
+                    let btnStyle = "p-4 md:p-5 rounded-2xl border-2 transition-all font-bold text-sm md:text-lg text-white text-center flex justify-center items-center gap-2 ";
+
+                    if (selectedOption !== null) {
+                      if (idx === selectedOption) {
+                        btnStyle += idx === currentQ.newCorrectIndex 
+                          ? "bg-orange-500 border-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.6)] scale-[1.02] " 
+                          : "bg-red-900/80 border-red-500 opacity-70 "; 
+                      } else {
+                        btnStyle += "bg-zinc-800 border-zinc-700 opacity-50 ";
+                      }
+                    } else {
+                      btnStyle += "border-zinc-700 bg-zinc-800 hover:border-orange-500 hover:bg-orange-950/30 active:scale-95 ";
+                    }
+
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleAnswer(idx)}
+                        disabled={isTransitioning}
+                        className={btnStyle}
+                      >
+                        {optText}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
           </div>
-
-          {/* صندوق الخيارات (ثابت في الأسفل) */}
-          <div className="flex-shrink-0 bg-zinc-900/80 border border-zinc-800 p-4 md:p-6 rounded-3xl mt-auto">
-            <div className={`grid gap-3 md:gap-4 ${
-                currentQ.shuffledIndices.length === 2 
-                  ? 'grid-cols-1 sm:grid-cols-2' 
-                  : 'grid-cols-1 sm:grid-cols-2'
-              }`}
-            >
-              {currentQ.shuffledIndices.map((originalIdx: number, idx: number) => {
-                const optsArray = currentLanguage === 'en' && currentQ.optionsEn && currentQ.optionsEn.length > 0 
-                  ? currentQ.optionsEn 
-                  : currentQ.options;
-                
-                const optText = optsArray[originalIdx];
-
-                let btnStyle = "p-4 md:p-5 rounded-2xl border-2 transition-all font-bold text-sm md:text-lg text-white text-center flex justify-center items-center gap-2 ";
-
-                if (selectedOption !== null) {
-                  if (idx === selectedOption) {
-                    btnStyle += idx === currentQ.newCorrectIndex 
-                      ? "bg-orange-500 border-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.6)] scale-[1.02] " 
-                      : "bg-red-900/80 border-red-500 opacity-70 "; 
-                  } else {
-                    btnStyle += "bg-zinc-800 border-zinc-700 opacity-50 ";
-                  }
-                } else {
-                  btnStyle += "border-zinc-700 bg-zinc-800 hover:border-orange-500 hover:bg-orange-950/30 active:scale-95 ";
-                }
-
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => handleAnswer(idx)}
-                    disabled={isTransitioning}
-                    className={btnStyle}
-                  >
-                    {optText}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
         </div>
       )}
     </main>
