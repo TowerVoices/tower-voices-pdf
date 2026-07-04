@@ -393,8 +393,7 @@ export default function QuizPage() {
   const currentQ = activeQuestions[currentQuestionIndex];
 
   return (
-    // 🔥 تم تغيير الارتفاع ليكون ديناميكياً (100dvh ناقص مساحة الـ Header التقريبية) مع منع الـ Scrollbar
-    <main dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} className="h-[calc(100dvh-75px)] w-full flex flex-col p-4 md:p-6 bg-[#0a0a0a] text-white relative overflow-hidden">
+    <main dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} className="h-[100dvh] w-full flex flex-col bg-[#0a0a0a] text-white relative overflow-hidden">
       
       {/* تأثير العودة بالموت */}
       {isDying && (
@@ -413,7 +412,7 @@ export default function QuizPage() {
       )}
 
       {/* زر اللغة */}
-      <div className={`absolute top-2 md:top-4 ${currentLanguage === 'ar' ? 'left-4' : 'right-4'} z-[60]`}>
+      <div className={`absolute top-4 md:top-6 ${currentLanguage === 'ar' ? 'left-4 md:left-8' : 'right-4 md:right-8'} z-[60]`}>
         <button 
             onClick={() => {
               const nextLang = currentLanguage === 'ar' ? 'en' : 'ar';
@@ -585,13 +584,13 @@ export default function QuizPage() {
         </div>
       )}
 
-      {/* 🔥 حاوية اللعب الأساسية المجمّعة في المركز */}
+      {/* 🔥 حاوية اللعب الأساسية - تم التعديل لمنع الـ Scrollbar وتقريب الصناديق */}
       {!showIntroModal && !showGameOverModal && !showWinModal && currentQ && (
-        <div className="w-full max-w-4xl mx-auto flex flex-col flex-1 min-h-0 relative">
+        <div className="w-full max-w-3xl mx-auto flex flex-col flex-1 h-full px-4 md:px-6 pt-16 pb-6">
           
           {/* الشريط العلوي الثابت للعبة */}
-          <div className="flex-shrink-0 z-[40] mt-10 md:mt-8 mb-4">
-            <div className="flex flex-wrap justify-between items-center bg-zinc-900/80 p-3 md:p-4 rounded-2xl border border-zinc-800 gap-2 md:gap-4 shadow-md">
+          <div className="flex-shrink-0 w-full mb-6 md:mb-8">
+            <div className="flex flex-wrap justify-between items-center bg-zinc-900/80 p-3 md:p-4 rounded-2xl border border-zinc-800 gap-2 shadow-md">
                <div className="flex items-center gap-2 md:gap-3">
                   <span className="bg-orange-950/40 text-orange-400 font-bold px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-orange-900/50 text-[10px] md:text-sm">
                     {t.questionNum} {currentQuestionIndex + 1} {t.of} {TOTAL_QUESTIONS}
@@ -608,28 +607,28 @@ export default function QuizPage() {
             </div>
           </div>
 
-          {/* 🔥 حاوية السؤال والخيارات مجمعة ومتمركزة بمسافة ثابتة */}
-          <div className="flex-1 flex flex-col justify-center items-center gap-6 md:gap-8 min-h-0 pb-4 overflow-y-auto [&::-webkit-scrollbar]:hidden">
+          {/* حاوية السؤال والخيارات */}
+          <div className="flex-1 flex flex-col justify-start md:justify-center gap-4 md:gap-6 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden pb-4">
               
               {/* صندوق السؤال */}
-              <div className="w-full bg-zinc-800/80 border border-zinc-700 p-6 md:p-10 rounded-3xl shadow-lg text-center animate-in zoom-in-95 flex-shrink-0">
+              <div className="w-full bg-zinc-800/80 border border-zinc-700 p-5 md:p-8 rounded-2xl md:rounded-3xl shadow-lg text-center animate-in zoom-in-95 flex-shrink-0">
                 {currentQ.questionImage && (
-                  <div className="mb-6 flex justify-center">
+                  <div className="mb-4 flex justify-center">
                     <img 
                        src={currentQ.questionImage} 
                        alt="Question" 
-                       className="max-h-40 md:max-h-64 w-auto object-contain rounded-xl border-2 border-zinc-700 shadow-md" 
+                       className="max-h-32 md:max-h-56 w-auto object-contain rounded-xl border-2 border-zinc-700 shadow-md" 
                     />
                   </div>
                 )}
-                <h3 className="text-xl md:text-3xl font-bold text-white leading-relaxed">
+                <h3 className="text-lg md:text-2xl font-bold text-white leading-relaxed">
                     {currentLanguage === 'en' ? currentQ.questionEn : currentQ.question}
                 </h3>
               </div>
 
               {/* صندوق الخيارات */}
-              <div className="w-full bg-zinc-900/80 border border-zinc-800 p-5 md:p-6 rounded-3xl flex-shrink-0">
-                <div className={`grid gap-3 md:gap-4 ${
+              <div className="w-full bg-zinc-900/80 border border-zinc-800 p-4 md:p-6 rounded-2xl md:rounded-3xl flex-shrink-0">
+                <div className={`grid gap-2 md:gap-4 ${
                     currentQ.shuffledIndices.length === 2 
                       ? 'grid-cols-1 sm:grid-cols-2' 
                       : 'grid-cols-1 sm:grid-cols-2'
@@ -642,7 +641,7 @@ export default function QuizPage() {
                     
                     const optText = optsArray[originalIdx];
 
-                    let btnStyle = "p-4 md:p-5 rounded-2xl border-2 transition-all font-bold text-sm md:text-lg text-white text-center flex justify-center items-center gap-2 ";
+                    let btnStyle = "p-3 md:p-4 rounded-xl md:rounded-2xl border-2 transition-all font-bold text-sm md:text-lg text-white text-center flex justify-center items-center gap-2 leading-snug ";
 
                     if (selectedOption !== null) {
                       if (idx === selectedOption) {
