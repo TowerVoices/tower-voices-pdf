@@ -584,13 +584,13 @@ export default function QuizPage() {
         </div>
       )}
 
-      {/* 🔥 حاوية اللعب الأساسية - تم التعديل لمنع الـ Scrollbar وتقريب الصناديق */}
+      {/* 🔥 حاوية اللعب الأساسية المجمّعة في المركز */}
       {!showIntroModal && !showGameOverModal && !showWinModal && currentQ && (
-        <div className="w-full max-w-3xl mx-auto flex flex-col flex-1 h-full px-4 md:px-6 pt-16 pb-6">
+        <div className="w-full max-w-4xl mx-auto flex flex-col flex-1 h-full px-4 md:px-6 pt-16 pb-6 relative">
           
           {/* الشريط العلوي الثابت للعبة */}
           <div className="flex-shrink-0 w-full mb-6 md:mb-8">
-            <div className="flex flex-wrap justify-between items-center bg-zinc-900/80 p-3 md:p-4 rounded-2xl border border-zinc-800 gap-2 shadow-md">
+            <div className="flex flex-wrap justify-between items-center bg-zinc-900/80 p-3 md:p-4 rounded-2xl border border-zinc-800 gap-2 md:gap-4 shadow-md">
                <div className="flex items-center gap-2 md:gap-3">
                   <span className="bg-orange-950/40 text-orange-400 font-bold px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-orange-900/50 text-[10px] md:text-sm">
                     {t.questionNum} {currentQuestionIndex + 1} {t.of} {TOTAL_QUESTIONS}
@@ -607,8 +607,8 @@ export default function QuizPage() {
             </div>
           </div>
 
-          {/* حاوية السؤال والخيارات */}
-          <div className="flex-1 flex flex-col justify-start md:justify-center gap-4 md:gap-6 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden pb-4">
+          {/* 🔥 محاذاة تبدأ من الأعلى (justify-start) لجميع الأجهزة لمنع دفع المكونات للأسفل */}
+          <div className="flex-1 flex flex-col justify-start gap-4 md:gap-8 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden pb-4 md:pt-4">
               
               {/* صندوق السؤال */}
               <div className="w-full bg-zinc-800/80 border border-zinc-700 p-5 md:p-8 rounded-2xl md:rounded-3xl shadow-lg text-center animate-in zoom-in-95 flex-shrink-0">
