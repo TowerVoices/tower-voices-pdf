@@ -68,7 +68,7 @@ const uiTexts = {
     gameOverTitle: "💀 لقد خسرت!",
     gameOverDesc: "لقد تجاوزت الحد الأقصى من الأخطاء (15 خطأ)... استيقظ وحش اللارب ليقضي عليك!",
     restartGame: "العب من جديد",
-    backToActivities: "العودة للفعاليات 🏠" // 🔥 إضافة الترجمة
+    backToActivities: "العودة للفعاليات 🏠"
   },
   en: {
     gameTitle: "Guess the Character",
@@ -116,7 +116,7 @@ const uiTexts = {
     gameOverTitle: "💀 Game Over!",
     gameOverDesc: "You exceeded 15 mistakes... The Larp Monster has awakened to consume you!",
     restartGame: "Play Again",
-    backToActivities: "Back to Activities 🏠" // 🔥 إضافة الترجمة
+    backToActivities: "Back to Activities 🏠"
   }
 };
 
@@ -186,7 +186,7 @@ export default function GuessCharacterPage() {
   const [gameFinished, setGameFinished] = useState(false); 
 
   const [currentRound, setCurrentRound] = useState(1);
-  const usedCharsRef = useRef<string[]>([]); 
+  const usedCharsRef = useRef<string[]>([]); // 🔥 هذه هي الذاكرة الرئيسية للشخصيات
   
   const usedHintsRef = useRef<Record<string, number[]>>({}); 
   
@@ -254,7 +254,10 @@ export default function GuessCharacterPage() {
   const initializeRound = (chars: CharacterFromSanity[], currentDiff: Difficulty) => {
     if (chars.length < 4) return;
     
+    // 🔥 تصفية الشخصيات التي لم تظهر بعد
     let availableChars = chars.filter(c => !usedCharsRef.current.includes(c.name));
+    
+    // 🔥 إذا ظهرت كل الشخصيات، نقوم بتصفير الذاكرة لتبدأ دورة جديدة بفرص متساوية 100%
     if (availableChars.length === 0) {
         availableChars = [...chars];
         usedCharsRef.current = [];
@@ -263,8 +266,10 @@ export default function GuessCharacterPage() {
     const shuffledAvailable = shuffleArray(availableChars);
     const target = shuffledAvailable[0];
 
+    // تسجيل الشخصية كـ "مستخدمة" لكي لا تظهر مرة أخرى حتى تكتمل الدورة
     usedCharsRef.current.push(target.name);
 
+    // اختيار خيارات خاطئة (تشتيت) بشكل عشوائي تماماً
     const distractorsPool = chars.filter(c => c.name !== target.name);
     const distractors = shuffleArray(distractorsPool).slice(0, 3);
     const finalOptions = shuffleArray([target, ...distractors]);
@@ -313,7 +318,10 @@ export default function GuessCharacterPage() {
   const startGame = (selectedLevel: Difficulty) => {
     setDifficulty(selectedLevel);
     setCurrentRound(1); 
-    usedCharsRef.current = []; 
+    
+    // 🔥 تم حذف سطر تصفير الذاكرة (usedCharsRef.current = [];) من هنا!
+    // الآن اللعبة ستتذكر الشخصيات حتى إذا لعب المستخدم 100 جولة متتالية عبر العاب مختلفة.
+
     setTotalHintsUsed(0);
     setTotalWrongGuesses(0);
     
@@ -533,8 +541,7 @@ export default function GuessCharacterPage() {
               {t.gameOverDesc}
             </p>
 
-            {/* 🔥 تعديل الأزرار في نافذة الخسارة */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 w-full">
               <button 
                 onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowGameOverModal(false); }} 
                 className="w-full bg-red-700 hover:bg-red-600 transition-colors text-white py-3 md:py-4 rounded-xl font-bold text-lg md:text-xl shadow-[0_0_20px_rgba(220,38,38,0.3)] active:scale-95"
@@ -633,7 +640,6 @@ export default function GuessCharacterPage() {
             
             <p className="text-xl md:text-2xl font-bold text-white mb-6 md:mb-8">{currentLanguage === 'en' ? targetChar?.nameEn : targetChar?.name}</p>
             
-            {/* 🔥 تعديل الأزرار في نافذة انتهاء الوقت */}
             <div className="flex flex-col gap-2 md:gap-3">
                <button onClick={() => startGame(difficulty)} className="w-full bg-red-600 hover:bg-red-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-semibold text-sm md:text-base">
                  {t.tryAgain}
@@ -675,7 +681,6 @@ export default function GuessCharacterPage() {
               <p className="flex justify-between"><span>🎯 {t.totalErrors}:</span> <span className="font-bold text-white">{totalWrongGuesses}</span></p>
             </div>
 
-            {/* 🔥 تعديل الأزرار في نافذة الفوز */}
             <div className="flex flex-col gap-2 md:gap-3">
                <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-emerald-600 hover:bg-emerald-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm md:text-base">
                  {t.share}
