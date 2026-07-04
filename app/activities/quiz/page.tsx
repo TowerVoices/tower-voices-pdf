@@ -393,7 +393,8 @@ export default function QuizPage() {
   const currentQ = activeQuestions[currentQuestionIndex];
 
   return (
-    <main dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen flex flex-col p-4 md:p-8 bg-[#0a0a0a] text-white relative overflow-hidden">
+    // 🔥 التعديل هنا: h-[100dvh] و overflow-hidden تمنع شريط التمرير (Scrollbar) تماماً وتناسب حجم الشاشة بالضبط.
+    <main dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} className="h-[100dvh] w-full flex flex-col p-4 md:p-6 bg-[#0a0a0a] text-white relative overflow-hidden">
       
       {/* تأثير العودة بالموت */}
       {isDying && (
@@ -412,7 +413,7 @@ export default function QuizPage() {
       )}
 
       {/* زر اللغة */}
-      <div className={`absolute top-4 md:top-6 ${currentLanguage === 'ar' ? 'left-4 md:left-12' : 'right-4 md:right-12'} z-[60]`}>
+      <div className={`absolute top-4 md:top-6 ${currentLanguage === 'ar' ? 'left-4 md:left-8' : 'right-4 md:right-8'} z-[60]`}>
         <button 
             onClick={() => {
               const nextLang = currentLanguage === 'ar' ? 'en' : 'ar';
@@ -584,39 +585,39 @@ export default function QuizPage() {
         </div>
       )}
 
+      {/* واجهة اللعب الأساسية - تم تجميعها في حاوية واحدة لضبط الـ Flexbox بدقة */}
       {!showIntroModal && !showGameOverModal && !showWinModal && currentQ && (
-        <div className="sticky top-0 z-[40] pt-14 pb-2 bg-[#0a0a0a]/90 backdrop-blur-md w-full max-w-4xl mx-auto border-b border-zinc-800/50 mb-6">
-          <div className="flex flex-wrap justify-between items-center bg-zinc-900/80 p-3 md:p-4 rounded-2xl border border-zinc-800 gap-2 md:gap-4 shadow-md">
-             <div className="flex items-center gap-2 md:gap-3">
-                <span className="bg-orange-950/40 text-orange-400 font-bold px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-orange-900/50 text-[10px] md:text-sm">
-                  {t.questionNum} {currentQuestionIndex + 1} {t.of} {TOTAL_QUESTIONS}
-                </span>
-             </div>
-             
-             <div className="flex gap-2 md:gap-3 text-[10px] md:text-sm font-semibold">
-                <span className={`px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border flex items-center gap-1 transition-colors ${timeLeft <= 3 ? 'bg-red-950/80 border-red-500 text-red-400 animate-pulse' : 'bg-zinc-800 border-zinc-700'}`}>
-                  ⏱️ {timeLeft} {t.seconds}
-                </span>
-                <span className="bg-zinc-800 px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-zinc-700">✅ {score}</span>
-                <span className={`px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border flex items-center gap-1 ${lives === 0 ? 'bg-red-900/20 border-red-500 text-red-400' : 'bg-zinc-800 border-zinc-700'}`}>❤️ {lives}</span>
-             </div>
-          </div>
-        </div>
-      )}
-
-      {!showIntroModal && !showGameOverModal && !showWinModal && currentQ && (
-        <div className="w-full max-w-4xl mx-auto flex flex-col flex-1 pb-8">
+        <div className="w-full max-w-4xl mx-auto flex flex-col flex-1 min-h-0 w-full h-full">
           
-          {/* 🔥 التعديل هنا: تمت إزالة flex-1 لعدم دفع السؤال لأعلى الشاشة وتعديل الهوامش */}
-          <div className="flex flex-col justify-center gap-4 mt-4 md:mt-8 mb-6 md:mb-10">
-              <div className="bg-zinc-800/80 border border-zinc-700 p-6 md:p-10 rounded-3xl shadow-lg text-center animate-in zoom-in-95">
+          {/* الشريط العلوي الثابت */}
+          <div className="flex-shrink-0 z-[40] mt-12 md:mt-4 mb-4">
+            <div className="flex flex-wrap justify-between items-center bg-zinc-900/80 p-3 md:p-4 rounded-2xl border border-zinc-800 gap-2 md:gap-4 shadow-md">
+               <div className="flex items-center gap-2 md:gap-3">
+                  <span className="bg-orange-950/40 text-orange-400 font-bold px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-orange-900/50 text-[10px] md:text-sm">
+                    {t.questionNum} {currentQuestionIndex + 1} {t.of} {TOTAL_QUESTIONS}
+                  </span>
+               </div>
+               
+               <div className="flex gap-2 md:gap-3 text-[10px] md:text-sm font-semibold">
+                  <span className={`px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border flex items-center gap-1 transition-colors ${timeLeft <= 3 ? 'bg-red-950/80 border-red-500 text-red-400 animate-pulse' : 'bg-zinc-800 border-zinc-700'}`}>
+                    ⏱️ {timeLeft} {t.seconds}
+                  </span>
+                  <span className="bg-zinc-800 px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-zinc-700">✅ {score}</span>
+                  <span className={`px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border flex items-center gap-1 ${lives === 0 ? 'bg-red-900/20 border-red-500 text-red-400' : 'bg-zinc-800 border-zinc-700'}`}>❤️ {lives}</span>
+               </div>
+            </div>
+          </div>
+
+          {/* صندوق السؤال (يتمدد في المنتصف) */}
+          <div className="flex-1 flex flex-col justify-center min-h-0 mb-4">
+              <div className="bg-zinc-800/80 border border-zinc-700 p-6 md:p-10 rounded-3xl shadow-lg text-center animate-in zoom-in-95 overflow-y-auto max-h-full">
                 
                 {currentQ.questionImage && (
                   <div className="mb-6 flex justify-center">
                     <img 
                        src={currentQ.questionImage} 
                        alt="Question" 
-                       className="max-h-48 md:max-h-64 w-auto object-contain rounded-xl border-2 border-zinc-700 shadow-md" 
+                       className="max-h-40 md:max-h-64 w-auto object-contain rounded-xl border-2 border-zinc-700 shadow-md" 
                     />
                   </div>
                 )}
@@ -627,8 +628,8 @@ export default function QuizPage() {
               </div>
           </div>
 
-          {/* صندوق الخيارات يبقى في الأسفل */}
-          <div className="bg-zinc-900/80 border border-zinc-800 p-5 md:p-8 rounded-3xl mt-auto">
+          {/* صندوق الخيارات (ثابت في الأسفل) */}
+          <div className="flex-shrink-0 bg-zinc-900/80 border border-zinc-800 p-4 md:p-6 rounded-3xl mt-auto">
             <div className={`grid gap-3 md:gap-4 ${
                 currentQ.shuffledIndices.length === 2 
                   ? 'grid-cols-1 sm:grid-cols-2' 
@@ -642,7 +643,7 @@ export default function QuizPage() {
                 
                 const optText = optsArray[originalIdx];
 
-                let btnStyle = "p-4 md:p-5 rounded-2xl border-2 transition-all font-bold text-base md:text-lg text-white text-center flex justify-center items-center gap-2 ";
+                let btnStyle = "p-4 md:p-5 rounded-2xl border-2 transition-all font-bold text-sm md:text-lg text-white text-center flex justify-center items-center gap-2 ";
 
                 if (selectedOption !== null) {
                   if (idx === selectedOption) {
@@ -669,6 +670,7 @@ export default function QuizPage() {
               })}
             </div>
           </div>
+
         </div>
       )}
     </main>
