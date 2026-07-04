@@ -53,7 +53,7 @@ const uiTexts = {
     gameOverTitle: "💀 لقد خسرت!",
     gameOverDesc: "لقد تجاوزت الحد الأقصى من الأخطاء (15 خطأ)... استيقظ وحش اللارب ليقضي عليك!",
     restartGame: "العب من جديد",
-    backToActivities: "العودة للفعاليات 🏠" // 🔥 إضافة الترجمة
+    backToActivities: "العودة للفعاليات 🏠"
   },
   en: {
     gameTitle: "Match Character to Info",
@@ -79,14 +79,13 @@ const uiTexts = {
     gameOverTitle: "💀 Game Over!",
     gameOverDesc: "You exceeded 15 mistakes... The Larp Monster has awakened to consume you!",
     restartGame: "Play Again",
-    backToActivities: "Back to Activities 🏠" // 🔥 إضافة الترجمة
+    backToActivities: "Back to Activities 🏠"
   }
 };
 
 const MAX_LEVEL = 3;
 const MAX_MISTAKES = 15;
 
-// 🔥 دالة تشغيل الصوت المحسنة
 const playSound = (audioPath: string) => {
   if (typeof window !== "undefined") {
     const audio = new Audio(audioPath);
@@ -354,7 +353,7 @@ export default function MatchCharacterPage() {
         
         if (newErrors >= MAX_MISTAKES) {
           setGameFinished(true);
-          playSound('/sounds/larp-monster.mp3'); // تشغيل صوت الوحش فوراً عند الخسارة
+          playSound('/sounds/larp-monster.mp3'); 
           setTimeout(() => {
             setShowGameOverModal(true);
           }, 300);
@@ -403,19 +402,10 @@ export default function MatchCharacterPage() {
       dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} 
       className="min-h-screen flex flex-col p-4 md:p-8 bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white relative z-0"
     >
-      <div className={`absolute top-4 md:top-6 ${currentLanguage === 'ar' ? 'left-4 md:left-12' : 'right-4 md:right-12'} z-[60]`}>
-        <button 
-            onClick={() => {
-              const nextLang = currentLanguage === 'ar' ? 'en' : 'ar';
-              setCurrentLanguage(nextLang);
-              localStorage.setItem('siteLang', nextLang);
-            }}
-            className="flex items-center gap-2 border border-indigo-500/30 bg-indigo-900/40 rounded-full px-3 py-1.5 md:px-4 md:py-2 hover:bg-indigo-900/60 transition-colors text-xs md:text-sm font-semibold backdrop-blur-md shadow-lg"
-        >
-            <span className="w-4 h-4 bg-transparent border border-white rounded-full flex items-center justify-center text-[10px]">🌐</span>
-            {t.langName}
-        </button>
-      </div>
+      
+      {/* 
+        🔥 تم حذف زر تغيير اللغة من هنا للحفاظ على تركيز اللاعب 
+      */}
 
       {showGameOverModal && (
         <div className="fixed inset-0 bg-red-950/95 backdrop-blur-xl flex items-center justify-center z-[100] p-4 overflow-y-auto">
@@ -435,8 +425,7 @@ export default function MatchCharacterPage() {
               {t.gameOverDesc}
             </p>
 
-            {/* 🔥 تعديل الأزرار في نافذة الخسارة */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 w-full">
               <button 
                 onClick={handleRestartGame} 
                 className="w-full bg-red-700 hover:bg-red-600 transition-colors text-white py-3 md:py-4 rounded-xl font-bold text-lg shadow-[0_0_20px_rgba(220,38,38,0.3)] active:scale-95"
@@ -445,7 +434,7 @@ export default function MatchCharacterPage() {
               </button>
               <Link 
                 href="/activities" 
-                className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-zinc-300 block text-sm md:text-base"
+                className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-zinc-300 block text-sm md:text-base text-center"
               >
                 {t.backToActivities}
               </Link>
@@ -605,8 +594,7 @@ export default function MatchCharacterPage() {
               <p className="flex justify-between"><span>🎯 {t.errors}:</span> <span className="font-bold text-white">{errors}</span></p>
             </div>
 
-            {/* 🔥 تعديل الأزرار في نافذة الفوز */}
-            <div className="mt-4 md:mt-6 flex flex-col gap-2 md:gap-3">
+            <div className="mt-4 md:mt-6 flex flex-col gap-2 md:gap-3 w-full">
               <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-indigo-600 hover:bg-indigo-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm md:text-base">
                 {t.share}
               </button>
@@ -615,7 +603,7 @@ export default function MatchCharacterPage() {
               </button>
               <Link 
                 href="/activities" 
-                className="w-full bg-black/40 hover:bg-black/60 border border-transparent hover:border-zinc-800 transition-colors py-3 rounded-xl font-semibold text-sm md:text-base text-zinc-400 block mt-1"
+                className="w-full bg-black/40 hover:bg-black/60 border border-transparent hover:border-zinc-800 transition-colors py-3 rounded-xl font-semibold text-sm md:text-base text-zinc-400 block mt-1 text-center"
               >
                 {t.backToActivities}
               </Link>
