@@ -411,20 +411,9 @@ export default function QuizPage() {
         </div>
       )}
 
-      {/* زر اللغة */}
-      <div className={`absolute top-4 md:top-6 ${currentLanguage === 'ar' ? 'left-4 md:left-8' : 'right-4 md:right-8'} z-[60]`}>
-        <button 
-            onClick={() => {
-              const nextLang = currentLanguage === 'ar' ? 'en' : 'ar';
-              setCurrentLanguage(nextLang);
-              localStorage.setItem('siteLang', nextLang);
-            }}
-            className="flex items-center gap-2 border border-orange-500/30 bg-orange-900/40 rounded-full px-3 py-1.5 md:px-4 md:py-2 hover:bg-orange-900/60 transition-colors text-xs md:text-sm font-semibold backdrop-blur-md shadow-lg"
-        >
-            <span className="w-4 h-4 text-[10px] md:text-xs flex items-center justify-center">🌐</span>
-            {t.langName}
-        </button>
-      </div>
+      {/* 
+        🔥 تم حذف زر تغيير اللغة من هنا بناءً على طلبك ليبقى التحدي خاليًا من المشتتات 
+      */}
 
       {showGameOverModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
@@ -584,7 +573,7 @@ export default function QuizPage() {
         </div>
       )}
 
-      {/* 🔥 حاوية اللعب الأساسية المجمّعة في المركز */}
+      {/* 🔥 حاوية اللعب الأساسية */}
       {!showIntroModal && !showGameOverModal && !showWinModal && currentQ && (
         <div className="w-full max-w-4xl mx-auto flex flex-col flex-1 h-full px-4 md:px-6 pt-16 pb-6 relative">
           
@@ -607,7 +596,7 @@ export default function QuizPage() {
             </div>
           </div>
 
-          {/* 🔥 محاذاة تبدأ من الأعلى (justify-start) لجميع الأجهزة لمنع دفع المكونات للأسفل */}
+          {/* محاذاة تبدأ من الأعلى (justify-start) لجميع الأجهزة لمنع دفع المكونات للأسفل */}
           <div className="flex-1 flex flex-col justify-start gap-4 md:gap-8 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden pb-4 md:pt-4">
               
               {/* صندوق السؤال */}
