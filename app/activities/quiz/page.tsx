@@ -167,6 +167,9 @@ export default function QuizPage() {
   const [deathsCount, setDeathsCount] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
 
+  // 🔥 الذاكرة الذكية: حفظ الأسئلة التي تم لعبها لضمان عدم تكرارها حتى تظهر جميع الأسئلة
+  const usedQuestionsRef = useRef<Record<string, string[]>>({ normal: [], novel: [] });
+
   // Effects & Modals
   const [isDying, setIsDying] = useState(false); 
   const [showIntroModal, setShowIntroModal] = useState(true);
@@ -206,19 +209,38 @@ export default function QuizPage() {
 
   const startGame = (selectedLevel: Difficulty) => {
     const isNovelMode = selectedLevel === 'novel';
+    const poolKey = isNovelMode ? 'novel' : 'normal';
+
     const filteredDB = dbQuestions.filter(q => isNovelMode ? q.isNovelSpoiler : !q.isNovelSpoiler);
 
     if (filteredDB.length < TOTAL_QUESTIONS) {
       alert(currentLanguage === 'ar' 
-        ? `عذراً! لا يوجد عدد كافٍ من الأسئلة لهذا المسار. المتوفر: ${filteredDB.length} والمطلوب: 10.` 
-        : `Not enough questions for this path! Available: ${filteredDB.length}, Needed: 10.`);
+        ? `عذراً! لا يوجد عدد كافٍ من الأسئلة لهذا المسار. المتوفر: ${filteredDB.length} والمطلوب: ${TOTAL_QUESTIONS}.` 
+        : `Not enough questions for this path! Available: ${filteredDB.length}, Needed: ${TOTAL_QUESTIONS}.`);
       return;
     }
 
     setDifficulty(selectedLevel);
-    const shuffled = shuffleArray(filteredDB).slice(0, TOTAL_QUESTIONS);
+
+    // 🔥 الخوارزمية الذكية لمنع تكرار الأسئلة
+    let availableQuestions = filteredDB.filter(q => !usedQuestionsRef.current[poolKey].includes(q._id));
+
+    // إذا لم يتبقَ عدد كافٍ من الأسئلة غير الملعوبة لعمل جولة كاملة، نقوم بتصفير الذاكرة
+    if (availableQuestions.length < TOTAL_QUESTIONS) {
+        usedQuestionsRef.current[poolKey] = [];
+        availableQuestions = [...filteredDB];
+    }
+
+    // سحب 10 أسئلة بشكل عشوائي من الأسئلة المتاحة (التي لم تلعب بعد)
+    const selectedQuestions = shuffleArray(availableQuestions).slice(0, TOTAL_QUESTIONS);
+
+    // تسجيل الأسئلة المسحوبة في الذاكرة لكي لا تظهر الجولات القادمة
+    selectedQuestions.forEach(q => {
+        usedQuestionsRef.current[poolKey].push(q._id);
+    });
     
-    const randomizedQuestions = shuffled.map(q => {
+    // خلط أماكن الإجابات داخل كل سؤال
+    const randomizedQuestions = selectedQuestions.map(q => {
       const optsLen = q.options?.length || 4;
       const baseIndices = Array.from({ length: optsLen }, (_, i) => i);
       const shuffledIndices = shuffleArray(baseIndices);
@@ -412,7 +434,7 @@ export default function QuizPage() {
       )}
 
       {/* 
-        🔥 تم حذف زر تغيير اللغة من هنا بناءً على طلبك ليبقى التحدي خاليًا من المشتتات 
+        تم حذف زر تغيير اللغة من هنا للحفاظ على تجربة مستخدم نقية وبدون تشتيت 
       */}
 
       {showGameOverModal && (
@@ -573,7 +595,7 @@ export default function QuizPage() {
         </div>
       )}
 
-      {/* 🔥 حاوية اللعب الأساسية */}
+      {/* 🔥 حاوية اللعب الأساسية المجمّعة في المركز */}
       {!showIntroModal && !showGameOverModal && !showWinModal && currentQ && (
         <div className="w-full max-w-4xl mx-auto flex flex-col flex-1 h-full px-4 md:px-6 pt-16 pb-6 relative">
           
