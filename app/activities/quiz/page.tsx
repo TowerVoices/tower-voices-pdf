@@ -38,7 +38,7 @@ const uiTexts = {
     rule2Title: "الإجابات الصحيحة:",
     rule2Desc: "كلما زادت إجاباتك الصحيحة من أصل 10، زادت فرصة البطاقة النادرة.",
     rule3Title: "العودة بالموت:",
-    rule3Desc: "يعيدك بالزمن! الموتة الأولى ترجعك سؤال، الثانية سؤالين، والثالثة ستعيدك لـنقطة البداية 💀",
+    rule3Desc: "يعيدك بالزمن! الموتة الأولى ترجعك سؤال، الثانية سؤالين، والثالثة ستعيدك لـنقطة البداية وتغير مسار الأحداث (الأسئلة) 💀",
     score: "الإجابات الصحيحة",
     lives: "الأرواح",
     notEnoughData: "عذراً، يجب إضافة 10 أسئلة على الأقل في لوحة Sanity للبدء.",
@@ -79,7 +79,7 @@ const uiTexts = {
     rule2Title: "Correct Answers:",
     rule2Desc: "The more correct answers out of 10, the better the card.",
     rule3Title: "Return by Death:",
-    rule3Desc: "Rewinds time! 1st death = back 1 Q, 2nd = back 2 Qs, 3rd = restart from save point 💀",
+    rule3Desc: "Rewinds time! 1st death = back 1 Q, 2nd = back 2 Qs, 3rd = restart from save point and shifts timeline (questions) 💀",
     score: "Correct Answers",
     lives: "Lives",
     notEnoughData: "Sorry, you need at least 10 questions in Sanity to start.",
@@ -167,7 +167,7 @@ export default function QuizPage() {
   const [deathsCount, setDeathsCount] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
 
-  // 🔥 الذاكرة الذكية: حفظ الأسئلة التي تم لعبها لضمان عدم تكرارها حتى تظهر جميع الأسئلة
+  // الذاكرة الذكية لتتبع الأسئلة التي ظهرت للاعب
   const usedQuestionsRef = useRef<Record<string, string[]>>({ normal: [], novel: [] });
 
   // Effects & Modals
@@ -207,10 +207,46 @@ export default function QuizPage() {
     fetchSanityData();
   }, []);
 
-  const startGame = (selectedLevel: Difficulty) => {
+  // 🔥 دالة ذكية لتوليد وتغيير الأسئلة بدون تكرار
+  const generateNewQuestions = (selectedLevel: Difficulty) => {
+    if (!selectedLevel) return;
+    
     const isNovelMode = selectedLevel === 'novel';
     const poolKey = isNovelMode ? 'novel' : 'normal';
 
+    const filteredDB = dbQuestions.filter(q => isNovelMode ? q.isNovelSpoiler : !q.isNovelSpoiler);
+
+    // تصفية الأسئلة التي لم تظهر بعد
+    let availableQuestions = filteredDB.filter(q => !usedQuestionsRef.current[poolKey].includes(q._id));
+
+    // إذا نفدت الأسئلة، قم بتصفير الذاكرة لتبدأ دورة جديدة
+    if (availableQuestions.length < TOTAL_QUESTIONS) {
+        usedQuestionsRef.current[poolKey] = [];
+        availableQuestions = [...filteredDB];
+    }
+
+    // اختيار 10 أسئلة عشوائياً
+    const selectedQuestions = shuffleArray(availableQuestions).slice(0, TOTAL_QUESTIONS);
+
+    // تسجيل الأسئلة الجديدة في الذاكرة
+    selectedQuestions.forEach(q => {
+        usedQuestionsRef.current[poolKey].push(q._id);
+    });
+    
+    // خلط أماكن الإجابات
+    const randomizedQuestions = selectedQuestions.map(q => {
+      const optsLen = q.options?.length || 4;
+      const baseIndices = Array.from({ length: optsLen }, (_, i) => i);
+      const shuffledIndices = shuffleArray(baseIndices);
+      const newCorrectIndex = shuffledIndices.indexOf(q.correctAnswerIndex);
+      return { ...q, shuffledIndices, newCorrectIndex };
+    });
+
+    setActiveQuestions(randomizedQuestions);
+  };
+
+  const startGame = (selectedLevel: Difficulty) => {
+    const isNovelMode = selectedLevel === 'novel';
     const filteredDB = dbQuestions.filter(q => isNovelMode ? q.isNovelSpoiler : !q.isNovelSpoiler);
 
     if (filteredDB.length < TOTAL_QUESTIONS) {
@@ -221,36 +257,10 @@ export default function QuizPage() {
     }
 
     setDifficulty(selectedLevel);
-
-    // 🔥 الخوارزمية الذكية لمنع تكرار الأسئلة
-    let availableQuestions = filteredDB.filter(q => !usedQuestionsRef.current[poolKey].includes(q._id));
-
-    // إذا لم يتبقَ عدد كافٍ من الأسئلة غير الملعوبة لعمل جولة كاملة، نقوم بتصفير الذاكرة
-    if (availableQuestions.length < TOTAL_QUESTIONS) {
-        usedQuestionsRef.current[poolKey] = [];
-        availableQuestions = [...filteredDB];
-    }
-
-    // سحب 10 أسئلة بشكل عشوائي من الأسئلة المتاحة (التي لم تلعب بعد)
-    const selectedQuestions = shuffleArray(availableQuestions).slice(0, TOTAL_QUESTIONS);
-
-    // تسجيل الأسئلة المسحوبة في الذاكرة لكي لا تظهر الجولات القادمة
-    selectedQuestions.forEach(q => {
-        usedQuestionsRef.current[poolKey].push(q._id);
-    });
     
-    // خلط أماكن الإجابات داخل كل سؤال
-    const randomizedQuestions = selectedQuestions.map(q => {
-      const optsLen = q.options?.length || 4;
-      const baseIndices = Array.from({ length: optsLen }, (_, i) => i);
-      const shuffledIndices = shuffleArray(baseIndices);
-      
-      const newCorrectIndex = shuffledIndices.indexOf(q.correctAnswerIndex);
-      
-      return { ...q, shuffledIndices, newCorrectIndex };
-    });
+    // جلب أسئلة جديدة عند بدء اللعبة
+    generateNewQuestions(selectedLevel);
 
-    setActiveQuestions(randomizedQuestions);
     setCurrentQuestionIndex(0);
     setScore(0);
     setDeathsCount(0);
@@ -302,22 +312,30 @@ export default function QuizPage() {
         setLives(prev => prev - 1);
         setIsDying(false);
         
-        let rewindAmount = 0;
+        let MathRewindAmount = 0;
+        let isFullRestart = false; // متغير يحدد هل عدنا للبداية أم لا
+
         if (difficulty === 'echidna') {
-          rewindAmount = currentQuestionIndex; 
+          MathRewindAmount = currentQuestionIndex; 
+          isFullRestart = true;
         } else {
-          if (nextDeaths === 1) rewindAmount = 1;
-          else if (nextDeaths === 2) rewindAmount = 2;
-          else if (nextDeaths >= 3) rewindAmount = currentQuestionIndex; 
+          if (nextDeaths === 1) MathRewindAmount = 1;
+          else if (nextDeaths === 2) MathRewindAmount = 2;
+          else if (nextDeaths >= 3) {
+            MathRewindAmount = currentQuestionIndex; 
+            isFullRestart = true;
+          }
         }
 
-        setCurrentQuestionIndex(prev => {
-          const newIndex = Math.max(0, prev - rewindAmount);
-          setScore(newIndex); 
-          return newIndex;
-        });
-
+        const newIndex = Math.max(0, currentQuestionIndex - MathRewindAmount);
+        setCurrentQuestionIndex(newIndex);
+        setScore(newIndex);
         setSelectedOption(null); 
+        
+        // 🔥 السر هنا: إذا عدنا لنقطة البداية (بسبب إيكيدنا أو الروح الأخيرة)، قم بتغيير مسار الأحداث (الأسئلة)!
+        if (isFullRestart) {
+            generateNewQuestions(difficulty);
+        }
         
         if (difficulty === 'larp') setTimeLeft(15);
         else if (difficulty === 'subaru') setTimeLeft(10);
@@ -433,9 +451,7 @@ export default function QuizPage() {
         </div>
       )}
 
-      {/* 
-        تم حذف زر تغيير اللغة من هنا للحفاظ على تجربة مستخدم نقية وبدون تشتيت 
-      */}
+      {/* تم إزالة زر تبديل اللغة للحفاظ على تجربة مستخدم نقية وبدون تشتيت */}
 
       {showGameOverModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
