@@ -25,28 +25,25 @@ const uiTexts = {
 };
 
 export default function ActivitiesPage() {
+  // نجعل العربية هي اللغة الافتراضية للـ Server Side Rendering لكي تتأرشف في جوجل
   const [currentLanguage, setCurrentLanguage] = useState<'ar' | 'en'>('ar');
   const [isMounted, setIsMounted] = useState(false); 
 
-  // 🔥 خوارزمية ذكية تمنع الوميض وتحدد اللغة قبل العرض
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const urlLang = params.get('lang');
       const savedLang = localStorage.getItem('siteLang');
       
-      let targetLang: 'ar' | 'en' = 'ar'; // الافتراضي عربي
+      let targetLang: 'ar' | 'en' = 'ar'; 
 
-      // 1. التحقق من الرابط أولاً
       if (urlLang === 'en' || urlLang === 'ar') {
         targetLang = urlLang;
         localStorage.setItem('siteLang', urlLang);
       } 
-      // 2. التحقق من الذاكرة المحلية ثانياً
       else if (savedLang === 'en' || savedLang === 'ar') {
         targetLang = savedLang;
       } 
-      // 3. التحقق من لغة المتصفح/الجهاز تلقائياً
       else {
         const browserLang = navigator.language || (navigator.languages && navigator.languages[0]);
         if (browserLang && !browserLang.toLowerCase().startsWith('ar')) {
@@ -54,7 +51,6 @@ export default function ActivitiesPage() {
         }
       }
       
-      // تثبيت اللغة أولاً ثم السماح للموقع بالظهور
       setCurrentLanguage(targetLang);
       setIsMounted(true); 
     }
@@ -68,10 +64,7 @@ export default function ActivitiesPage() {
 
   const t = uiTexts[currentLanguage];
 
-  // يمنع خادم Next.js من عرض واجهة افتراضية خاطئة قبل فحص المتصفح
-  if (!isMounted) {
-    return <main className="min-h-screen bg-[#000]"></main>;
-  }
+  // تم إزالة الشاشة السوداء الفارغة لكي تتمكن محركات البحث من قراءة النصوص والروابط
 
   const activities = [
     {
@@ -109,18 +102,21 @@ export default function ActivitiesPage() {
   return (
     <main 
       dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}
-      className="min-h-screen p-8 bg-[radial-gradient(circle_at_top,#18181b_0%,#000_100%)] text-white flex flex-col items-center justify-center relative"
+      className={`min-h-screen p-8 bg-[radial-gradient(circle_at_top,#18181b_0%,#000_100%)] text-white flex flex-col items-center justify-center relative transition-opacity duration-300 ${isMounted ? 'opacity-100' : 'opacity-95'}`}
     >
       
-      <div className={`absolute top-6 ${currentLanguage === 'ar' ? 'left-6 md:left-12' : 'right-6 md:right-12'}`}>
-        <button 
-            onClick={toggleLanguage}
-            className="flex items-center gap-2 border border-zinc-700 bg-zinc-800/80 rounded-full px-4 py-2 hover:border-zinc-500 transition-colors text-sm font-semibold z-10"
-        >
-            <span className="w-4 h-4 bg-transparent border border-white rounded-full flex items-center justify-center text-xs">🌐</span>
-            {t.langName}
-        </button>
-      </div>
+      {/* إخفاء زر تبديل اللغة للحظات حتى لا يحدث وميض مزعج عند التحميل */}
+      {isMounted && (
+        <div className={`absolute top-6 ${currentLanguage === 'ar' ? 'left-6 md:left-12' : 'right-6 md:right-12'}`}>
+          <button 
+              onClick={toggleLanguage}
+              className="flex items-center gap-2 border border-zinc-700 bg-zinc-800/80 rounded-full px-4 py-2 hover:border-zinc-500 transition-colors text-sm font-semibold z-10"
+          >
+              <span className="w-4 h-4 bg-transparent border border-white rounded-full flex items-center justify-center text-xs">🌐</span>
+              {t.langName}
+          </button>
+        </div>
+      )}
 
       <div className="text-center mb-12 mt-12 md:mt-0 flex flex-col items-center">
         <h1 
@@ -153,6 +149,7 @@ export default function ActivitiesPage() {
                 {activity.icon}
               </div>
               
+              {/* تم استخدام h2 هنا لتعزيز أرشفة العناوين الفرعية */}
               <h2 className="text-2xl font-bold mb-2">{activity.title}</h2>
               <p className="text-zinc-400 flex-1">{activity.description}</p>
               
