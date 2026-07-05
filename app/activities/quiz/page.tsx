@@ -392,7 +392,7 @@ export default function QuizPage() {
 
     if (difficulty === 'echidna') { legendaryChance = 70; rareChance = 30; } 
     else if (difficulty === 'novel') { legendaryChance = 50; rareChance = 40; } 
-    else if (difficulty === 'subaru') { legendaryChance = 25; rareChance = 50; }
+    else if (difficulty === 'subaru') { legendaryChance = 30; rareChance = 50; }
     else { legendaryChance = 10; rareChance = 30; }
 
     const mistakes = TOTAL_QUESTIONS - finalScore;
