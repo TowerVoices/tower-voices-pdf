@@ -177,7 +177,7 @@ export default function QuizPage() {
 
   const usedQuestionsRef = useRef<Record<string, string[]>>({ normal: [], novel: [] });
   
-  // 🔥 Ref للتحكم بصوت إيكيدنا لكي نوقفه متى أردنا
+  // Ref للتحكم بصوت إيكيدنا
   const echidnaAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const [isDying, setIsDying] = useState(false); 
@@ -201,6 +201,13 @@ export default function QuizPage() {
       echidnaAudioRef.current.currentTime = 0;
     }
   };
+
+  // 🔥 إيقاف الصوت تلقائياً إذا غادر اللاعب الصفحة (Unmount) لكي لا تستمر الموسيقى في الخلفية
+  useEffect(() => {
+    return () => {
+      stopEchidnaAudio();
+    };
+  }, []);
 
   useEffect(() => {
     const fetchSanityData = async () => {
@@ -303,7 +310,7 @@ export default function QuizPage() {
     setIsTransitioning(true); 
     setShowGlitch(true);
     
-    // 🔥 تشغيل صوت إيكيدنا المخصص وحفظه في الـ Ref
+    // تشغيل صوت إيكيدنا المخصص وحفظه في الـ Ref
     if (typeof window !== "undefined") {
       const audio = new Audio('/sounds/echidna.mp3');
       echidnaAudioRef.current = audio;
@@ -335,7 +342,7 @@ export default function QuizPage() {
   };
 
   const finishTrialWin = () => {
-    stopEchidnaAudio(); // إيقاف الصوت عند الفوز
+    // 🔥 إزالة أمر (stopEchidnaAudio) من هنا لكي تستمر الموسيقى بالعمل داخل شاشة الفوز
     setWonEchidnaTrial(true);
     
     const legendaryRewards = dbRewards.filter(r => r.rarity === 'legendary');
@@ -436,7 +443,7 @@ export default function QuizPage() {
             setTimeout(() => finishTrialWin(), 800);
         } else {
             setTimeout(() => {
-                stopEchidnaAudio(); // إيقاف الصوت عند الخسارة
+                stopEchidnaAudio(); // إيقاف الموسيقى فوراً عند الخسارة
                 playSound('/sounds/larp-monster.mp3');
                 setShowGameOverModal(true);
                 setIsTransitioning(false);
@@ -468,7 +475,7 @@ export default function QuizPage() {
         if (prev <= 1) {
           clearInterval(timer);
           if (isEchidnaTrial) {
-               stopEchidnaAudio(); // إيقاف الصوت لو انتهى الوقت
+               stopEchidnaAudio(); // إيقاف الموسيقى إذا انتهى الوقت ولم يجب اللاعب
                playSound('/sounds/larp-monster.mp3');
                setShowGameOverModal(true);
                setIsEchidnaTrial(false);
@@ -551,7 +558,7 @@ export default function QuizPage() {
         </div>
       )}
 
-      {/* 🔥 تأثير الشاشة المشوشة للحدث السري (تم تعديل الألوان لتناسب إيكيدنا - أبيض وأسود) */}
+      {/* تأثير الشاشة المشوشة للحدث السري */}
       {showGlitch && (
         <div className="fixed inset-0 z-[300] bg-black flex flex-col items-center justify-center overflow-hidden pointer-events-none">
             <div className="absolute inset-0 bg-zinc-900/80 mix-blend-difference animate-pulse"></div>
@@ -685,7 +692,6 @@ export default function QuizPage() {
       {showWinModal && reward && (
         <div className={`fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto transition-colors duration-500`}>
           
-          {/* 🔥 تغيير ألوان شاشة الفوز إذا كانت محنة إيكيدنا للأبيض والأسود الرمادي */}
           <div className={`border rounded-3xl p-6 md:p-8 text-center w-full max-w-md animate-in zoom-in-95 duration-500 my-8
               ${wonEchidnaTrial ? 'bg-black border-zinc-500 shadow-[0_0_60px_rgba(255,255,255,0.2)]' : 'bg-zinc-900 border-orange-500/50 shadow-[0_0_60px_rgba(249,115,22,0.25)]'}`}
           >
@@ -726,13 +732,16 @@ export default function QuizPage() {
                >
                  {t.share}
                </button>
-               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowWinModal(false); setWonEchidnaTrial(false); }} className={`w-full border transition-colors py-3 md:py-3.5 rounded-xl font-semibold block text-sm md:text-base
+               {/* 🔥 إيقاف الصوت هنا في حال ضغط على زر التغيير */}
+               <button onClick={() => { stopEchidnaAudio(); setIntroStep(2); setShowIntroModal(true); setShowWinModal(false); setWonEchidnaTrial(false); }} className={`w-full border transition-colors py-3 md:py-3.5 rounded-xl font-semibold block text-sm md:text-base
                    ${wonEchidnaTrial ? 'border-zinc-500 bg-zinc-900 hover:bg-zinc-800 text-white' : 'border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-300'}`}
                >
                  {t.changeLevel}
                </button>
+               {/* 🔥 إيقاف الصوت هنا في حال غادر للفعاليات */}
                <Link 
                  href="/activities" 
+                 onClick={() => stopEchidnaAudio()}
                  className={`w-full border transition-colors py-3 rounded-xl font-semibold text-sm md:text-base block mt-1 text-center
                      ${wonEchidnaTrial ? 'bg-black hover:bg-zinc-900 border-transparent hover:border-zinc-700 text-zinc-400' : 'bg-black/40 hover:bg-black/60 border-transparent hover:border-zinc-800 text-zinc-400'}`}
                >
@@ -743,7 +752,7 @@ export default function QuizPage() {
         </div>
       )}
 
-      {/* 🔥 حاوية اللعب الأساسية المجمّعة في المركز */}
+      {/* حاوية اللعب الأساسية المجمّعة في المركز */}
       {!showIntroModal && !showGameOverModal && !showWinModal && currentQ && (
         <div className="w-full max-w-4xl mx-auto flex flex-col flex-1 h-full px-4 md:px-6 pt-16 pb-6 relative">
           
@@ -772,7 +781,6 @@ export default function QuizPage() {
             </div>
           </div>
 
-          {/* محاذاة تبدأ من الأعلى (justify-start) لجميع الأجهزة لمنع دفع المكونات للأسفل */}
           <div className="flex-1 flex flex-col justify-start gap-4 md:gap-8 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden pb-4 md:pt-4">
               
               {/* صندوق السؤال */}
