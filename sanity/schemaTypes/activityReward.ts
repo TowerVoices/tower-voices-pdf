@@ -10,7 +10,6 @@ export default defineType({
       title: 'اسم البطاقة (عربي)',
       type: 'string',
     }),
-    // 🔥 الحقل الجديد: اسم البطاقة بالإنجليزية
     defineField({
       name: 'nameEn',
       title: 'اسم البطاقة (English)',
@@ -34,9 +33,17 @@ export default defineType({
           { title: 'نادر (Rare)', value: 'rare' },
           { title: 'أسطوري (Legendary)', value: 'legendary' }
         ],
-        layout: 'radio', // لتظهر كخيارات أزرار
+        layout: 'radio',
       },
       description: 'حدد ندرة هذه البطاقة / Select the rarity of this card',
+    }),
+    // 🔥 الحقل الجديد والمحسن لتحديد بطاقة إيكيدنا السرية
+    defineField({
+      name: 'isEchidnaSecretReward',
+      title: 'هل هذه بطاقة إيكيدنا للمحنة السرية؟',
+      type: 'boolean',
+      initialValue: false,
+      description: 'قم بتفعيل هذا الخيار فقط لبطاقة إيكيدنا الأسطورية لكي يتم منحها مضمونة عند الفوز بالمحنة السرية.',
     })
   ],
 })

@@ -13,6 +13,7 @@ interface QuizQuestion {
   optionsEn: string[];
   correctAnswerIndex: number;
   isNovelSpoiler?: boolean; 
+  isEchidnaTrial?: boolean; // 🔥 إضافة حقل تحديد سؤال المحنة
 }
 
 interface RewardFromSanity {
@@ -20,6 +21,7 @@ interface RewardFromSanity {
   nameEn: string;
   image: string;
   rarity: string;
+  isEchidnaSecretReward?: boolean; // 🔥 إضافة حقل تحديد بطاقة المكافأة السرية
 }
 
 const uiTexts = {
@@ -62,7 +64,12 @@ const uiTexts = {
     gameOverDesc: "استنفدت جميع أرواحك... وحش اللارب التهمك!",
     restartGame: "العب من جديد",
     returnByDeath: "العودة بالموت...",
-    backToActivities: "العودة للفعاليات 🏠"
+    backToActivities: "العودة للفعاليات 🏠",
+    // النصوص الخاصة بالمحنة السرية (لا تظهر في التعليمات)
+    glitchText: "هل ظننت أنك انتهيت؟",
+    trialTitle: "👁️ محنة إيكيدنا",
+    apostleTitle: "👑 مرسول الجشع!",
+    apostleDesc: "لقد اجتزت محنة إيكيدنا المطلقة وأثبتّ جدارتك..."
   },
   en: {
     gameTitle: "Knowledge Quiz",
@@ -103,7 +110,12 @@ const uiTexts = {
     gameOverDesc: "You ran out of lives... The Larp Monster consumed you!",
     restartGame: "Play Again",
     returnByDeath: "Return by Death...",
-    backToActivities: "Back to Activities 🏠"
+    backToActivities: "Back to Activities 🏠",
+    // Secret Trial Texts
+    glitchText: "Did you think it was over?",
+    trialTitle: "👁️ Echidna's Trial",
+    apostleTitle: "👑 Apostle of Greed!",
+    apostleDesc: "You passed the ultimate Echidna's Trial and proved your worth..."
   }
 };
 
@@ -170,7 +182,7 @@ export default function QuizPage() {
   // الذاكرة الذكية لتتبع الأسئلة التي ظهرت للاعب
   const usedQuestionsRef = useRef<Record<string, string[]>>({ normal: [], novel: [] });
 
-  // Effects & Modals
+  // Effects & Modals & Secret Trial
   const [isDying, setIsDying] = useState(false); 
   const [showIntroModal, setShowIntroModal] = useState(true);
   const [introStep, setIntroStep] = useState<1 | 2>(1);
@@ -180,13 +192,20 @@ export default function QuizPage() {
   const [isSharing, setIsSharing] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
+  // حالات محنة إيكيدنا السرية
+  const [showGlitch, setShowGlitch] = useState(false);
+  const [isEchidnaTrial, setIsEchidnaTrial] = useState(false);
+  const [trialQuestion, setTrialQuestion] = useState<any>(null);
+  const [wonEchidnaTrial, setWonEchidnaTrial] = useState(false);
+
   useEffect(() => {
     const fetchSanityData = async () => {
       try {
+        // 🔥 جلب الحقول الجديدة المضافة لقاعدة البيانات
         const quizQuery = `*[_type == "activityQuiz"]{
-          _id, question, questionEn, "questionImage": questionImage.asset->url, options, optionsEn, correctAnswerIndex, isNovelSpoiler
+          _id, question, questionEn, "questionImage": questionImage.asset->url, options, optionsEn, correctAnswerIndex, isNovelSpoiler, isEchidnaTrial
         }`;
-        const rewardQuery = `*[_type == "activityReward"]{name, nameEn, "image": image.asset->url, rarity}`;
+        const rewardQuery = `*[_type == "activityReward"]{name, nameEn, "image": image.asset->url, rarity, isEchidnaSecretReward}`;
         const settingsQuery = `*[_type == "gameSettings"][0]{"larpMonsterImage": larpMonsterImage.asset->url}`;
 
         const [questionsData, rewardData, settingsData] = await Promise.all([
@@ -207,7 +226,6 @@ export default function QuizPage() {
     fetchSanityData();
   }, []);
 
-  // 🔥 دالة ذكية لتوليد وتغيير الأسئلة بدون تكرار
   const generateNewQuestions = (selectedLevel: Difficulty) => {
     if (!selectedLevel) return;
     
@@ -216,24 +234,19 @@ export default function QuizPage() {
 
     const filteredDB = dbQuestions.filter(q => isNovelMode ? q.isNovelSpoiler : !q.isNovelSpoiler);
 
-    // تصفية الأسئلة التي لم تظهر بعد
     let availableQuestions = filteredDB.filter(q => !usedQuestionsRef.current[poolKey].includes(q._id));
 
-    // إذا نفدت الأسئلة، قم بتصفير الذاكرة لتبدأ دورة جديدة
     if (availableQuestions.length < TOTAL_QUESTIONS) {
         usedQuestionsRef.current[poolKey] = [];
         availableQuestions = [...filteredDB];
     }
 
-    // اختيار 10 أسئلة عشوائياً
     const selectedQuestions = shuffleArray(availableQuestions).slice(0, TOTAL_QUESTIONS);
 
-    // تسجيل الأسئلة الجديدة في الذاكرة
     selectedQuestions.forEach(q => {
         usedQuestionsRef.current[poolKey].push(q._id);
     });
     
-    // خلط أماكن الإجابات
     const randomizedQuestions = selectedQuestions.map(q => {
       const optsLen = q.options?.length || 4;
       const baseIndices = Array.from({ length: optsLen }, (_, i) => i);
@@ -258,7 +271,11 @@ export default function QuizPage() {
 
     setDifficulty(selectedLevel);
     
-    // جلب أسئلة جديدة عند بدء اللعبة
+    setIsEchidnaTrial(false);
+    setShowGlitch(false);
+    setTrialQuestion(null);
+    setWonEchidnaTrial(false);
+
     generateNewQuestions(selectedLevel);
 
     setCurrentQuestionIndex(0);
@@ -278,7 +295,57 @@ export default function QuizPage() {
     setIsTransitioning(false);
   };
 
-  const handleNextQuestion = () => {
+  // 🔥 دالة تفعيل المحنة السرية باستخدام الأسئلة المحددة لها
+  const triggerEchidnaTrial = () => {
+    setIsTransitioning(true); 
+    setShowGlitch(true);
+    playSound('/sounds/return-by-death.mp3'); 
+
+    // جلب الأسئلة المخصصة لمحنة إيكيدنا
+    const echidnaPool = dbQuestions.filter(q => q.isEchidnaTrial);
+    // في حال عدم وجود أسئلة محددة، الاستعانة بأسئلة الرواية كاحتياط
+    const fallbackPool = dbQuestions.filter(q => q.isNovelSpoiler);
+    const finalPool = echidnaPool.length > 0 ? echidnaPool : fallbackPool;
+    
+    const unusedNovel = finalPool.filter(q => !activeQuestions.find(aq => aq._id === q._id));
+    const tQ = unusedNovel.length > 0 ? shuffleArray(unusedNovel)[0] : shuffleArray(finalPool)[0]; 
+
+    const optsLen = tQ.options?.length || 4;
+    const baseIndices = Array.from({ length: optsLen }, (_, i) => i);
+    const shuffledIndices = shuffleArray(baseIndices);
+    const newCorrectIndex = shuffledIndices.indexOf(tQ.correctAnswerIndex);
+    
+    setTrialQuestion({ ...tQ, shuffledIndices, newCorrectIndex });
+
+    setTimeout(() => {
+        setShowGlitch(false);
+        setIsEchidnaTrial(true);
+        setTimeLeft(5); 
+        setSelectedOption(null);
+        setIsTransitioning(false);
+    }, 3000); 
+  };
+
+  // 🔥 دالة الفوز بالمحنة السرية باستخدام الحقل الجديد
+  const finishTrialWin = () => {
+    setWonEchidnaTrial(true);
+    
+    const legendaryRewards = dbRewards.filter(r => r.rarity === 'legendary');
+    
+    // البحث عن البطاقة باستخدام مفتاح isEchidnaSecretReward
+    let pool = legendaryRewards.filter(r => r.isEchidnaSecretReward === true);
+    
+    // كود احتياطي في حال لم يتم تحديد أي بطاقة في Sanity بعد
+    if (pool.length === 0 && legendaryRewards.length > 0) pool = legendaryRewards;
+    if (pool.length === 0) pool = dbRewards; 
+
+    const wonCard = pool[Math.floor(Math.random() * pool.length)];
+    setReward(wonCard);
+    setShowWinModal(true);
+    setIsEchidnaTrial(false);
+  };
+
+  const handleNextQuestion = (currentFinalScore: number) => {
     if (currentQuestionIndex + 1 < TOTAL_QUESTIONS) {
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedOption(null); 
@@ -288,7 +355,11 @@ export default function QuizPage() {
       else if (difficulty === 'novel') setTimeLeft(10);
       setIsTransitioning(false);
     } else {
-      finishGame(score);
+      if (difficulty === 'novel' && currentFinalScore === TOTAL_QUESTIONS) {
+          triggerEchidnaTrial();
+      } else {
+          finishGame(currentFinalScore);
+      }
     }
   };
 
@@ -313,7 +384,7 @@ export default function QuizPage() {
         setIsDying(false);
         
         let MathRewindAmount = 0;
-        let isFullRestart = false; // متغير يحدد هل عدنا للبداية أم لا
+        let isFullRestart = false; 
 
         if (difficulty === 'echidna') {
           MathRewindAmount = currentQuestionIndex; 
@@ -332,7 +403,6 @@ export default function QuizPage() {
         setScore(newIndex);
         setSelectedOption(null); 
         
-        // 🔥 السر هنا: إذا عدنا لنقطة البداية (بسبب إيكيدنا أو الروح الأخيرة)، قم بتغيير مسار الأحداث (الأسئلة)!
         if (isFullRestart) {
             generateNewQuestions(difficulty);
         }
@@ -356,12 +426,26 @@ export default function QuizPage() {
     setIsTransitioning(true);
     setSelectedOption(selectedIndex); 
 
+    if (isEchidnaTrial && trialQuestion) {
+        if (selectedIndex === trialQuestion.newCorrectIndex) {
+            setTimeout(() => finishTrialWin(), 800);
+        } else {
+            setTimeout(() => {
+                playSound('/sounds/larp-monster.mp3');
+                setShowGameOverModal(true);
+                setIsTransitioning(false);
+                setIsEchidnaTrial(false);
+            }, 500);
+        }
+        return;
+    }
+
     const currentQ = activeQuestions[currentQuestionIndex];
-    
     if (selectedIndex === currentQ.newCorrectIndex) {
-      setScore(prev => prev + 1);
+      const newScore = score + 1;
+      setScore(newScore);
       setTimeout(() => {
-        handleNextQuestion();
+        handleNextQuestion(newScore);
       }, 800);
     } else {
       setTimeout(() => {
@@ -371,13 +455,19 @@ export default function QuizPage() {
   };
 
   useEffect(() => {
-    if (showIntroModal || showGameOverModal || showWinModal || isTransitioning || isLoading) return;
+    if (showIntroModal || showGameOverModal || showWinModal || isTransitioning || isLoading || showGlitch) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          processDeath(); 
+          if (isEchidnaTrial) {
+               playSound('/sounds/larp-monster.mp3');
+               setShowGameOverModal(true);
+               setIsEchidnaTrial(false);
+          } else {
+               processDeath(); 
+          }
           return 0;
         }
         return prev - 1;
@@ -385,7 +475,7 @@ export default function QuizPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [showIntroModal, showGameOverModal, showWinModal, isTransitioning, isLoading, lives]);
+  }, [showIntroModal, showGameOverModal, showWinModal, isTransitioning, isLoading, lives, isEchidnaTrial, showGlitch]);
 
   const finishGame = (finalScore: number) => {
     let legendaryChance = 0; let rareChance = 0;
@@ -415,7 +505,10 @@ export default function QuizPage() {
   const handleShareClick = async () => {
     if (!reward) return;
     setIsSharing(true);
-    const levelName = difficulty === 'larp' ? t.levelLarp : difficulty === 'subaru' ? t.levelSubaru : difficulty === 'echidna' ? t.levelEchidna : t.levelNovel;
+    let levelName = difficulty === 'larp' ? t.levelLarp : difficulty === 'subaru' ? t.levelSubaru : difficulty === 'echidna' ? t.levelEchidna : t.levelNovel;
+    
+    if (wonEchidnaTrial) levelName = t.apostleTitle; 
+
     const shareText = `${currentLanguage === 'en' ? "Knowledge Quiz" : "اختبار المعرفة"}\n🎉 ${currentLanguage === 'en' ? reward.nameEn : reward.name}!\n\n🛡️ ${levelName}\n✅ ${t.score}: ${score}/${TOTAL_QUESTIONS}\n❤️ ${t.lives}: ${lives}\n\nhttps://towervoices.online/activities/quiz?lang=${currentLanguage}`;
 
     try {
@@ -430,7 +523,7 @@ export default function QuizPage() {
 
   if (!isMounted || isLoading) return <main className="min-h-screen flex items-center justify-center bg-[#0a0a0a]"><div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div></main>;
 
-  const currentQ = activeQuestions[currentQuestionIndex];
+  const currentQ = isEchidnaTrial ? trialQuestion : activeQuestions[currentQuestionIndex];
 
   return (
     <main dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} className="h-[100dvh] w-full flex flex-col bg-[#0a0a0a] text-white relative overflow-hidden">
@@ -451,7 +544,19 @@ export default function QuizPage() {
         </div>
       )}
 
-      {/* تم إزالة زر تبديل اللغة للحفاظ على تجربة مستخدم نقية وبدون تشتيت */}
+      {/* 🔥 تأثير الشاشة المشوشة للحدث السري */}
+      {showGlitch && (
+        <div className="fixed inset-0 z-[300] bg-black flex flex-col items-center justify-center overflow-hidden pointer-events-none">
+            <div className="absolute inset-0 bg-red-950/40 mix-blend-color-burn animate-pulse"></div>
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 animate-ping"></div>
+            <h1 
+               className="text-5xl md:text-8xl font-black text-white relative z-10 tracking-widest text-center px-4 animate-bounce"
+               style={{ textShadow: "4px 0 0 red, -4px 0 0 blue" }}
+            >
+                {t.glitchText}
+            </h1>
+        </div>
+      )}
 
       {showGameOverModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
@@ -574,8 +679,14 @@ export default function QuizPage() {
         <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-zinc-900 border border-orange-500/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_60px_rgba(249,115,22,0.25)] animate-in zoom-in-95 duration-500 my-8">
             <div className="text-5xl md:text-6xl mb-3 md:mb-4 animate-bounce">🏆</div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400">{t.winTitle}</h2>
-            <p className="text-sm md:text-base text-zinc-300 mb-4 md:mb-6">{t.gotCard}</p>
+            
+            {/* 🔥 تغيير العنوان إذا فاز بالمحنة السرية */}
+            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-400">
+              {wonEchidnaTrial ? t.apostleTitle : t.winTitle}
+            </h2>
+            <p className="text-sm md:text-base text-zinc-300 mb-4 md:mb-6">
+              {wonEchidnaTrial ? t.apostleDesc : t.gotCard}
+            </p>
             
             <div className="relative mx-auto w-36 md:w-48 flex justify-center items-center mb-4 md:mb-6">
               {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[50px] opacity-40 rounded-full animate-pulse scale-110"></div>}
@@ -597,7 +708,7 @@ export default function QuizPage() {
                <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-orange-600 hover:bg-orange-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm md:text-base">
                  {t.share}
                </button>
-               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowWinModal(false); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-zinc-300 block text-sm md:text-base">
+               <button onClick={() => { setIntroStep(2); setShowIntroModal(true); setShowWinModal(false); setWonEchidnaTrial(false); }} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-zinc-300 block text-sm md:text-base">
                  {t.changeLevel}
                </button>
                <Link 
@@ -617,19 +728,25 @@ export default function QuizPage() {
           
           {/* الشريط العلوي الثابت للعبة */}
           <div className="flex-shrink-0 w-full mb-6 md:mb-8">
-            <div className="flex flex-wrap justify-between items-center bg-zinc-900/80 p-3 md:p-4 rounded-2xl border border-zinc-800 gap-2 md:gap-4 shadow-md">
+            <div className={`flex flex-wrap justify-between items-center p-3 md:p-4 rounded-2xl border shadow-md transition-colors duration-500
+                ${isEchidnaTrial ? 'bg-red-950/80 border-red-800' : 'bg-zinc-900/80 border-zinc-800'}`}
+            >
                <div className="flex items-center gap-2 md:gap-3">
-                  <span className="bg-orange-950/40 text-orange-400 font-bold px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-orange-900/50 text-[10px] md:text-sm">
-                    {t.questionNum} {currentQuestionIndex + 1} {t.of} {TOTAL_QUESTIONS}
+                  <span className={`font-bold px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border text-[10px] md:text-sm
+                      ${isEchidnaTrial ? 'bg-red-900/50 text-red-400 border-red-700' : 'bg-orange-950/40 text-orange-400 border-orange-900/50'}`}
+                  >
+                    {isEchidnaTrial ? t.trialTitle : `${t.questionNum} ${currentQuestionIndex + 1} ${t.of} ${TOTAL_QUESTIONS}`}
                   </span>
                </div>
                
                <div className="flex gap-2 md:gap-3 text-[10px] md:text-sm font-semibold">
-                  <span className={`px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border flex items-center gap-1 transition-colors ${timeLeft <= 3 ? 'bg-red-950/80 border-red-500 text-red-400 animate-pulse' : 'bg-zinc-800 border-zinc-700'}`}>
+                  <span className={`px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border flex items-center gap-1 transition-colors 
+                      ${isEchidnaTrial || timeLeft <= 3 ? 'bg-red-950/80 border-red-500 text-red-400 animate-pulse' : 'bg-zinc-800 border-zinc-700'}`}
+                  >
                     ⏱️ {timeLeft} {t.seconds}
                   </span>
-                  <span className="bg-zinc-800 px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-zinc-700">✅ {score}</span>
-                  <span className={`px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border flex items-center gap-1 ${lives === 0 ? 'bg-red-900/20 border-red-500 text-red-400' : 'bg-zinc-800 border-zinc-700'}`}>❤️ {lives}</span>
+                  <span className={`${isEchidnaTrial ? 'hidden' : 'bg-zinc-800 px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-zinc-700'}`}>✅ {score}</span>
+                  <span className={`${isEchidnaTrial ? 'hidden' : `px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border flex items-center gap-1 ${lives === 0 ? 'bg-red-900/20 border-red-500 text-red-400' : 'bg-zinc-800 border-zinc-700'}`}`}>❤️ {lives}</span>
                </div>
             </div>
           </div>
@@ -638,23 +755,27 @@ export default function QuizPage() {
           <div className="flex-1 flex flex-col justify-start gap-4 md:gap-8 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden pb-4 md:pt-4">
               
               {/* صندوق السؤال */}
-              <div className="w-full bg-zinc-800/80 border border-zinc-700 p-5 md:p-8 rounded-2xl md:rounded-3xl shadow-lg text-center animate-in zoom-in-95 flex-shrink-0">
+              <div className={`w-full p-5 md:p-8 rounded-2xl md:rounded-3xl shadow-lg text-center animate-in zoom-in-95 flex-shrink-0 border transition-colors duration-500
+                  ${isEchidnaTrial ? 'bg-red-950/60 border-red-800 shadow-[0_0_30px_rgba(220,38,38,0.2)]' : 'bg-zinc-800/80 border-zinc-700'}`}
+              >
                 {currentQ.questionImage && (
                   <div className="mb-4 flex justify-center">
                     <img 
                        src={currentQ.questionImage} 
                        alt="Question" 
-                       className="max-h-32 md:max-h-56 w-auto object-contain rounded-xl border-2 border-zinc-700 shadow-md" 
+                       className={`max-h-32 md:max-h-56 w-auto object-contain rounded-xl border-2 shadow-md ${isEchidnaTrial ? 'border-red-800' : 'border-zinc-700'}`} 
                     />
                   </div>
                 )}
-                <h3 className="text-lg md:text-2xl font-bold text-white leading-relaxed">
+                <h3 className={`text-lg md:text-2xl font-bold leading-relaxed ${isEchidnaTrial ? 'text-red-200' : 'text-white'}`}>
                     {currentLanguage === 'en' ? currentQ.questionEn : currentQ.question}
                 </h3>
               </div>
 
               {/* صندوق الخيارات */}
-              <div className="w-full bg-zinc-900/80 border border-zinc-800 p-4 md:p-6 rounded-2xl md:rounded-3xl flex-shrink-0">
+              <div className={`w-full p-4 md:p-6 rounded-2xl md:rounded-3xl flex-shrink-0 border transition-colors duration-500
+                  ${isEchidnaTrial ? 'bg-black/80 border-red-900/50' : 'bg-zinc-900/80 border-zinc-800'}`}
+              >
                 <div className={`grid gap-2 md:gap-4 ${
                     currentQ.shuffledIndices.length === 2 
                       ? 'grid-cols-1 sm:grid-cols-2' 
@@ -673,13 +794,15 @@ export default function QuizPage() {
                     if (selectedOption !== null) {
                       if (idx === selectedOption) {
                         btnStyle += idx === currentQ.newCorrectIndex 
-                          ? "bg-orange-500 border-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.6)] scale-[1.02] " 
-                          : "bg-red-900/80 border-red-500 opacity-70 "; 
+                          ? (isEchidnaTrial ? "bg-red-600 border-red-400 shadow-[0_0_20px_rgba(220,38,38,0.6)] " : "bg-orange-500 border-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.6)] scale-[1.02] ") 
+                          : "bg-red-950/80 border-red-500 opacity-70 "; 
                       } else {
                         btnStyle += "bg-zinc-800 border-zinc-700 opacity-50 ";
                       }
                     } else {
-                      btnStyle += "border-zinc-700 bg-zinc-800 hover:border-orange-500 hover:bg-orange-950/30 active:scale-95 ";
+                      btnStyle += isEchidnaTrial 
+                          ? "border-red-900/50 bg-red-950/30 hover:border-red-500 hover:bg-red-900/60 active:scale-95 text-red-200 " 
+                          : "border-zinc-700 bg-zinc-800 hover:border-orange-500 hover:bg-orange-950/30 active:scale-95 ";
                     }
 
                     return (
