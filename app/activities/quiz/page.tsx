@@ -40,7 +40,7 @@ const uiTexts = {
     rule2Title: "الإجابات الصحيحة:",
     rule2Desc: "كلما زادت إجاباتك الصحيحة من أصل 10، زادت فرصة البطاقة النادرة.",
     rule3Title: "العودة بالموت:",
-    rule3Desc: "يعيدك بالزمن! الموتة الأولى ترجعك سؤال، الثانية سؤالين، والثالثة ستعيدك لـنقطة البداية وتغير مسار الأحداث (الأسئلة) 💀",
+    rule3Desc: "يعيدك بالزمن! الموتة الأولى والثانية ترجعك سؤال، والأخيرة ستعيدك لـنقطة البداية وتغير مسار الأحداث (الأسئلة) 💀",
     score: "الإجابات الصحيحة",
     lives: "الأرواح",
     notEnoughData: "عذراً، يجب إضافة 10 أسئلة على الأقل في لوحة Sanity للبدء.",
@@ -53,7 +53,7 @@ const uiTexts = {
     levelEchidna: "إيكيدنا (Echidna)",
     levelEchidnaDesc: "5 ثواني للسؤال، لديك روح 1 (الخطأ يعيدك للبداية!).",
     levelNovel: "مكتبة تايجيتا (Taygeta)", 
-    levelNovelDesc: "10 ثوانٍ للسؤال. ⚠️ تحذير شديد: حرق للأحداث المتقدمة!",
+    levelNovelDesc: "10 ثوانٍ للسؤال. ⚠️ تحذير شديد: حرق للأحداث المتقدمة! أي خطأ يمنعك من المحنة السرية.",
     timeUp: "انتهى الوقت!",
     correctAnswerWas: "الإجابة الصحيحة كانت:",
     changeLevel: "تغيير المستوى",
@@ -85,7 +85,7 @@ const uiTexts = {
     rule2Title: "Correct Answers:",
     rule2Desc: "The more correct answers out of 10, the better the card.",
     rule3Title: "Return by Death:",
-    rule3Desc: "Rewinds time! 1st death = back 1 Q, 2nd = back 2 Qs, 3rd = restart from save point and shifts timeline (questions) 💀",
+    rule3Desc: "Rewinds time! 1st and 2nd death = back 1 Q, Last = restart from save point and shifts timeline 💀",
     score: "Correct Answers",
     lives: "Lives",
     notEnoughData: "Sorry, you need at least 10 questions in Sanity to start.",
@@ -98,7 +98,7 @@ const uiTexts = {
     levelEchidna: "Echidna",
     levelEchidnaDesc: "5s per question, 1 Life (Mistake = Restart!).",
     levelNovel: "Taygeta Library", 
-    levelNovelDesc: "10s per question. ⚠️ Extreme Warning: Spoilers ahead!",
+    levelNovelDesc: "10s per question. ⚠️ Extreme Warning: Spoilers! Any mistake locks the secret trial.",
     timeUp: "Time's Up!",
     correctAnswerWas: "The correct answer was:",
     changeLevel: "Change Level",
@@ -174,6 +174,9 @@ export default function QuizPage() {
   const [score, setScore] = useState(0);
   const [deathsCount, setDeathsCount] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  
+  // 🔥 متغير جديد لتتبع ما إذا ارتكب اللاعب أي خطأ منذ بداية الجولة
+  const [hasMadeMistake, setHasMadeMistake] = useState(false);
 
   const usedQuestionsRef = useRef<Record<string, string[]>>({ normal: [], novel: [] });
   
@@ -283,6 +286,7 @@ export default function QuizPage() {
     setShowGlitch(false);
     setTrialQuestion(null);
     setWonEchidnaTrial(false);
+    setHasMadeMistake(false); // 🔥 تصفير الأخطاء عند بداية جولة جديدة
 
     generateNewQuestions(selectedLevel);
 
@@ -362,7 +366,8 @@ export default function QuizPage() {
       else if (difficulty === 'novel') setTimeLeft(10);
       setIsTransitioning(false);
     } else {
-      if (difficulty === 'novel' && currentFinalScore === TOTAL_QUESTIONS) {
+      // 🔥 التأكد من أن اللاعب في مستوى تايجيتا، وأن درجته كاملة، ولم يرتكب أي خطأ طوال الجولة
+      if (difficulty === 'novel' && currentFinalScore === TOTAL_QUESTIONS && !hasMadeMistake) {
           triggerEchidnaTrial();
       } else {
           finishGame(currentFinalScore);
@@ -374,11 +379,14 @@ export default function QuizPage() {
     if (isTransitioning && selectedOption === null) return; 
     setIsTransitioning(true);
     
+    setHasMadeMistake(true); // 🔥 تسجيل خطأ بمجرد الموت ليتم منعه من المحنة
+    
     const nextDeaths = deathsCount + 1;
     setDeathsCount(nextDeaths);
     
     if (lives > 0) {
-      if (difficulty === 'echidna' || nextDeaths >= 3) {
+      // إذا كانت هذه هي الموتة الأخيرة (الروح الأخيرة) أو كان في مستوى إيكيدنا، يتم التشغيل كعودة للبداية
+      if (difficulty === 'echidna' || lives === 1) {
         playSound('/sounds/return-by-death.mp3'); 
       } else {
         playSound('/sounds/return-by-death-short.mp3'); 
@@ -397,11 +405,13 @@ export default function QuizPage() {
           MathRewindAmount = currentQuestionIndex; 
           isFullRestart = true;
         } else {
-          if (nextDeaths === 1) MathRewindAmount = 1;
-          else if (nextDeaths === 2) MathRewindAmount = 2;
-          else if (nextDeaths >= 3) {
-            MathRewindAmount = currentQuestionIndex; 
-            isFullRestart = true;
+          // 🔥 إذا كانت الأرواح المتبقية أكثر من 1 (أي لم يخسر روحه الأخيرة بعد) يعود سؤالاً واحداً فقط
+          if (lives > 1) {
+             MathRewindAmount = 1;
+          } else {
+             // 🔥 إذا كانت هذه روحه الأخيرة التي خسرها، يعود للبداية
+             MathRewindAmount = currentQuestionIndex; 
+             isFullRestart = true;
           }
         }
 
@@ -412,6 +422,7 @@ export default function QuizPage() {
         
         if (isFullRestart) {
             generateNewQuestions(difficulty);
+            setHasMadeMistake(false); // عند العودة للبداية وتغيير الأسئلة، تُمسح أخطاؤه ليبدأ من جديد فرصة المحنة
         }
         
         if (difficulty === 'larp') setTimeLeft(15);
