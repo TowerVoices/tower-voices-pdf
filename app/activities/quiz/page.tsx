@@ -177,7 +177,6 @@ export default function QuizPage() {
 
   const usedQuestionsRef = useRef<Record<string, string[]>>({ normal: [], novel: [] });
   
-  // Ref للتحكم بصوت إيكيدنا
   const echidnaAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const [isDying, setIsDying] = useState(false); 
@@ -194,7 +193,6 @@ export default function QuizPage() {
   const [trialQuestion, setTrialQuestion] = useState<any>(null);
   const [wonEchidnaTrial, setWonEchidnaTrial] = useState(false);
 
-  // دالة مساعدة لإيقاف صوت إيكيدنا
   const stopEchidnaAudio = () => {
     if (echidnaAudioRef.current) {
       echidnaAudioRef.current.pause();
@@ -202,7 +200,6 @@ export default function QuizPage() {
     }
   };
 
-  // 🔥 إيقاف الصوت تلقائياً إذا غادر اللاعب الصفحة (Unmount) لكي لا تستمر الموسيقى في الخلفية
   useEffect(() => {
     return () => {
       stopEchidnaAudio();
@@ -310,7 +307,6 @@ export default function QuizPage() {
     setIsTransitioning(true); 
     setShowGlitch(true);
     
-    // تشغيل صوت إيكيدنا المخصص وحفظه في الـ Ref
     if (typeof window !== "undefined") {
       const audio = new Audio('/sounds/echidna.mp3');
       echidnaAudioRef.current = audio;
@@ -342,7 +338,6 @@ export default function QuizPage() {
   };
 
   const finishTrialWin = () => {
-    // 🔥 إزالة أمر (stopEchidnaAudio) من هنا لكي تستمر الموسيقى بالعمل داخل شاشة الفوز
     setWonEchidnaTrial(true);
     
     const legendaryRewards = dbRewards.filter(r => r.rarity === 'legendary');
@@ -443,7 +438,7 @@ export default function QuizPage() {
             setTimeout(() => finishTrialWin(), 800);
         } else {
             setTimeout(() => {
-                stopEchidnaAudio(); // إيقاف الموسيقى فوراً عند الخسارة
+                stopEchidnaAudio(); 
                 playSound('/sounds/larp-monster.mp3');
                 setShowGameOverModal(true);
                 setIsTransitioning(false);
@@ -475,7 +470,7 @@ export default function QuizPage() {
         if (prev <= 1) {
           clearInterval(timer);
           if (isEchidnaTrial) {
-               stopEchidnaAudio(); // إيقاف الموسيقى إذا انتهى الوقت ولم يجب اللاعب
+               stopEchidnaAudio(); 
                playSound('/sounds/larp-monster.mp3');
                setShowGameOverModal(true);
                setIsEchidnaTrial(false);
@@ -732,13 +727,11 @@ export default function QuizPage() {
                >
                  {t.share}
                </button>
-               {/* 🔥 إيقاف الصوت هنا في حال ضغط على زر التغيير */}
                <button onClick={() => { stopEchidnaAudio(); setIntroStep(2); setShowIntroModal(true); setShowWinModal(false); setWonEchidnaTrial(false); }} className={`w-full border transition-colors py-3 md:py-3.5 rounded-xl font-semibold block text-sm md:text-base
                    ${wonEchidnaTrial ? 'border-zinc-500 bg-zinc-900 hover:bg-zinc-800 text-white' : 'border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-300'}`}
                >
                  {t.changeLevel}
                </button>
-               {/* 🔥 إيقاف الصوت هنا في حال غادر للفعاليات */}
                <Link 
                  href="/activities" 
                  onClick={() => stopEchidnaAudio()}
