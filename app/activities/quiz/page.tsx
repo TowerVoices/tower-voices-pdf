@@ -175,7 +175,6 @@ export default function QuizPage() {
   const [deathsCount, setDeathsCount] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   
-  // 🔥 متغير جديد لتتبع ما إذا ارتكب اللاعب أي خطأ منذ بداية الجولة
   const [hasMadeMistake, setHasMadeMistake] = useState(false);
 
   const usedQuestionsRef = useRef<Record<string, string[]>>({ normal: [], novel: [] });
@@ -242,7 +241,8 @@ export default function QuizPage() {
     const isNovelMode = selectedLevel === 'novel';
     const poolKey = isNovelMode ? 'novel' : 'normal';
 
-    const filteredDB = dbQuestions.filter(q => isNovelMode ? q.isNovelSpoiler : !q.isNovelSpoiler);
+    // 🔥 التعديل الأساسي هنا: استبعاد أسئلة محنة إيكيدنا (!q.isEchidnaTrial) من الأسئلة العادية تماماً
+    const filteredDB = dbQuestions.filter(q => !q.isEchidnaTrial && (isNovelMode ? q.isNovelSpoiler : !q.isNovelSpoiler));
 
     let availableQuestions = filteredDB.filter(q => !usedQuestionsRef.current[poolKey].includes(q._id));
 
@@ -270,7 +270,9 @@ export default function QuizPage() {
 
   const startGame = (selectedLevel: Difficulty) => {
     const isNovelMode = selectedLevel === 'novel';
-    const filteredDB = dbQuestions.filter(q => isNovelMode ? q.isNovelSpoiler : !q.isNovelSpoiler);
+    
+    // 🔥 التأكد أيضاً من استبعاد أسئلة المحنة عند التحقق من عدد الأسئلة المتوفرة في القاعدة
+    const filteredDB = dbQuestions.filter(q => !q.isEchidnaTrial && (isNovelMode ? q.isNovelSpoiler : !q.isNovelSpoiler));
 
     if (filteredDB.length < TOTAL_QUESTIONS) {
       alert(currentLanguage === 'ar' 
@@ -286,7 +288,7 @@ export default function QuizPage() {
     setShowGlitch(false);
     setTrialQuestion(null);
     setWonEchidnaTrial(false);
-    setHasMadeMistake(false); // 🔥 تصفير الأخطاء عند بداية جولة جديدة
+    setHasMadeMistake(false); 
 
     generateNewQuestions(selectedLevel);
 
@@ -319,7 +321,7 @@ export default function QuizPage() {
     }
 
     const echidnaPool = dbQuestions.filter(q => q.isEchidnaTrial);
-    const fallbackPool = dbQuestions.filter(q => q.isNovelSpoiler);
+    const fallbackPool = dbQuestions.filter(q => q.isNovelSpoiler && !q.isEchidnaTrial);
     const finalPool = echidnaPool.length > 0 ? echidnaPool : fallbackPool;
     
     const unusedNovel = finalPool.filter(q => !activeQuestions.find(aq => aq._id === q._id));
@@ -366,7 +368,6 @@ export default function QuizPage() {
       else if (difficulty === 'novel') setTimeLeft(10);
       setIsTransitioning(false);
     } else {
-      // 🔥 التأكد من أن اللاعب في مستوى تايجيتا، وأن درجته كاملة، ولم يرتكب أي خطأ طوال الجولة
       if (difficulty === 'novel' && currentFinalScore === TOTAL_QUESTIONS && !hasMadeMistake) {
           triggerEchidnaTrial();
       } else {
@@ -379,13 +380,12 @@ export default function QuizPage() {
     if (isTransitioning && selectedOption === null) return; 
     setIsTransitioning(true);
     
-    setHasMadeMistake(true); // 🔥 تسجيل خطأ بمجرد الموت ليتم منعه من المحنة
+    setHasMadeMistake(true); 
     
     const nextDeaths = deathsCount + 1;
     setDeathsCount(nextDeaths);
     
     if (lives > 0) {
-      // إذا كانت هذه هي الموتة الأخيرة (الروح الأخيرة) أو كان في مستوى إيكيدنا، يتم التشغيل كعودة للبداية
       if (difficulty === 'echidna' || lives === 1) {
         playSound('/sounds/return-by-death.mp3'); 
       } else {
@@ -405,11 +405,9 @@ export default function QuizPage() {
           MathRewindAmount = currentQuestionIndex; 
           isFullRestart = true;
         } else {
-          // 🔥 إذا كانت الأرواح المتبقية أكثر من 1 (أي لم يخسر روحه الأخيرة بعد) يعود سؤالاً واحداً فقط
           if (lives > 1) {
              MathRewindAmount = 1;
           } else {
-             // 🔥 إذا كانت هذه روحه الأخيرة التي خسرها، يعود للبداية
              MathRewindAmount = currentQuestionIndex; 
              isFullRestart = true;
           }
@@ -422,7 +420,7 @@ export default function QuizPage() {
         
         if (isFullRestart) {
             generateNewQuestions(difficulty);
-            setHasMadeMistake(false); // عند العودة للبداية وتغيير الأسئلة، تُمسح أخطاؤه ليبدأ من جديد فرصة المحنة
+            setHasMadeMistake(false); 
         }
         
         if (difficulty === 'larp') setTimeLeft(15);
