@@ -302,7 +302,7 @@ export default function MatchCharacterPage() {
   const getRandomReward = (mistakesCount: number) => {
     if (dbRewards.length === 0) return null;
     let legendaryChance = 5; let rareChance = 25;       
-    if (mistakesCount >= 0 && mistakesCount <= 5) { legendaryChance = 45; rareChance = 65; } 
+    if (mistakesCount >= 0 && mistakesCount <= 5) { legendaryChance = 60; rareChance = 40; } 
     else if (mistakesCount >= 6 && mistakesCount <= 10) { legendaryChance = 45; rareChance = 50; } 
     else if (mistakesCount >= 11 && mistakesCount <= 20) { legendaryChance = 18; rareChance = 35; } 
     else { legendaryChance = 5; rareChance = 25; }
