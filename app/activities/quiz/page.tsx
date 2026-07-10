@@ -53,7 +53,7 @@ const uiTexts = {
     levelEchidna: "إيكيدنا (Echidna)",
     levelEchidnaDesc: "5 ثواني للسؤال، لديك روح 1 (الخطأ يعيدك للبداية!).",
     levelNovel: "مكتبة تايجيتا (Taygeta)", 
-    levelNovelDesc: "10 ثوانٍ للسؤال. ⚠️ تحذير شديد: حرق للأحداث المتقدمة ",
+    levelNovelDesc: "10 ثوانٍ للسؤال. ⚠️ تحذير شديد: حرق للأحداث المتقدمة! أي خطأ يمنعك من المحنة السرية.",
     timeUp: "انتهى الوقت!",
     correctAnswerWas: "الإجابة الصحيحة كانت:",
     changeLevel: "تغيير المستوى",
@@ -98,7 +98,7 @@ const uiTexts = {
     levelEchidna: "Echidna",
     levelEchidnaDesc: "5s per question, 1 Life (Mistake = Restart!).",
     levelNovel: "Taygeta Library", 
-    levelNovelDesc: "10s per question. ⚠️ Extreme Warning: Spoilers! ",
+    levelNovelDesc: "10s per question. ⚠️ Extreme Warning: Spoilers! Any mistake locks the secret trial.",
     timeUp: "Time's Up!",
     correctAnswerWas: "The correct answer was:",
     changeLevel: "Change Level",
@@ -175,10 +175,11 @@ export default function QuizPage() {
   const [deathsCount, setDeathsCount] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   
+  // 🔥 حالات المنع من المحنة
   const [hasMadeMistake, setHasMadeMistake] = useState(false);
+  const [isTrialLocked, setIsTrialLocked] = useState(false); // القفل النهائي إذا خسر داخل المحنة
 
   const usedQuestionsRef = useRef<Record<string, string[]>>({ normal: [], novel: [] });
-  
   const echidnaAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const [isDying, setIsDying] = useState(false); 
@@ -241,7 +242,6 @@ export default function QuizPage() {
     const isNovelMode = selectedLevel === 'novel';
     const poolKey = isNovelMode ? 'novel' : 'normal';
 
-    // 🔥 التعديل الأساسي هنا: استبعاد أسئلة محنة إيكيدنا (!q.isEchidnaTrial) من الأسئلة العادية تماماً
     const filteredDB = dbQuestions.filter(q => !q.isEchidnaTrial && (isNovelMode ? q.isNovelSpoiler : !q.isNovelSpoiler));
 
     let availableQuestions = filteredDB.filter(q => !usedQuestionsRef.current[poolKey].includes(q._id));
@@ -270,8 +270,6 @@ export default function QuizPage() {
 
   const startGame = (selectedLevel: Difficulty) => {
     const isNovelMode = selectedLevel === 'novel';
-    
-    // 🔥 التأكد أيضاً من استبعاد أسئلة المحنة عند التحقق من عدد الأسئلة المتوفرة في القاعدة
     const filteredDB = dbQuestions.filter(q => !q.isEchidnaTrial && (isNovelMode ? q.isNovelSpoiler : !q.isNovelSpoiler));
 
     if (filteredDB.length < TOTAL_QUESTIONS) {
@@ -289,6 +287,7 @@ export default function QuizPage() {
     setTrialQuestion(null);
     setWonEchidnaTrial(false);
     setHasMadeMistake(false); 
+    setIsTrialLocked(false);
 
     generateNewQuestions(selectedLevel);
 
@@ -368,7 +367,8 @@ export default function QuizPage() {
       else if (difficulty === 'novel') setTimeLeft(10);
       setIsTransitioning(false);
     } else {
-      if (difficulty === 'novel' && currentFinalScore === TOTAL_QUESTIONS && !hasMadeMistake) {
+      // 🔥 التأكد من عدم ارتكاب أي خطأ في الجولة، والتأكد أن المحنة لم تُقفل عليه بسبب خسارة سابقة فيها
+      if (difficulty === 'novel' && currentFinalScore === TOTAL_QUESTIONS && !hasMadeMistake && !isTrialLocked) {
           triggerEchidnaTrial();
       } else {
           finishGame(currentFinalScore);
@@ -376,32 +376,39 @@ export default function QuizPage() {
     }
   };
 
-  const processDeath = () => {
-    if (isTransitioning && selectedOption === null) return; 
+  // 🔥 إضافة معلمة (fromTrial) لمعرفة ما إذا كانت الخسارة قد حدثت داخل المحنة
+  const processDeath = (fromTrial = false) => {
+    const isFromTrial = fromTrial === true;
+    if (isTransitioning && selectedOption === null && !isFromTrial) return; 
     setIsTransitioning(true);
     
-    setHasMadeMistake(true); 
+    if (isFromTrial) {
+      setIsTrialLocked(true); // إذا خسر في المحنة يُقفل عليه الباب نهائياً لهذه الجولة
+    } else {
+      setHasMadeMistake(true); // إذا أخطأ خطأ عادي يُسجل عليه
+    }
     
     const nextDeaths = deathsCount + 1;
     setDeathsCount(nextDeaths);
     
-    if (lives > 0) {
-      if (difficulty === 'echidna' || lives === 1) {
+    if (lives > 0 || isFromTrial) {
+      if (difficulty === 'echidna' || lives === 1 || isFromTrial) {
         playSound('/sounds/return-by-death.mp3'); 
       } else {
         playSound('/sounds/return-by-death-short.mp3'); 
       }
       
       setIsDying(true);
+      if (isFromTrial) setIsEchidnaTrial(false); // إخفاء المحنة فوراً أثناء العودة بالموت
       
       setTimeout(() => {
-        setLives(prev => prev - 1);
+        setLives(prev => Math.max(0, prev - 1));
         setIsDying(false);
         
         let MathRewindAmount = 0;
         let isFullRestart = false; 
 
-        if (difficulty === 'echidna') {
+        if (isFromTrial || difficulty === 'echidna') {
           MathRewindAmount = currentQuestionIndex; 
           isFullRestart = true;
         } else {
@@ -420,7 +427,11 @@ export default function QuizPage() {
         
         if (isFullRestart) {
             generateNewQuestions(difficulty);
-            setHasMadeMistake(false); 
+            // نصفر الأخطاء العادية فقط إذا كان مجرد موت عادي لكي نعطيه فرصة جديدة للمحنة
+            // أما إذا كانت الخسارة بسبب المحنة (isFromTrial) فستبقى (isTrialLocked) مفعلة لتمنعه!
+            if (!isFromTrial) {
+                setHasMadeMistake(false); 
+            }
         }
         
         if (difficulty === 'larp') setTimeLeft(15);
@@ -448,10 +459,8 @@ export default function QuizPage() {
         } else {
             setTimeout(() => {
                 stopEchidnaAudio(); 
-                playSound('/sounds/larp-monster.mp3');
-                setShowGameOverModal(true);
-                setIsTransitioning(false);
-                setIsEchidnaTrial(false);
+                // إرسال true يعني أن الخسارة كانت داخل المحنة
+                processDeath(true);
             }, 500);
         }
         return;
@@ -466,7 +475,7 @@ export default function QuizPage() {
       }, 800);
     } else {
       setTimeout(() => {
-        processDeath();
+        processDeath(false);
       }, 500); 
     }
   };
@@ -480,11 +489,9 @@ export default function QuizPage() {
           clearInterval(timer);
           if (isEchidnaTrial) {
                stopEchidnaAudio(); 
-               playSound('/sounds/larp-monster.mp3');
-               setShowGameOverModal(true);
-               setIsEchidnaTrial(false);
+               processDeath(true); 
           } else {
-               processDeath(); 
+               processDeath(false); 
           }
           return 0;
         }
