@@ -175,9 +175,8 @@ export default function QuizPage() {
   const [deathsCount, setDeathsCount] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   
-  // 🔥 حالات المنع من المحنة
   const [hasMadeMistake, setHasMadeMistake] = useState(false);
-  const [isTrialLocked, setIsTrialLocked] = useState(false); // القفل النهائي إذا خسر داخل المحنة
+  const [isTrialLocked, setIsTrialLocked] = useState(false);
 
   const usedQuestionsRef = useRef<Record<string, string[]>>({ normal: [], novel: [] });
   const echidnaAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -367,7 +366,6 @@ export default function QuizPage() {
       else if (difficulty === 'novel') setTimeLeft(10);
       setIsTransitioning(false);
     } else {
-      // 🔥 التأكد من عدم ارتكاب أي خطأ في الجولة، والتأكد أن المحنة لم تُقفل عليه بسبب خسارة سابقة فيها
       if (difficulty === 'novel' && currentFinalScore === TOTAL_QUESTIONS && !hasMadeMistake && !isTrialLocked) {
           triggerEchidnaTrial();
       } else {
@@ -376,16 +374,15 @@ export default function QuizPage() {
     }
   };
 
-  // 🔥 إضافة معلمة (fromTrial) لمعرفة ما إذا كانت الخسارة قد حدثت داخل المحنة
   const processDeath = (fromTrial = false) => {
     const isFromTrial = fromTrial === true;
     if (isTransitioning && selectedOption === null && !isFromTrial) return; 
     setIsTransitioning(true);
     
     if (isFromTrial) {
-      setIsTrialLocked(true); // إذا خسر في المحنة يُقفل عليه الباب نهائياً لهذه الجولة
+      setIsTrialLocked(true); 
     } else {
-      setHasMadeMistake(true); // إذا أخطأ خطأ عادي يُسجل عليه
+      setHasMadeMistake(true); 
     }
     
     const nextDeaths = deathsCount + 1;
@@ -399,7 +396,7 @@ export default function QuizPage() {
       }
       
       setIsDying(true);
-      if (isFromTrial) setIsEchidnaTrial(false); // إخفاء المحنة فوراً أثناء العودة بالموت
+      if (isFromTrial) setIsEchidnaTrial(false); 
       
       setTimeout(() => {
         setLives(prev => Math.max(0, prev - 1));
@@ -427,8 +424,6 @@ export default function QuizPage() {
         
         if (isFullRestart) {
             generateNewQuestions(difficulty);
-            // نصفر الأخطاء العادية فقط إذا كان مجرد موت عادي لكي نعطيه فرصة جديدة للمحنة
-            // أما إذا كانت الخسارة بسبب المحنة (isFromTrial) فستبقى (isTrialLocked) مفعلة لتمنعه!
             if (!isFromTrial) {
                 setHasMadeMistake(false); 
             }
@@ -459,7 +454,6 @@ export default function QuizPage() {
         } else {
             setTimeout(() => {
                 stopEchidnaAudio(); 
-                // إرسال true يعني أن الخسارة كانت داخل المحنة
                 processDeath(true);
             }, 500);
         }
@@ -519,8 +513,11 @@ export default function QuizPage() {
     if (roll <= legendaryChance) targetRarity = 'legendary'; 
     else if (roll <= legendaryChance + rareChance) targetRarity = 'rare'; 
     
-    const filteredRewards = dbRewards.filter(r => r.rarity === targetRarity);
-    const pool = filteredRewards.length > 0 ? filteredRewards : dbRewards;
+    // 🔥 التعديل الأساسي هنا: منع بطاقة إيكيدنا من الظهور في الأطوار العادية
+    const availableNormalRewards = dbRewards.filter(r => r.isEchidnaSecretReward !== true);
+
+    const filteredRewards = availableNormalRewards.filter(r => r.rarity === targetRarity);
+    const pool = filteredRewards.length > 0 ? filteredRewards : availableNormalRewards;
     const wonCard = pool[Math.floor(Math.random() * pool.length)];
 
     setReward(wonCard);
