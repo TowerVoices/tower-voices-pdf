@@ -18,6 +18,7 @@ interface RewardFromSanity {
   nameEn: string;    
   image: string;
   rarity: string;
+  isEchidnaSecretReward?: boolean; // 🔥 إضافة الحقل السري هنا
 }
 
 interface CardData {
@@ -179,10 +180,12 @@ export default function MatchCharacterPage() {
           infoTexts, infoTextsEn 
         }`;
         
+        // 🔥 جلب الحقل isEchidnaSecretReward من قاعدة البيانات
         const rewardQuery = `*[_type == "activityReward"]{
           name, nameEn,      
           "image": image.asset->url,
-          rarity
+          rarity,
+          isEchidnaSecretReward
         }`;
 
         const settingsQuery = `*[_type == "gameSettings"][0]{
@@ -220,9 +223,9 @@ export default function MatchCharacterPage() {
     const selected = shuffleArray(characters).slice(0, count);
     
     selected.forEach((character) => {
-  const img = new Image();
-  img.src = character.image;
-});
+      const img = new Image();
+      img.src = character.image;
+    });
 
     let idCounter = 1;
     const newCardsPairs: CardData[] = selected
@@ -318,8 +321,11 @@ export default function MatchCharacterPage() {
     else if (roll <= legendaryChance + rareChance) targetRarity = 'rare'; 
     else targetRarity = 'common'; 
 
-    const filteredRewards = dbRewards.filter(r => r.rarity === targetRarity);
-    let pool = filteredRewards.length > 0 ? filteredRewards : dbRewards;
+    // 🔥 استبعاد بطاقات إيكيدنا السرية من هذه اللعبة
+    const availableNormalRewards = dbRewards.filter(r => r.isEchidnaSecretReward !== true);
+
+    const filteredRewards = availableNormalRewards.filter(r => r.rarity === targetRarity);
+    let pool = filteredRewards.length > 0 ? filteredRewards : availableNormalRewards;
     
     if (lastWonReward && pool.length > 1) {
       const withoutLastReward = pool.filter(r => r.name !== lastWonReward);
@@ -408,10 +414,6 @@ export default function MatchCharacterPage() {
       className="min-h-screen flex flex-col p-4 md:p-8 bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white relative z-0"
     >
       
-      {/* 
-        🔥 تم حذف زر تغيير اللغة من هنا للحفاظ على تركيز اللاعب 
-      */}
-
       {showGameOverModal && (
         <div className="fixed inset-0 bg-red-950/95 backdrop-blur-xl flex items-center justify-center z-[100] p-4 overflow-y-auto">
           <div className="bg-zinc-950 border-2 border-red-600 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_100px_rgba(220,38,38,0.5)] animate-in zoom-in-75 duration-700 my-8">
