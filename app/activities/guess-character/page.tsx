@@ -401,7 +401,7 @@ export default function GuessCharacterPage() {
     } else if (currentDifficulty === 'subaru') {
       legendaryChance = 35; rareChance = 40; 
     } else { 
-      legendaryChance = 15; rareChance = 35; 
+      legendaryChance = 35; rareChance = 35; 
     }
 
     const extraHints = Math.max(0, hintsUsed - MAX_ROUNDS);
