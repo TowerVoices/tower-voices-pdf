@@ -218,6 +218,11 @@ export default function MatchCharacterPage() {
     const count = Math.min(targetCount, characters.length);
     
     const selected = shuffleArray(characters).slice(0, count);
+    
+    selected.forEach((character) => {
+  const img = new Image();
+  img.src = character.image;
+});
 
     let idCounter = 1;
     const newCardsPairs: CardData[] = selected
