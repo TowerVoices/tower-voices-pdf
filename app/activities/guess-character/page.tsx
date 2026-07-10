@@ -19,6 +19,7 @@ interface RewardFromSanity {
   nameEn: string;
   image: string;
   rarity: string;
+  isEchidnaSecretReward?: boolean; // 🔥 الحقل المطلوب لمعرفة البطاقات السرية
 }
 
 const uiTexts = {
@@ -220,10 +221,12 @@ export default function GuessCharacterPage() {
           echidnaHints, echidnaHintsEn
         }`;
         
+        // 🔥 التعديل الأول: جلب الحقل isEchidnaSecretReward من قاعدة البيانات
         const rewardQuery = `*[_type == "activityReward"]{
           name, nameEn,      
           "image": image.asset->url,
-          rarity
+          rarity,
+          isEchidnaSecretReward
         }`;
 
         const settingsQuery = `*[_type == "gameSettings"][0]{
@@ -416,8 +419,13 @@ export default function GuessCharacterPage() {
     else if (roll <= legendaryChance + rareChance) targetRarity = 'rare'; 
     else targetRarity = 'common'; 
 
-    const filteredRewards = dbRewards.filter(r => r.rarity === targetRarity);
-    const pool = filteredRewards.length > 0 ? filteredRewards : dbRewards;
+    // 🔥 التعديل الثاني: تصفية واستبعاد أي بطاقة محددة كمكافأة سرية لمحنة إيكيدنا
+    const availableNormalRewards = dbRewards.filter(r => r.isEchidnaSecretReward !== true);
+
+    // البحث في البطاقات العادية المتبقية عن الندرة المطلوبة
+    const filteredRewards = availableNormalRewards.filter(r => r.rarity === targetRarity);
+    const pool = filteredRewards.length > 0 ? filteredRewards : availableNormalRewards;
+    
     return pool[Math.floor(Math.random() * pool.length)];
   };
 
@@ -509,8 +517,6 @@ export default function GuessCharacterPage() {
   return (
     <main dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen flex flex-col p-4 md:p-8 bg-[#0a0a0a] text-white relative">
       
-      {/* تم إزالة زر تبديل اللغة من هنا للحفاظ على تركيز اللاعب */}
-
       {showGameOverModal && (
         <div className="fixed inset-0 bg-red-950/95 backdrop-blur-xl flex items-center justify-center z-[100] p-4 overflow-y-auto">
           <div className="bg-zinc-950 border-2 border-red-600 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_100px_rgba(220,38,38,0.5)] animate-in zoom-in-75 duration-700 my-8">
