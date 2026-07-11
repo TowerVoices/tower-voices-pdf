@@ -18,7 +18,7 @@ interface RewardFromSanity {
   nameEn: string;    
   image: string;
   rarity: string;
-  isEchidnaSecretReward?: boolean; // 🔥 إضافة الحقل السري هنا
+  isEchidnaSecretReward?: boolean; 
 }
 
 interface CardData {
@@ -180,7 +180,6 @@ export default function MatchCharacterPage() {
           infoTexts, infoTextsEn 
         }`;
         
-        // 🔥 جلب الحقل isEchidnaSecretReward من قاعدة البيانات
         const rewardQuery = `*[_type == "activityReward"]{
           name, nameEn,      
           "image": image.asset->url,
@@ -321,7 +320,6 @@ export default function MatchCharacterPage() {
     else if (roll <= legendaryChance + rareChance) targetRarity = 'rare'; 
     else targetRarity = 'common'; 
 
-    // 🔥 استبعاد بطاقات إيكيدنا السرية من هذه اللعبة
     const availableNormalRewards = dbRewards.filter(r => r.isEchidnaSecretReward !== true);
 
     const filteredRewards = availableNormalRewards.filter(r => r.rarity === targetRarity);
@@ -411,7 +409,7 @@ export default function MatchCharacterPage() {
   return (
     <main 
       dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} 
-      className="min-h-screen flex flex-col p-4 md:p-8 bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white relative z-0"
+      className="min-h-screen flex flex-col bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white relative z-0"
     >
       
       {showGameOverModal && (
@@ -486,96 +484,105 @@ export default function MatchCharacterPage() {
         </div>
       )}
 
-      <div className="w-full max-w-6xl mx-auto flex-shrink-0 mt-14 md:mt-4 mb-2 md:mb-0">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center md:text-start text-indigo-400">
-          {t.gameTitle}
-        </h1>
-      </div>
+      {/* المحتوى الرئيسي للعبة */}
+      <div className="flex-1 flex flex-col p-4 md:p-8">
+        
+        {/* العنوان - مخفي في الهاتف ليصبح المكان أرتب */}
+        <div className="hidden md:block w-full max-w-6xl mx-auto flex-shrink-0 mb-4">
+          <h1 className="text-2xl md:text-3xl font-bold text-start text-indigo-400">
+            {t.gameTitle}
+          </h1>
+        </div>
 
-      {!showIntroModal && (
-        <>
-          <div className="hidden md:flex flex-wrap justify-between items-center mb-6 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800 gap-4 w-full max-w-6xl mx-auto mt-4">
-             <div className="flex items-center gap-3">
-                <span className="bg-indigo-950/60 text-indigo-400 font-bold px-4 py-2 rounded-lg border border-indigo-900/50 text-sm">
-                  {t.level} {currentLevel}
-                </span>
-             </div>
-             
-             <div className="flex gap-3 text-sm font-semibold">
-                <span className="bg-zinc-800 px-4 py-2 rounded-lg border border-zinc-700 flex items-center gap-1">
-                  ⏱️ {seconds} {t.seconds}
-                </span>
-                <span className={`px-4 py-2 rounded-lg border flex items-center gap-1 transition-colors ${errors >= 12 ? 'bg-red-950 border-red-500 text-red-400 animate-pulse' : 'bg-zinc-800 border-zinc-700'}`}>
-                  🎯 {t.errors}: {errors}
-                </span>
-             </div>
-          </div>
+        {!showIntroModal && (
+          <>
+            {/* شريط الإحصائيات لشاشات الكمبيوتر */}
+            <div className="hidden md:flex flex-wrap justify-between items-center mb-6 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800 gap-4 w-full max-w-6xl mx-auto">
+               <div className="flex items-center gap-3">
+                  <span className="bg-indigo-950/60 text-indigo-400 font-bold px-4 py-2 rounded-lg border border-indigo-900/50 text-sm">
+                    {t.level} {currentLevel}
+                  </span>
+               </div>
+               
+               <div className="flex gap-3 text-sm font-semibold">
+                  <span className="bg-zinc-800 px-4 py-2 rounded-lg border border-zinc-700 flex items-center gap-1">
+                    ⏱️ {seconds} {t.seconds}
+                  </span>
+                  <span className={`px-4 py-2 rounded-lg border flex items-center gap-1 transition-colors ${errors >= 12 ? 'bg-red-950 border-red-500 text-red-400 animate-pulse' : 'bg-zinc-800 border-zinc-700'}`}>
+                    🎯 {t.errors}: {errors}
+                  </span>
+               </div>
+            </div>
 
-          <div className="md:hidden fixed bottom-0 left-0 w-full z-[45] bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 p-3 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
-             <div className="flex justify-between items-center max-w-sm mx-auto">
-                <span className="bg-indigo-950/60 text-indigo-400 font-bold px-3 py-1.5 rounded-lg border border-indigo-900/50 text-xs">
-                  {t.level} {currentLevel}
-                </span>
-                <div className="flex gap-2 text-xs font-semibold">
-                   <span className="bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 flex items-center gap-1">
-                     ⏱️ {seconds}
-                   </span>
-                   <span className={`px-3 py-1.5 rounded-lg border flex items-center gap-1 transition-colors ${errors >= 12 ? 'bg-red-950 border-red-500 text-red-400 animate-pulse' : 'bg-zinc-800 border-zinc-700'}`}>
-                     🎯 {errors}
-                   </span>
-                </div>
-             </div>
-          </div>
-        </>
-      )}
+            {/* شريط الإحصائيات للهواتف - أنيق ומثبت في الأسفل ولا يأخذ مساحة كبيرة */}
+            <div className="md:hidden fixed bottom-4 left-4 right-4 z-[45] pointer-events-none flex justify-center">
+               <div className="bg-zinc-950/90 backdrop-blur-md border border-zinc-800/80 px-4 py-3 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex gap-4 items-center pointer-events-auto">
+                  <span className="text-indigo-400 font-bold text-xs uppercase tracking-wider">
+                    Lvl {currentLevel}
+                  </span>
+                  <div className="w-px h-4 bg-zinc-800"></div>
+                  <span className="text-zinc-300 font-semibold text-xs flex items-center gap-1.5">
+                    ⏱️ {seconds}s
+                  </span>
+                  <div className="w-px h-4 bg-zinc-800"></div>
+                  <span className={`font-semibold text-xs flex items-center gap-1.5 ${errors >= 12 ? 'text-red-400 animate-pulse' : 'text-zinc-300'}`}>
+                    🎯 {errors}
+                  </span>
+               </div>
+            </div>
+          </>
+        )}
 
-      <div className="flex-1 flex items-center justify-center w-full pb-20 md:pb-8 mt-4 md:mt-0">
-        <div 
-          className={`bg-zinc-800/80 border-4 border-zinc-900 rounded-3xl p-3 sm:p-4 md:p-6 w-full mx-auto shadow-2xl backdrop-blur-sm transition-all duration-500 ${
-            shuffledCards.length === 12 ? 'max-w-4xl' : 
-            shuffledCards.length >= 14 ? 'max-w-6xl' : 
-            'max-w-2xl' 
-          }`}
-        >
+        {/* شبكة البطاقات - تم رفعها قليلاً في الهواتف لكي لا يغطي عليها الشريط السفلي */}
+        <div className="flex-1 flex items-center justify-center w-full pb-24 md:pb-8 mt-4 md:mt-0">
           <div 
-            className={`grid gap-2 sm:gap-3 md:gap-4 w-full mx-auto ${
-              shuffledCards.length === 12 ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6' : 
-              shuffledCards.length >= 14 ? 'grid-cols-4 sm:grid-cols-4 md:grid-cols-8' : 
-              'grid-cols-2 sm:grid-cols-3' 
+            className={`bg-zinc-800/80 border-4 border-zinc-900 rounded-3xl p-3 sm:p-4 md:p-6 w-full mx-auto shadow-2xl backdrop-blur-sm transition-all duration-500 ${
+              shuffledCards.length === 12 ? 'max-w-4xl' : 
+              shuffledCards.length >= 14 ? 'max-w-6xl' : 
+              'max-w-2xl' 
             }`}
           >
-            {shuffledCards.map((card) => {
-              const isOpened = openedCards.includes(card.id);
-              const isMatched = matchedCards.includes(card.id);
-              const isFlipped = isOpened || isMatched;
+            <div 
+              className={`grid gap-2 sm:gap-3 md:gap-4 w-full mx-auto ${
+                shuffledCards.length === 12 ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6' : 
+                shuffledCards.length >= 14 ? 'grid-cols-4 sm:grid-cols-4 md:grid-cols-8' : 
+                'grid-cols-2 sm:grid-cols-3' 
+              }`}
+            >
+              {shuffledCards.map((card) => {
+                const isOpened = openedCards.includes(card.id);
+                const isMatched = matchedCards.includes(card.id);
+                const isFlipped = isOpened || isMatched;
 
-              return (
-                <div
-                  key={card.id}
-                  onClick={() => handleCardClick(card.id)}
-                  className={`
-                    aspect-[3/4] rounded-xl md:rounded-2xl border transition-all duration-500 cursor-pointer overflow-hidden flex items-center justify-center p-2 md:p-3
-                    ${isMatched ? 'border-green-500/30 bg-green-950/20 opacity-30 grayscale-[50%] pointer-events-none scale-95' : 'hover:scale-[1.02]'}
-                    ${isOpened && !isMatched ? 'border-indigo-500 shadow-[0_0_30px_rgba(99,102,241,0.4)] bg-zinc-700' : ''}
-                    ${!isFlipped ? 'border-zinc-600 bg-gradient-to-b from-zinc-700 to-zinc-900 hover:border-zinc-400' : 'bg-zinc-800'}
-                  `}
-                >
-                  {isFlipped ? (
-                    card.type === "character" ? (
-                      <img src={card.image} alt="character" className="w-full h-full object-contain pointer-events-none animate-in fade-in zoom-in duration-300" />
+                return (
+                  <div
+                    key={card.id}
+                    onClick={() => handleCardClick(card.id)}
+                    className={`
+                      aspect-[3/4] rounded-xl md:rounded-2xl border transition-all duration-500 cursor-pointer overflow-hidden flex items-center justify-center p-2 md:p-3
+                      ${isMatched ? 'border-green-500/30 bg-green-950/20 opacity-30 grayscale-[50%] pointer-events-none scale-95' : 'hover:scale-[1.02]'}
+                      ${isOpened && !isMatched ? 'border-indigo-500 shadow-[0_0_30px_rgba(99,102,241,0.4)] bg-zinc-700' : ''}
+                      ${!isFlipped ? 'border-zinc-600 bg-gradient-to-b from-zinc-700 to-zinc-900 hover:border-zinc-400' : 'bg-zinc-800'}
+                    `}
+                  >
+                    {isFlipped ? (
+                      card.type === "character" ? (
+                        <img src={card.image} alt="character" className="w-full h-full object-contain pointer-events-none animate-in fade-in zoom-in duration-300" />
+                      ) : (
+                        <div className="text-center font-bold text-zinc-100 text-[10px] sm:text-xs md:text-sm leading-snug animate-in fade-in duration-300">
+                          {card.text}
+                        </div>
+                      )
                     ) : (
-                      <div className="text-center font-bold text-zinc-100 text-[10px] sm:text-xs md:text-sm leading-snug animate-in fade-in duration-300">
-                        {card.text}
-                      </div>
-                    )
-                  ) : (
-                    <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-zinc-500">؟</div>
-                  )}
-                </div>
-              );
-            })}
+                      <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-zinc-500">؟</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
+
       </div>
 
       {showRewardModal && reward && (
