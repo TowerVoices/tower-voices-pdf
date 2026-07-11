@@ -205,6 +205,7 @@ export default function GuessCharacterPage() {
   const [correctGuess, setCorrectGuess] = useState<string | null>(null);
 
   const [reward, setReward] = useState<any>(null);
+  const [lastWonReward, setLastWonReward] = useState<string | null>(null);
   const [showIntroModal, setShowIntroModal] = useState(true);
   const [showLevelCompleteModal, setShowLevelCompleteModal] = useState(false);
   const [showGameOverModal, setShowGameOverModal] = useState(false); 
@@ -419,14 +420,29 @@ export default function GuessCharacterPage() {
     else if (roll <= legendaryChance + rareChance) targetRarity = 'rare'; 
     else targetRarity = 'common'; 
 
-    // 🔥 التعديل الثاني: تصفية واستبعاد أي بطاقة محددة كمكافأة سرية لمحنة إيكيدنا
+    // 1. استبعاد البطاقات المخصصة لمحنة إيكيدنا السرية
     const availableNormalRewards = dbRewards.filter(r => r.isEchidnaSecretReward !== true);
 
-    // البحث في البطاقات العادية المتبقية عن الندرة المطلوبة
+    // 2. البحث عن البطاقات بالندرة المطلوبة
     const filteredRewards = availableNormalRewards.filter(r => r.rarity === targetRarity);
-    const pool = filteredRewards.length > 0 ? filteredRewards : availableNormalRewards;
+    let pool = filteredRewards.length > 0 ? filteredRewards : availableNormalRewards;
     
-    return pool[Math.floor(Math.random() * pool.length)];
+    // 🔥 3. التعديل الجديد: منع تكرار آخر بطاقة حصل عليها اللاعب
+    if (lastWonReward && pool.length > 1) {
+      const withoutLastReward = pool.filter(r => r.name !== lastWonReward);
+      // التأكد من أنه تبقى بطاقات بعد الاستبعاد قبل اعتماد المسبح الجديد
+      if (withoutLastReward.length > 0) {
+        pool = withoutLastReward;
+      }
+    }
+
+    // 4. السحب العشوائي النهائي من المسبح النظيف
+    const pickedReward = pool[Math.floor(Math.random() * pool.length)];
+    
+    // 5. حفظ اسم البطاقة كـ "آخر بطاقة تم الفوز بها" للجولات القادمة
+    setLastWonReward(pickedReward.name);
+    
+    return pickedReward;
   };
 
   const handleGuess = (charName: string) => {
