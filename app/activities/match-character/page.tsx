@@ -582,8 +582,8 @@ export default function MatchCharacterPage() {
 
       {/* 🌟 بطاقة الفوز الاحترافية */}
       {showRewardModal && reward && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-start justify-center z-[100] p-4 pt-20 md:pt-8 overflow-y-auto">
-          <div className="bg-zinc-900 border border-indigo-500/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_60px_rgba(79,70,229,0.25)] animate-in zoom-in-95 duration-500 my-12">
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-[100] p-4 overflow-y-auto">
+          <div className="bg-zinc-900 border border-indigo-500/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_60px_rgba(79,70,229,0.25)] animate-in zoom-in-95 duration-500 my-8">
             
             {/* أيقونة الكأس المضيئة */}
             <div className="text-5xl md:text-6xl mb-3 md:mb-4 animate-bounce">🏆</div>
