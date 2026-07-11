@@ -97,7 +97,6 @@ const playSound = (audioPath: string) => {
     
     if (playPromise !== undefined) {
       playPromise.then(() => {
-        // Playback started successfully
       }).catch(error => {
         console.log("Audio play blocked by browser:", error);
       });
@@ -449,7 +448,7 @@ export default function MatchCharacterPage() {
       )}
 
       {showIntroModal && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-4 overflow-y-auto">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 text-center w-full max-w-lg shadow-[0_0_50px_rgba(79,70,229,0.15)] animate-in zoom-in-95 duration-300 my-8">
             <div className="w-16 h-16 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6 text-3xl">🎮</div>
             <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4 text-white">{t.gameTitle}</h2>
@@ -487,7 +486,6 @@ export default function MatchCharacterPage() {
       {/* المحتوى الرئيسي للعبة */}
       <div className="flex-1 flex flex-col p-4 md:p-8">
         
-        {/* العنوان - مخفي في الهاتف ليصبح المكان أرتب */}
         <div className="hidden md:block w-full max-w-6xl mx-auto flex-shrink-0 mb-4">
           <h1 className="text-2xl md:text-3xl font-bold text-start text-indigo-400">
             {t.gameTitle}
@@ -496,7 +494,6 @@ export default function MatchCharacterPage() {
 
         {!showIntroModal && (
           <>
-            {/* شريط الإحصائيات لشاشات الكمبيوتر */}
             <div className="hidden md:flex flex-wrap justify-between items-center mb-6 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800 gap-4 w-full max-w-6xl mx-auto">
                <div className="flex items-center gap-3">
                   <span className="bg-indigo-950/60 text-indigo-400 font-bold px-4 py-2 rounded-lg border border-indigo-900/50 text-sm">
@@ -514,7 +511,6 @@ export default function MatchCharacterPage() {
                </div>
             </div>
 
-            {/* شريط الإحصائيات للهواتف - أنيق ומثبت في الأسفل ولا يأخذ مساحة كبيرة */}
             <div className="md:hidden fixed bottom-4 left-4 right-4 z-[45] pointer-events-none flex justify-center">
                <div className="bg-zinc-950/90 backdrop-blur-md border border-zinc-800/80 px-4 py-3 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex gap-4 items-center pointer-events-auto">
                   <span className="text-indigo-400 font-bold text-xs uppercase tracking-wider">
@@ -533,7 +529,6 @@ export default function MatchCharacterPage() {
           </>
         )}
 
-        {/* شبكة البطاقات - تم رفعها قليلاً في الهواتف لكي لا يغطي عليها الشريط السفلي */}
         <div className="flex-1 flex items-center justify-center w-full pb-24 md:pb-8 mt-4 md:mt-0">
           <div 
             className={`bg-zinc-800/80 border-4 border-zinc-900 rounded-3xl p-3 sm:p-4 md:p-6 w-full mx-auto shadow-2xl backdrop-blur-sm transition-all duration-500 ${
@@ -585,25 +580,34 @@ export default function MatchCharacterPage() {
 
       </div>
 
+      {/* 🌟 بطاقة الفوز الاحترافية */}
       {showRewardModal && reward && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 my-8">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{t.winTitle}</h2>
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-[100] p-4 overflow-y-auto">
+          <div className="bg-zinc-900 border border-indigo-500/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_60px_rgba(79,70,229,0.25)] animate-in zoom-in-95 duration-500 my-8">
+            
+            {/* أيقونة الكأس المضيئة */}
+            <div className="text-5xl md:text-6xl mb-3 md:mb-4 animate-bounce">🏆</div>
+            
+            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">
+              {t.winTitle}
+            </h2>
             <p className="mb-4 md:mb-6 text-sm md:text-base text-zinc-400">{t.gotCard}</p>
 
             <div className="relative mx-auto w-40 md:w-60 flex justify-center items-center mb-4 md:mb-6 mt-2 md:-mt-4">
-              {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
-              {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-[40px] opacity-40 rounded-full animate-pulse scale-110"></div>}
+              {/* توهج خلف البطاقة */}
+              {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[50px] opacity-40 rounded-full animate-pulse scale-110"></div>}
+              {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-[50px] opacity-40 rounded-full animate-pulse scale-110"></div>}
+              {reward.rarity === 'common' && <div className="absolute inset-0 bg-white blur-[50px] opacity-10 rounded-full animate-pulse scale-110"></div>}
               
-              <img src={reward.image} alt={currentLanguage === 'en' ? reward.nameEn : reward.name} className="w-full h-auto object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500" />
+              <img src={reward.image} alt={currentLanguage === 'en' ? reward.nameEn : reward.name} className="w-full h-auto object-contain relative z-10 drop-shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:scale-105 transition-transform duration-500" />
             </div>
             
-            <p className={`text-xl md:text-2xl font-bold ${reward.rarity === 'legendary' ? 'text-yellow-400' : reward.rarity === 'rare' ? 'text-blue-400' : 'text-white'}`}>
+            <p className={`text-xl md:text-2xl font-bold ${reward.rarity === 'legendary' ? 'text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]' : reward.rarity === 'rare' ? 'text-blue-400 drop-shadow-[0_0_5px_rgba(96,165,250,0.5)]' : 'text-white'}`}>
               {currentLanguage === 'en' ? reward.nameEn : reward.name}
             </p>
             <p className="text-[10px] md:text-xs mt-1 text-zinc-500 uppercase tracking-widest">{t.rewardRarity}: {currentLanguage === 'en' ? reward.rarity.toUpperCase() : (reward.rarity === 'common' ? 'عادي' : reward.rarity === 'rare' ? 'نادر' : 'أسطوري')}</p>
 
-            <div className="mt-4 md:mt-6 bg-black/30 p-3 md:p-4 rounded-xl space-y-2 md:space-y-3 text-sm text-zinc-300 text-start border border-zinc-800">
+            <div className="mt-4 md:mt-6 bg-black/40 p-3 md:p-4 rounded-xl space-y-2 md:space-y-3 text-sm text-zinc-300 text-start border border-zinc-800">
               <p className="flex justify-between"><span>⏱️ {currentLanguage === 'en' ? 'Time' : 'الزمن'}:</span> <span className="font-bold text-white">{seconds} {t.seconds}</span></p>
               <p className="flex justify-between"><span>🎯 {t.errors}:</span> <span className="font-bold text-white">{errors}</span></p>
             </div>
