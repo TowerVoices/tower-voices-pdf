@@ -402,7 +402,7 @@ export default function GuessCharacterPage() {
     if (currentDifficulty === 'echidna') {
       legendaryChance = 60; rareChance = 30; 
     } else if (currentDifficulty === 'subaru') {
-      legendaryChance = 35; rareChance = 40; 
+      legendaryChance = 40; rareChance = 40; 
     } else { 
       legendaryChance = 35; rareChance = 35; 
     }
