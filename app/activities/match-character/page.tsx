@@ -406,13 +406,14 @@ export default function MatchCharacterPage() {
   }
 
   return (
+    // 🔥 تم حذف relative z-0 من هنا لكي لا يحبس نوافذ الفوز
     <main 
       dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'} 
-      className="min-h-screen flex flex-col bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white relative z-0"
+      className="min-h-screen flex flex-col bg-[radial-gradient(circle_at_top,#312e81_0%,#000_60%)] text-white relative"
     >
       
       {showGameOverModal && (
-        <div className="fixed inset-0 bg-red-950/95 backdrop-blur-xl flex items-center justify-center z-[100] p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-red-950/95 backdrop-blur-xl flex items-center justify-center z-[999] p-4 overflow-y-auto">
           <div className="bg-zinc-950 border-2 border-red-600 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_100px_rgba(220,38,38,0.5)] animate-in zoom-in-75 duration-700 my-8">
             <h2 className="text-3xl md:text-4xl font-extrabold mb-4 text-red-500 animate-pulse">{t.gameOverTitle}</h2>
             
@@ -448,7 +449,7 @@ export default function MatchCharacterPage() {
       )}
 
       {showIntroModal && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[999] p-4 overflow-y-auto">
           <div className="bg-zinc-900 border border-zinc-700/50 rounded-3xl p-6 md:p-10 text-center w-full max-w-lg shadow-[0_0_50px_rgba(79,70,229,0.15)] animate-in zoom-in-95 duration-300 my-8">
             <div className="w-16 h-16 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6 text-3xl">🎮</div>
             <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4 text-white">{t.gameTitle}</h2>
@@ -486,6 +487,7 @@ export default function MatchCharacterPage() {
       {/* المحتوى الرئيسي للعبة */}
       <div className="flex-1 flex flex-col p-4 md:p-8">
         
+        {/* العنوان - مخفي في الهاتف ليصبح المكان أرتب */}
         <div className="hidden md:block w-full max-w-6xl mx-auto flex-shrink-0 mb-4">
           <h1 className="text-2xl md:text-3xl font-bold text-start text-indigo-400">
             {t.gameTitle}
@@ -494,6 +496,7 @@ export default function MatchCharacterPage() {
 
         {!showIntroModal && (
           <>
+            {/* شريط الإحصائيات لشاشات الكمبيوتر */}
             <div className="hidden md:flex flex-wrap justify-between items-center mb-6 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800 gap-4 w-full max-w-6xl mx-auto">
                <div className="flex items-center gap-3">
                   <span className="bg-indigo-950/60 text-indigo-400 font-bold px-4 py-2 rounded-lg border border-indigo-900/50 text-sm">
@@ -511,6 +514,7 @@ export default function MatchCharacterPage() {
                </div>
             </div>
 
+            {/* شريط الإحصائيات للهواتف - أنيق ومثبت في الأسفل ولا يأخذ مساحة كبيرة */}
             <div className="md:hidden fixed bottom-4 left-4 right-4 z-[45] pointer-events-none flex justify-center">
                <div className="bg-zinc-950/90 backdrop-blur-md border border-zinc-800/80 px-4 py-3 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex gap-4 items-center pointer-events-auto">
                   <span className="text-indigo-400 font-bold text-xs uppercase tracking-wider">
@@ -529,6 +533,7 @@ export default function MatchCharacterPage() {
           </>
         )}
 
+        {/* شبكة البطاقات - تم رفعها قليلاً في الهواتف لكي لا يغطي عليها الشريط السفلي */}
         <div className="flex-1 flex items-center justify-center w-full pb-24 md:pb-8 mt-4 md:mt-0">
           <div 
             className={`bg-zinc-800/80 border-4 border-zinc-900 rounded-3xl p-3 sm:p-4 md:p-6 w-full mx-auto shadow-2xl backdrop-blur-sm transition-all duration-500 ${
@@ -582,7 +587,7 @@ export default function MatchCharacterPage() {
 
       {/* 🌟 بطاقة الفوز الاحترافية */}
       {showRewardModal && reward && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-[100] p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-[999] p-4 overflow-y-auto">
           <div className="bg-zinc-900 border border-indigo-500/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_60px_rgba(79,70,229,0.25)] animate-in zoom-in-95 duration-500 my-8">
             
             {/* أيقونة الكأس المضيئة */}
