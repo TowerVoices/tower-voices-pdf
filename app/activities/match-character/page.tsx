@@ -583,47 +583,95 @@ export default function MatchCharacterPage() {
       {/* 🌟 بطاقة الفوز الاحترافية */}
       {showRewardModal && reward && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-[100] p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-indigo-500/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_60px_rgba(79,70,229,0.25)] animate-in zoom-in-95 duration-500 my-8">
-            
-            {/* أيقونة الكأس المضيئة */}
-            <div className="text-5xl md:text-6xl mb-3 md:mb-4 animate-bounce">🏆</div>
-            
-            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">
-              {t.winTitle}
-            </h2>
-            <p className="mb-4 md:mb-6 text-sm md:text-base text-zinc-400">{t.gotCard}</p>
+    <div className="bg-zinc-900 border border-indigo-500/50 rounded-3xl p-6 md:p-8 text-center w-full max-w-md shadow-[0_0_60px_rgba(79,70,229,0.25)] animate-in zoom-in-95 duration-500 my-8">
 
-            <div className="relative mx-auto w-40 md:w-60 flex justify-center items-center mb-4 md:mb-6 mt-2 md:-mt-4">
-              {/* توهج خلف البطاقة */}
-              {reward.rarity === 'legendary' && <div className="absolute inset-0 bg-yellow-500 blur-[50px] opacity-40 rounded-full animate-pulse scale-110"></div>}
-              {reward.rarity === 'rare' && <div className="absolute inset-0 bg-blue-500 blur-[50px] opacity-40 rounded-full animate-pulse scale-110"></div>}
-              {reward.rarity === 'common' && <div className="absolute inset-0 bg-white blur-[50px] opacity-10 rounded-full animate-pulse scale-110"></div>}
-              
-              <img src={reward.image} alt={currentLanguage === 'en' ? reward.nameEn : reward.name} className="w-full h-auto object-contain relative z-10 drop-shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:scale-105 transition-transform duration-500" />
-            </div>
-            
-            <p className={`text-xl md:text-2xl font-bold ${reward.rarity === 'legendary' ? 'text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]' : reward.rarity === 'rare' ? 'text-blue-400 drop-shadow-[0_0_5px_rgba(96,165,250,0.5)]' : 'text-white'}`}>
-              {currentLanguage === 'en' ? reward.nameEn : reward.name}
-            </p>
-            <p className="text-[10px] md:text-xs mt-1 text-zinc-500 uppercase tracking-widest">{t.rewardRarity}: {currentLanguage === 'en' ? reward.rarity.toUpperCase() : (reward.rarity === 'common' ? 'عادي' : reward.rarity === 'rare' ? 'نادر' : 'أسطوري')}</p>
+      <div className="text-5xl md:text-6xl mb-4 animate-bounce">
+        🏆
+      </div>
 
-            <div className="mt-4 md:mt-6 bg-black/40 p-3 md:p-4 rounded-xl space-y-2 md:space-y-3 text-sm text-zinc-300 text-start border border-zinc-800">
-              <p className="flex justify-between"><span>⏱️ {currentLanguage === 'en' ? 'Time' : 'الزمن'}:</span> <span className="font-bold text-white">{seconds} {t.seconds}</span></p>
-              <p className="flex justify-between"><span>🎯 {t.errors}:</span> <span className="font-bold text-white">{errors}</span></p>
-            </div>
+      <h2 className="text-2xl md:text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
+        {t.winTitle}
+      </h2>
 
-            <div className="mt-4 md:mt-6 flex flex-col gap-2 md:gap-3 w-full">
-              <button onClick={handleShareClick} disabled={isSharing} className="w-full bg-indigo-600 hover:bg-indigo-500 transition-colors text-white py-3 md:py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm md:text-base">
-                {t.share}
-              </button>
-              <button onClick={handleNextLevel} className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors py-3 md:py-3.5 rounded-xl font-semibold text-sm md:text-base text-zinc-300 block">
-                {currentLevel < MAX_LEVEL ? t.nextLevel : t.replay}
-              </button>
-              <Link 
-                href="/activities" 
-                className="w-full bg-black/40 hover:bg-black/60 border border-transparent hover:border-zinc-800 transition-colors py-3 rounded-xl font-semibold text-sm md:text-base text-zinc-400 block mt-1 text-center"
-              >
-                {t.backToActivities}
+      <p className="text-sm md:text-base text-zinc-300 mb-6">
+        {t.gotCard}
+      </p>
+
+      <div className="relative mx-auto w-36 md:w-48 flex justify-center items-center mb-6">
+
+        {reward.rarity === "legendary" && (
+          <div className="absolute inset-0 bg-yellow-500 blur-[50px] opacity-40 rounded-full animate-pulse scale-110"></div>
+        )}
+
+        {reward.rarity === "rare" && (
+          <div className="absolute inset-0 bg-blue-500 blur-[50px] opacity-40 rounded-full animate-pulse scale-110"></div>
+        )}
+
+        <img
+          src={reward.image}
+          alt={currentLanguage === "en" ? reward.nameEn : reward.name}
+          className="w-full h-auto relative z-10 drop-shadow-2xl hover:scale-105 transition-transform duration-500"
+        />
+      </div>
+
+      <p
+        className={`text-xl md:text-2xl font-bold ${
+          reward.rarity === "legendary"
+            ? "text-yellow-400"
+            : reward.rarity === "rare"
+            ? "text-blue-400"
+            : "text-white"
+        }`}
+      >
+        {currentLanguage === "en" ? reward.nameEn : reward.name}
+      </p>
+
+      <p className="text-xs mt-1 text-zinc-500 uppercase tracking-widest mb-6">
+        {t.rewardRarity}:{" "}
+        {currentLanguage === "en"
+          ? reward.rarity.toUpperCase()
+          : reward.rarity === "common"
+          ? "عادي"
+          : reward.rarity === "rare"
+          ? "نادر"
+          : "أسطوري"}
+      </p>
+
+      <div className="bg-black/40 p-4 rounded-xl space-y-3 text-sm text-zinc-300 text-start border border-zinc-800 mb-6">
+        <p className="flex justify-between">
+          <span>⏱️ {currentLanguage === "en" ? "Time" : "الوقت"}:</span>
+          <span className="font-bold text-white">
+            {seconds} {t.seconds}
+          </span>
+        </p>
+
+        <p className="flex justify-between">
+          <span>🎯 {t.errors}:</span>
+          <span className="font-bold text-white">{errors}</span>
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <button
+          onClick={handleShareClick}
+          disabled={isSharing}
+          className="w-full bg-indigo-600 hover:bg-indigo-500 transition-colors py-3.5 rounded-xl font-bold text-white"
+        >
+          {t.share}
+        </button>
+
+        <button
+          onClick={handleNextLevel}
+          className="w-full border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 py-3.5 rounded-xl font-semibold text-zinc-300"
+        >
+          {currentLevel < MAX_LEVEL ? t.nextLevel : t.replay}
+        </button>
+
+        <Link
+          href="/activities"
+          className="w-full bg-black/40 hover:bg-black/60 py-3 rounded-xl font-semibold text-zinc-400 text-center"
+        >
+          {t.backToActivities}
               </Link>
             </div>
           </div>
