@@ -297,7 +297,7 @@ export default function QuizPage() {
     
     if (selectedLevel === 'larp') { setLives(3); setTimeLeft(15); }
     else if (selectedLevel === 'subaru') { setLives(2); setTimeLeft(10); } 
-    else if (selectedLevel === 'echidna') { setLives(1); setTimeLeft(5); } 
+    else if (selectedLevel === 'echidna') { setLives(1); setTimeLeft(10); } 
     else if (selectedLevel === 'novel') { setLives(2); setTimeLeft(10); } 
 
     setShowIntroModal(false);
@@ -335,7 +335,7 @@ export default function QuizPage() {
     setTimeout(() => {
         setShowGlitch(false);
         setIsEchidnaTrial(true);
-        setTimeLeft(5); 
+        setTimeLeft(10); 
         setSelectedOption(null);
         setIsTransitioning(false);
     }, 3000); 
@@ -362,7 +362,7 @@ export default function QuizPage() {
       setSelectedOption(null); 
       if (difficulty === 'larp') setTimeLeft(15);
       else if (difficulty === 'subaru') setTimeLeft(10);
-      else if (difficulty === 'echidna') setTimeLeft(5);
+      else if (difficulty === 'echidna') setTimeLeft(10);
       else if (difficulty === 'novel') setTimeLeft(10);
       setIsTransitioning(false);
     } else {
@@ -431,7 +431,7 @@ export default function QuizPage() {
         
         if (difficulty === 'larp') setTimeLeft(15);
         else if (difficulty === 'subaru') setTimeLeft(10);
-        else if (difficulty === 'echidna') setTimeLeft(5);
+        else if (difficulty === 'echidna') setTimeLeft(10);
         else if (difficulty === 'novel') setTimeLeft(10);
 
         setIsTransitioning(false);
